@@ -6,11 +6,13 @@ import '../theme/app_color.dart';
 class SymptomCard extends StatelessWidget {
   final SymptomLog log;
   final VoidCallback? onDelete;
+  final VoidCallback? onTap;
 
   const SymptomCard({
     super.key,
     required this.log,
     this.onDelete,
+    this.onTap,
   });
 
   @override
@@ -28,22 +30,24 @@ class SymptomCard extends StatelessWidget {
         break;
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColor.neutralGray.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColor.neutralGray.withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -108,6 +112,7 @@ class SymptomCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

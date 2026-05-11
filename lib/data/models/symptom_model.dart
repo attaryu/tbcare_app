@@ -10,7 +10,7 @@ enum SymptomLevel {
       case SymptomLevel.mild:
         return 'Ringan';
       case SymptomLevel.severe:
-        return 'Berat';
+        return 'Parah';
     }
   }
 }

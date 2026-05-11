@@ -64,4 +64,19 @@ class SymptomViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateLog(SymptomLog log) async {
+    try {
+      await _repository.updateSymptomLog(log);
+      final index = _logs.indexWhere((l) => l.id == log.id);
+      if (index != -1) {
+        _logs[index] = log.copyWith(editedAt: DateTime.now());
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
 }
