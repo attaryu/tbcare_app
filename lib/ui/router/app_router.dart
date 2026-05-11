@@ -8,6 +8,7 @@ import '../features/auth/view_models/auth_view_model.dart';
 import '../features/auth/views/login_view.dart';
 import '../features/home/views/home_view.dart';
 import '../features/profile/views/profile_view.dart';
+import '../features/history/views/history_view.dart';
 import '../features/symptoms/view_models/symptom_view_model.dart';
 import '../features/symptoms/views/symptom_list_view.dart';
 
@@ -46,6 +47,14 @@ class AppRouter {
                 GoRoute(
                   path: '/',
                   builder: (context, state) => const HomeView(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/history',
+                  builder: (context, state) => const HistoryView(),
                 ),
               ],
             ),

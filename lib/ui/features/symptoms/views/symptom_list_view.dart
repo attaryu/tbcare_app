@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/widgets/symptom_card.dart';
 import '../view_models/symptom_view_model.dart';
 import '../../../../data/models/symptom_model.dart';
+import '../../../../core/theme/app_color.dart';
 
 class SymptomListView extends StatefulWidget {
   final SymptomViewModel viewModel;
@@ -13,12 +14,164 @@ class SymptomListView extends StatefulWidget {
 }
 
 class _SymptomListViewState extends State<SymptomListView> {
+  String _searchQuery = '';
+  SymptomLevel? _selectedFilter;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.viewModel.loadLogs();
     });
+  }
+
+  List<SymptomLog> get _filteredLogs {
+    return widget.viewModel.logs.where((log) {
+      final matchesSearch = log.note?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? true;
+      final matchesFilter = _selectedFilter == null || log.level == _selectedFilter;
+      return matchesSearch && matchesFilter;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColor.white,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Text(
+                'Riwayat Gejala',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.darkGray,
+                ),
+              ),
+            ),
+            
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColor.lightGray.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: AppColor.neutralGray.withOpacity(0.3)),
+                ),
+                child: TextField(
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  decoration: const InputDecoration(
+                    hintText: 'Cari catatan gejala...',
+                    prefixIcon: Icon(Icons.search, color: AppColor.neutralGray),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Filters
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  _buildFilterChip(null, 'Semua'),
+                  _buildFilterChip(SymptomLevel.normal, 'Normal'),
+                  _buildFilterChip(SymptomLevel.mild, 'Ringan'),
+                  _buildFilterChip(SymptomLevel.severe, 'Parah'),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // List
+            Expanded(
+              child: ListenableBuilder(
+                listenable: widget.viewModel,
+                builder: (context, _) {
+                  if (widget.viewModel.isLoading && widget.viewModel.logs.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final logs = _filteredLogs;
+
+                  if (logs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.assignment_turned_in_outlined, 
+                            size: 80, color: AppColor.lightGray),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Belum ada catatan gejala',
+                            style: TextStyle(color: AppColor.neutralGray),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: widget.viewModel.loadLogs,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(top: 8, bottom: 100),
+                      itemCount: logs.length,
+                      itemBuilder: (context, index) {
+                        return SymptomCard(
+                          log: logs[index],
+                          onDelete: () => _showDeleteConfirm(logs[index]),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddSymptomDialog,
+        backgroundColor: AppColor.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: AppColor.white, size: 32),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(SymptomLevel? level, String label) {
+    final isSelected = _selectedFilter == level;
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (selected) {
+          setState(() => _selectedFilter = selected ? level : null);
+        },
+        backgroundColor: AppColor.white,
+        selectedColor: AppColor.primary,
+        labelStyle: TextStyle(
+          color: isSelected ? AppColor.white : AppColor.primary,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppColor.primary.withOpacity(0.5)),
+        ),
+        showCheckmark: false,
+      ),
+    );
   }
 
   void _showAddSymptomDialog() {
@@ -35,7 +188,7 @@ class _SymptomListViewState extends State<SymptomListView> {
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColor.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Padding(
@@ -49,12 +202,13 @@ class _SymptomListViewState extends State<SymptomListView> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    color: AppColor.darkGray,
                   ),
                 ),
                 const SizedBox(height: 24),
                 const Text(
                   'Bagaimana kondisi Anda saat ini?',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -63,9 +217,9 @@ class _SymptomListViewState extends State<SymptomListView> {
                     final isSelected = selectedLevel == level;
                     Color color;
                     switch (level) {
-                      case SymptomLevel.normal: color = Colors.green; break;
-                      case SymptomLevel.mild: color = Colors.orange; break;
-                      case SymptomLevel.severe: color = Colors.red; break;
+                      case SymptomLevel.normal: color = AppColor.success; break;
+                      case SymptomLevel.mild: color = AppColor.warning; break;
+                      case SymptomLevel.severe: color = AppColor.error; break;
                     }
 
                     return Expanded(
@@ -75,17 +229,14 @@ class _SymptomListViewState extends State<SymptomListView> {
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: isSelected ? color : Colors.grey.shade100,
+                            color: isSelected ? color : AppColor.lightGray,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected ? color : Colors.grey.shade200,
-                            ),
                           ),
                           child: Center(
                             child: Text(
                               level.displayName,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.grey.shade600,
+                                color: isSelected ? AppColor.white : AppColor.neutralGray,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),
@@ -98,7 +249,7 @@ class _SymptomListViewState extends State<SymptomListView> {
                 const SizedBox(height: 24),
                 const Text(
                   'Catatan tambahan (opsional)',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -107,7 +258,7 @@ class _SymptomListViewState extends State<SymptomListView> {
                   decoration: InputDecoration(
                     hintText: 'Tuliskan detail gejala yang Anda rasakan...',
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: AppColor.lightGray.withOpacity(0.5),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -133,8 +284,8 @@ class _SymptomListViewState extends State<SymptomListView> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColor.primary,
+                      foregroundColor: AppColor.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -150,92 +301,6 @@ class _SymptomListViewState extends State<SymptomListView> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'Daftar Gejala',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () => widget.viewModel.loadLogs(),
-            icon: const Icon(Icons.refresh, color: Colors.black),
-          ),
-        ],
-      ),
-      body: ListenableBuilder(
-        listenable: widget.viewModel,
-        builder: (context, _) {
-          if (widget.viewModel.isLoading && widget.viewModel.logs.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (widget.viewModel.error != null && widget.viewModel.logs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Terjadi kesalahan: ${widget.viewModel.error}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => widget.viewModel.loadLogs(),
-                    child: const Text('Coba Lagi'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (widget.viewModel.logs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.assignment_turned_in_outlined, 
-                    size: 80, color: Colors.grey.shade300),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Belum ada catatan gejala',
-                    style: TextStyle(color: Colors.grey.shade500),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: widget.viewModel.loadLogs,
-            child: ListView.builder(
-              padding: const EdgeInsets.only(top: 8, bottom: 80),
-              itemCount: widget.viewModel.logs.length,
-              itemBuilder: (context, index) {
-                final log = widget.viewModel.logs[index];
-                return SymptomCard(
-                  log: log,
-                  onDelete: () => _showDeleteConfirm(log),
-                );
-              },
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddSymptomDialog,
-        backgroundColor: Colors.blue.shade700,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Catat Gejala', 
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -256,7 +321,7 @@ class _SymptomListViewState extends State<SymptomListView> {
               widget.viewModel.deleteLog(log.id);
               Navigator.pop(context);
             },
-            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+            child: const Text('Hapus', style: TextStyle(color: AppColor.error)),
           ),
         ],
       ),

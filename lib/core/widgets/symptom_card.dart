@@ -1,137 +1,112 @@
 import 'package:flutter/material.dart';
-import '../../data/models/symptom_model.dart';
 import 'package:intl/intl.dart';
+import '../../data/models/symptom_model.dart';
+import '../theme/app_color.dart';
 
 class SymptomCard extends StatelessWidget {
   final SymptomLog log;
-  final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
   const SymptomCard({
     super.key,
     required this.log,
-    this.onTap,
     this.onDelete,
   });
 
-  Color _getLevelColor(SymptomLevel level) {
-    switch (level) {
-      case SymptomLevel.normal:
-        return Colors.green.shade600;
-      case SymptomLevel.mild:
-        return Colors.orange.shade600;
-      case SymptomLevel.severe:
-        return Colors.red.shade600;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
-    final color = _getLevelColor(log.level);
+    Color levelColor;
+    switch (log.level) {
+      case SymptomLevel.normal:
+        levelColor = AppColor.success;
+        break;
+      case SymptomLevel.mild:
+        levelColor = AppColor.warning;
+        break;
+      case SymptomLevel.severe:
+        levelColor = AppColor.error;
+        break;
+    }
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColor.neutralGray.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.lens, size: 8, color: color),
-                            const SizedBox(width: 8),
-                            Text(
-                              log.level.displayName,
-                              style: TextStyle(
-                                color: color,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        dateFormat.format(log.createdAt),
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (log.note != null && log.note!.isNotEmpty)
-                    Text(
-                      log.note!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        height: 1.5,
-                      ),
-                    )
-                  else
-                    const Text(
-                      'Tidak ada catatan',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black38,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  if (onDelete != null) ...[
-                    const Divider(height: 24),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: onDelete,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Hapus'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red.shade400,
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            log.note ?? 'Tidak ada catatan.',
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColor.darkGray,
+              height: 1.5,
             ),
           ),
-        ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const Text(
+                'Gejala',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColor.neutralGray,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: levelColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  log.level.displayName,
+                  style: const TextStyle(
+                    color: AppColor.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 16,
+                color: AppColor.darkGray,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                DateFormat('dd MMM yyyy, HH:mm').format(log.createdAt),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColor.darkGray,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline, size: 20, color: AppColor.error),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }
