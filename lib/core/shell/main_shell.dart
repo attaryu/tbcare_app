@@ -24,7 +24,7 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: widget.navigationShell,
       bottomNavigationBar: Container(
-        height: 80,
+        height: 72,
         decoration: const BoxDecoration(
           color: AppColor.primary,
         ),
