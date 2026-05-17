@@ -4,38 +4,52 @@ import 'package:provider/provider.dart';
 import 'package:tbcare_app/data/models/symptom_model.dart';
 
 import '../../core/shell/main_shell.dart';
+import '../../data/models/treatment_period_model.dart';
+import '../../data/repositories/history_repository.dart';
+import '../../data/repositories/home_repository.dart';
+import '../../data/repositories/profile_repository.dart';
 import '../../data/repositories/symptom_repository.dart';
+import '../../data/repositories/treatment_repository.dart';
 import '../features/auth/view_models/auth_view_model.dart';
 import '../features/auth/views/login_view.dart';
+import '../features/auth/views/register_view.dart';
+import '../features/history/view_models/history_view_model.dart';
 import '../features/history/views/history_view.dart';
+import '../features/home/view_models/home_view_model.dart';
 import '../features/home/views/home_view.dart';
+import '../features/profile/view_models/profile_view_model.dart';
 import '../features/profile/views/profile_view.dart';
 import '../features/symptoms/view_models/symptom_view_model.dart';
 import '../features/symptoms/views/symptom_form_view.dart';
 import '../features/symptoms/views/symptom_list_view.dart';
+import '../features/treatment/view_models/treatment_view_model.dart';
+import '../features/treatment/views/treatment_form_view.dart';
+import '../features/treatment/views/treatment_view.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
   static GoRouter config(AuthViewModel authViewModel) {
     return GoRouter(
-      initialLocation: '/symptoms',
+      initialLocation: '/',
       navigatorKey: _rootNavigatorKey,
       refreshListenable: authViewModel,
       redirect: (context, state) {
         final isAuthenticated = authViewModel.isAuthenticated;
         final isLoggingIn = state.matchedLocation == '/login';
+        final isRegistering = state.matchedLocation == '/register';
 
-        if (!isAuthenticated && !isLoggingIn) {
+        if (!isAuthenticated && !isLoggingIn && !isRegistering) {
           return '/login';
         }
-        if (isAuthenticated && isLoggingIn) {
-          return '/symptoms';
+        if (isAuthenticated && (isLoggingIn || isRegistering)) {
+          return '/';
         }
         return null;
       },
       routes: [
         GoRoute(path: '/login', builder: (context, state) => const LoginView()),
+        GoRoute(path: '/register', builder: (context, state) => const RegisterView()),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             return MainShell(navigationShell: navigationShell);
@@ -45,7 +59,21 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/',
-                  builder: (context, state) => const HomeView(),
+                  builder: (context, state) {
+                    final userId = authViewModel.currentUser?.id;
+                    if (userId == null) {
+                      return const Scaffold(
+                        body: Center(child: Text('Sesi berakhir')),
+                      );
+                    }
+                    return ChangeNotifierProvider(
+                      create: (_) => HomeViewModel(
+                        repository: context.read<HomeRepository>(),
+                        userId: userId,
+                      ),
+                      child: const HomeView(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -53,7 +81,21 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/history',
-                  builder: (context, state) => const HistoryView(),
+                  builder: (context, state) {
+                    final userId = authViewModel.currentUser?.id;
+                    if (userId == null) {
+                      return const Scaffold(
+                        body: Center(child: Text('Sesi berakhir')),
+                      );
+                    }
+                    return ChangeNotifierProvider(
+                      create: (_) => HistoryViewModel(
+                        repository: context.read<HistoryRepository>(),
+                        userId: userId,
+                      ),
+                      child: const HistoryView(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -131,7 +173,65 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/profile',
-                  builder: (context, state) => const ProfileView(),
+                  builder: (context, state) {
+                    final userId = authViewModel.currentUser?.id;
+                    if (userId == null) {
+                      return const Scaffold(
+                        body: Center(child: Text('Sesi berakhir')),
+                      );
+                    }
+                    return ChangeNotifierProvider(
+                      create: (_) => ProfileViewModel(
+                        repository: context.read<ProfileRepository>(),
+                        userId: userId,
+                      ),
+                      child: const ProfileView(),
+                    );
+                  },
+                  routes: [
+                    GoRoute(
+                      path: 'treatment-periods',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      builder: (context, state) {
+                        final userId = authViewModel.currentUser?.id;
+                        if (userId == null) {
+                          return const Scaffold(
+                            body: Center(child: Text('Sesi berakhir')),
+                          );
+                        }
+                        return ChangeNotifierProvider(
+                          create: (_) => TreatmentViewModel(
+                            repository: context.read<TreatmentRepository>(),
+                            userId: userId,
+                          ),
+                          child: const TreatmentView(),
+                        );
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'add',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          builder: (context, state) {
+                            final viewModel = state.extra as TreatmentViewModel;
+                            return TreatmentFormView(viewModel: viewModel);
+                          },
+                        ),
+                        GoRoute(
+                          path: 'edit',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          builder: (context, state) {
+                            final extras = state.extra as Map<String, dynamic>;
+                            final viewModel = extras['viewModel'] as TreatmentViewModel;
+                            final period = extras['period'] as TreatmentPeriodModel;
+                            return TreatmentFormView(
+                              viewModel: viewModel,
+                              existingPeriod: period,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),

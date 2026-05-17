@@ -57,6 +57,140 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> register(
+    String name,
+    String email,
+    String phone,
+    String password,
+    String roleSlug, {
+    String? supervisionCode,
+    String? treatmentName,
+    DateTime? startDate,
+    int? duration,
+    String? durationType,
+    DateTime? predictionEndDate,
+    List<Map<String, String>>? medicationSchedules,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // 1. Check if user already exists
+      final existingUser = await _supabase.client
+          .from('users')
+          .select()
+          .eq('email', email)
+          .maybeSingle();
+
+      if (existingUser != null) {
+        throw 'Email sudah terdaftar. Silakan gunakan email lain atau login.';
+      }
+
+      if (roleSlug == 'pasien' && supervisionCode != null && supervisionCode.isNotEmpty) {
+        // Verify supervision code exists before creating user
+        final supervision = await _supabase.client
+            .from('supervisions')
+            .select()
+            .eq('supervision_code', supervisionCode)
+            .maybeSingle();
+        if (supervision == null) {
+          throw 'Kode Pengawas tidak valid atau tidak ditemukan.';
+        }
+      }
+
+      // 2. Hash password using BCrypt
+      final hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+
+      // 3. Insert into public.users
+      final userResponse = await _supabase.client
+          .from('users')
+          .insert({
+            'name': name,
+            'email': email,
+            'telephone_number': phone,
+            'password': hashedPassword,
+          })
+          .select()
+          .single();
+
+      final userId = userResponse['id'] as int;
+
+      // 4. Get role id from public.roles
+      final roleResponse = await _supabase.client
+          .from('roles')
+          .select('id')
+          .eq('slug', roleSlug)
+          .single();
+      final roleId = roleResponse['id'] as int;
+
+      // 5. Insert into user_roles
+      await _supabase.client.from('user_roles').insert({
+        'user_id': userId,
+        'role_id': roleId,
+      });
+
+      // 6. Handle Role specific logic
+      if (roleSlug == 'pengawas') {
+        // Generate unique supervision code e.g. TBC-XXXXXX
+        final randomCode = 'TBC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}${DateTime.now().second}';
+        await _supabase.client.from('supervisions').insert({
+          'supervisor_id': userId,
+          'supervision_code': randomCode,
+        });
+      } else if (roleSlug == 'pasien') {
+        if (supervisionCode != null && supervisionCode.isNotEmpty) {
+          final supervision = await _supabase.client
+              .from('supervisions')
+              .select('id')
+              .eq('supervision_code', supervisionCode)
+              .maybeSingle();
+          if (supervision != null) {
+            final supervisionId = supervision['id'] as int;
+            await _supabase.client.from('supervisions_patients').insert({
+              'supervision_id': supervisionId,
+              'patients_id': userId,
+              'status': 'pending',
+            });
+          }
+        }
+
+        if (treatmentName != null && startDate != null && duration != null && durationType != null && predictionEndDate != null) {
+          final tpResponse = await _supabase.client.from('treatment_periods').insert({
+            'patients_id': userId,
+            'name': treatmentName,
+            'start_date': startDate.toIso8601String().split('T')[0],
+            'prediction_end_date': predictionEndDate.toIso8601String().split('T')[0],
+            'duration': duration,
+            'duration_type': durationType,
+            'status': 'active',
+          }).select().single();
+          final tpId = tpResponse['id'] as int;
+
+          if (medicationSchedules != null && medicationSchedules.isNotEmpty) {
+            final schedulesToInsert = medicationSchedules.map((sched) => {
+              'treatment_period_id': tpId,
+              'med_name': sched['med_name'],
+              'schedule_time': sched['schedule_time'],
+            }).toList();
+            await _supabase.client.from('medication_schedules').insert(schedulesToInsert);
+          }
+        }
+      }
+
+      // 7. Set custom session
+      _currentUser = UserModel.fromJson(userResponse);
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+      _currentUser = null;
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
     _currentUser = null;
     notifyListeners();

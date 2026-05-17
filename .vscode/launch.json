@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TB Care App (Dev Supabase)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define=SUPABASE_URL=https://zncqojqhucivhmaeitkk.supabase.co",
+        "--dart-define=SUPABASE_ANON_KEY=sb_publishable_WwQ7EF3bOqqMBW6ObZH4iw_Evd3kEoE"
+      ]
+    }
+  ]
+}
