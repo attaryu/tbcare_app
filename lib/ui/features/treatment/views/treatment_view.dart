@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../../data/models/treatment_period_model.dart';
 import '../view_models/treatment_view_model.dart';
 
@@ -391,54 +392,33 @@ class TreatmentView extends StatelessWidget {
     BuildContext context,
     TreatmentViewModel viewModel,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Tandai Selesai',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'Apakah Anda yakin periode pengobatan ini telah selesai?',
-        ),
-        actions: [
-          AppButton(
-            text: 'Batal',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
-          ),
-          AppButton(
-            text: 'Ya, Selesai',
-            width: null,
-            height: 40,
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await viewModel.markActivePeriodCompleted();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Periode pengobatan ditandai selesai!'),
-                      backgroundColor: AppColor.success,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString()),
-                      backgroundColor: AppColor.error,
-                    ),
-                  );
-                }
-              }
-            },
-          ),
-        ],
-      ),
+    AppDialog.confirm(
+      context,
+      title: 'Tandai Selesai',
+      message: 'Apakah Anda yakin periode pengobatan ini telah selesai?',
+      confirmLabel: 'Ya, Selesai',
+      onConfirm: () async {
+        try {
+          await viewModel.markActivePeriodCompleted();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Periode pengobatan ditandai selesai!'),
+                backgroundColor: AppColor.success,
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: AppColor.error,
+              ),
+            );
+          }
+        }
+      },
     );
   }
 }

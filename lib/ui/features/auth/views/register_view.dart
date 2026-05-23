@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../view_models/auth_view_model.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -282,243 +283,130 @@ class _RegisterViewState extends State<RegisterView>
     }
   }
 
-  void _showAddScheduleDialog() {
-    final nameCtrl = TextEditingController();
-    TimeOfDay selectedTime = const TimeOfDay(hour: 8, minute: 0);
+  void _showScheduleDialog({int? editIndex}) {
+    final isEdit = editIndex != null;
+    final item = isEdit ? _medicationSchedules[editIndex] : null;
+    final nameCtrl = TextEditingController(text: item?.medName);
+    TimeOfDay selectedTime = item?.scheduleTime ?? const TimeOfDay(hour: 8, minute: 0);
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Tambah Jadwal Obat',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-              color: AppColor.darkGray,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildLabel('Nama Obat'),
-              TextFormField(
-                controller: nameCtrl,
-                textCapitalization: TextCapitalization.words,
-                style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-                decoration: _buildInputDecoration('Misal: Isoniazid'),
+    AppDialog.custom(
+      context,
+      barrierDismissible: true,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setModalState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              isEdit ? 'Edit Jadwal Obat' : 'Tambah Jadwal Obat',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 20,
+                color: AppColor.darkGray,
               ),
-              const SizedBox(height: 20),
-              _buildLabel('Waktu Minum'),
-              GestureDetector(
-                onTap: () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: selectedTime,
-                    builder: (context, child) => Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: AppColor.primary,
-                          onPrimary: AppColor.white,
-                          onSurface: AppColor.darkGray,
-                        ),
-                      ),
-                      child: child!,
-                    ),
-                  );
-                  if (time != null) {
-                    setModalState(() => selectedTime = time);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColor.lightGray.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColor.neutralGray.withOpacity(0.25),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} WIB',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.access_time,
-                        color: AppColor.primary,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-          actions: [
-            AppButton(
-              text: 'Batal',
-              variant: AppButtonVariant.outline,
-              width: null,
-              height: 40,
-              onPressed: () => Navigator.pop(context),
             ),
-            AppButton(
-              text: 'Simpan',
-              width: null,
-              height: 40,
-              onPressed: () {
-                final name = nameCtrl.text.trim();
-                if (name.isNotEmpty) {
-                  setState(() {
-                    _medicationSchedules.add(
-                      MedicationScheduleItem(name, selectedTime),
-                    );
-                  });
-                  HapticFeedback.selectionClick();
-                  Navigator.pop(context);
+            const SizedBox(height: 16),
+            const Divider(height: 1, thickness: 1.2),
+            const SizedBox(height: 20),
+            _buildLabel('Nama Obat'),
+            TextFormField(
+              controller: nameCtrl,
+              textCapitalization: TextCapitalization.words,
+              style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
+              decoration: _buildInputDecoration('Misal: Isoniazid'),
+            ),
+            const SizedBox(height: 20),
+            _buildLabel('Waktu Minum'),
+            GestureDetector(
+              onTap: () async {
+                final time = await showTimePicker(
+                  context: context,
+                  initialTime: selectedTime,
+                  builder: (context, child) => Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: AppColor.primary,
+                        onPrimary: AppColor.white,
+                        onSurface: AppColor.darkGray,
+                      ),
+                    ),
+                    child: child!,
+                  ),
+                );
+                if (time != null) {
+                  setModalState(() => selectedTime = time);
                 }
               },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showEditScheduleDialog(int index) {
-    final item = _medicationSchedules[index];
-    final nameCtrl = TextEditingController(text: item.medName);
-    TimeOfDay selectedTime = item.scheduleTime;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Edit Jadwal Obat',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-              color: AppColor.darkGray,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildLabel('Nama Obat'),
-              TextFormField(
-                controller: nameCtrl,
-                textCapitalization: TextCapitalization.words,
-                style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-                decoration: _buildInputDecoration('Misal: Isoniazid'),
-              ),
-              const SizedBox(height: 20),
-              _buildLabel('Waktu Minum'),
-              GestureDetector(
-                onTap: () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: selectedTime,
-                    builder: (context, child) => Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: AppColor.primary,
-                          onPrimary: AppColor.white,
-                          onSurface: AppColor.darkGray,
-                        ),
-                      ),
-                      child: child!,
-                    ),
-                  );
-                  if (time != null) {
-                    setModalState(() => selectedTime = time);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColor.lightGray.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColor.neutralGray.withOpacity(0.25),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} WIB',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.access_time,
-                        color: AppColor.primary,
-                        size: 20,
-                      ),
-                    ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColor.lightGray.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColor.neutralGray.withOpacity(0.25),
                   ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} WIB',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColor.darkGray,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.access_time,
+                      color: AppColor.primary,
+                      size: 20,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-          actions: [
-            AppButton(
-              text: 'Batal',
-              variant: AppButtonVariant.outline,
-              width: null,
-              height: 40,
-              onPressed: () => Navigator.pop(context),
             ),
-            AppButton(
-              text: 'Simpan',
-              width: null,
-              height: 40,
-              onPressed: () {
-                final name = nameCtrl.text.trim();
-                if (name.isNotEmpty) {
-                  setState(() {
-                    _medicationSchedules[index] = MedicationScheduleItem(
-                      name,
-                      selectedTime,
-                    );
-                  });
-                  HapticFeedback.selectionClick();
-                  Navigator.pop(context);
-                }
-              },
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Batal',
+                    variant: AppButtonVariant.outline,
+                    height: 48,
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton(
+                    text: 'Simpan',
+                    height: 48,
+                    onPressed: () {
+                      final name = nameCtrl.text.trim();
+                      if (name.isNotEmpty) {
+                        setState(() {
+                          if (isEdit) {
+                            _medicationSchedules[editIndex] = MedicationScheduleItem(
+                              name,
+                              selectedTime,
+                            );
+                          } else {
+                            _medicationSchedules.add(
+                              MedicationScheduleItem(name, selectedTime),
+                            );
+                          }
+                        });
+                        HapticFeedback.selectionClick();
+                        Navigator.pop(dialogContext);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1145,7 +1033,7 @@ class _RegisterViewState extends State<RegisterView>
         const SizedBox(height: 36),
 
         // Tombol Tambah Jadwal
-        AppButton(text: 'Tambah Jadwal', onPressed: _showAddScheduleDialog),
+        AppButton(text: 'Tambah Jadwal', onPressed: () => _showScheduleDialog()),
         const SizedBox(height: 28),
 
         // Daftar Jadwal
@@ -1245,7 +1133,7 @@ class _RegisterViewState extends State<RegisterView>
                       ),
                       onSelected: (action) {
                         if (action == 'edit') {
-                          _showEditScheduleDialog(index);
+                          _showScheduleDialog(editIndex: index);
                         } else if (action == 'delete') {
                           setState(() {
                             _medicationSchedules.removeAt(index);

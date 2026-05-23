@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
+import '../../../../core/widgets/app_dialog_info_row.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../view_models/profile_view_model.dart';
 
@@ -329,82 +330,62 @@ class ProfileView extends StatelessWidget {
       text: viewModel.user?.telephoneNumber,
     );
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Edit Profil',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Nama Lengkap',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+    AppDialog.form(
+      context,
+      title: 'Edit Profil',
+      confirmLabel: 'Simpan',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameCtrl,
+            decoration: InputDecoration(
+              labelText: 'Nama Lengkap',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Nomor Telepon',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: phoneCtrl,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              labelText: 'Nomor Telepon',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
-          ),
-        ),
-        actions: [
-          AppButton(
-            text: 'Batal',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
-          ),
-          AppButton(
-            text: 'Simpan',
-            width: null,
-            height: 40,
-            onPressed: () async {
-              if (nameCtrl.text.trim().isEmpty) return;
-              try {
-                await viewModel.updateUserProfile(
-                  nameCtrl.text.trim(),
-                  phoneCtrl.text.trim(),
-                );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Profil berhasil diperbarui'),
-                      backgroundColor: AppColor.success,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString()),
-                      backgroundColor: AppColor.error,
-                    ),
-                  );
-                }
-              }
-            },
+            ),
           ),
         ],
       ),
+      onConfirm: (dialogContext) async {
+        if (nameCtrl.text.trim().isEmpty) return;
+        try {
+          await viewModel.updateUserProfile(
+            nameCtrl.text.trim(),
+            phoneCtrl.text.trim(),
+          );
+          if (dialogContext.mounted) {
+            Navigator.pop(dialogContext);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profil berhasil diperbarui'),
+                backgroundColor: AppColor.success,
+              ),
+            );
+          }
+        } catch (e) {
+          if (dialogContext.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: AppColor.error,
+              ),
+            );
+          }
+        }
+      },
     );
   }
 
@@ -414,73 +395,55 @@ class ProfileView extends StatelessWidget {
   ) {
     final codeCtrl = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Tambah Pengawas',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Masukkan kode pengawas yang diberikan oleh PMO Anda untuk terhubung.',
-              style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: codeCtrl,
-              decoration: InputDecoration(
-                labelText: 'Kode Pengawas',
-                hintText: 'TBC-XXXXXX',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+    AppDialog.form(
+      context,
+      title: 'Tambah Pengawas',
+      confirmLabel: 'Kirim',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Masukkan kode pengawas yang diberikan oleh PMO Anda untuk terhubung.',
+            style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: codeCtrl,
+            decoration: InputDecoration(
+              labelText: 'Kode Pengawas',
+              hintText: 'TBC-XXXXXX',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-          ],
-        ),
-        actions: [
-          AppButton(
-            text: 'Batal',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
-          ),
-          AppButton(
-            text: 'Kirim',
-            width: null,
-            height: 40,
-            onPressed: () async {
-              final code = codeCtrl.text.trim();
-              if (code.isEmpty) return;
-              try {
-                await viewModel.addSupervisor(code);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Permintaan pengawasan berhasil dikirim'),
-                      backgroundColor: AppColor.success,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString()),
-                      backgroundColor: AppColor.error,
-                    ),
-                  );
-                }
-              }
-            },
           ),
         ],
       ),
+      onConfirm: (dialogContext) async {
+        final code = codeCtrl.text.trim();
+        if (code.isEmpty) return;
+        try {
+          await viewModel.addSupervisor(code);
+          if (dialogContext.mounted) {
+            Navigator.pop(dialogContext);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Permintaan pengawasan berhasil dikirim'),
+                backgroundColor: AppColor.success,
+              ),
+            );
+          }
+        } catch (e) {
+          if (dialogContext.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: AppColor.error,
+              ),
+            );
+          }
+        }
+      },
     );
   }
 
@@ -491,33 +454,19 @@ class ProfileView extends StatelessWidget {
     final info = viewModel.supervisorInfo;
     if (info == null) return;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Informasi Pengawas',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('Nama', info['name'] ?? '-'),
-            const SizedBox(height: 8),
-            _buildDetailRow('Telepon', info['telephone'] ?? '-'),
-            const SizedBox(height: 8),
-            _buildDetailRow('Kode', info['code'] ?? '-'),
-            const SizedBox(height: 8),
-            _buildDetailRow('Status', info['status'] ?? '-'),
-          ],
-        ),
-        actions: [
-          AppButton(
-            text: 'Tutup',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
+    AppDialog.info(
+      context,
+      title: 'Informasi Pengawas',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogInfoRow(label: 'Nama', value: info['name'] ?? '-'),
+          AppDialogInfoRow(label: 'Telepon', value: info['telephone'] ?? '-'),
+          AppDialogInfoRow(label: 'Kode', value: info['code'] ?? '-'),
+          AppDialogInfoRow(
+            label: 'Status',
+            value: info['status'] ?? '-',
+            isLast: true,
           ),
         ],
       ),
@@ -530,115 +479,36 @@ class ProfileView extends StatelessWidget {
   ) {
     final code = viewModel.supervisorCode;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Kode Pengawasan',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Bagikan kode di bawah ini kepada pasien yang ingin Anda pantau.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: AppColor.primaryLight,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColor.primary),
-              ),
-              child: Text(
-                code ?? 'Belum ada kode',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                  letterSpacing: 2,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          AppButton(
-            text: 'Tutup',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
+    AppDialog.info(
+      context,
+      title: 'Kode Pengawasan',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Bagikan kode di bawah ini kepada pasien yang ingin Anda pantau.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
           ),
-        ],
-      ),
-    );
-  }
-
-  void _showTreatmentPeriodDialog(
-    BuildContext context,
-    ProfileViewModel viewModel,
-  ) {
-    final tp = viewModel.treatmentPeriod;
-    if (tp == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak ada periode pengobatan aktif')),
-      );
-      return;
-    }
-
-    String startStr = tp['start_date'] ?? '-';
-    String endStr = tp['prediction_end_date'] ?? '-';
-    try {
-      if (tp['start_date'] != null) {
-        startStr = DateFormat(
-          'dd MMMM yyyy',
-          'id_ID',
-        ).format(DateTime.parse(tp['start_date']));
-      }
-      if (tp['prediction_end_date'] != null) {
-        endStr = DateFormat(
-          'dd MMMM yyyy',
-          'id_ID',
-        ).format(DateTime.parse(tp['prediction_end_date']));
-      }
-    } catch (_) {}
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Periode Pengobatan',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('Judul', tp['name'] ?? '-'),
-            const SizedBox(height: 8),
-            _buildDetailRow('Mulai', startStr),
-            const SizedBox(height: 8),
-            _buildDetailRow('Prediksi Berakhir', endStr),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              'Durasi',
-              '${tp['duration']} ${tp['duration_type'] == 'month' ? 'Bulan' : 'Hari'}',
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppColor.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColor.primary),
             ),
-            const SizedBox(height: 8),
-            _buildDetailRow('Status', tp['status'] ?? '-'),
-          ],
-        ),
-        actions: [
-          AppButton(
-            text: 'Tutup',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
+            child: Text(
+              code ?? 'Belum ada kode',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColor.primary,
+                letterSpacing: 2,
+              ),
+            ),
           ),
         ],
       ),
@@ -651,117 +521,62 @@ class ProfileView extends StatelessWidget {
   ) {
     final scheds = viewModel.medicationSchedules;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Jadwal Minum Obat',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: scheds.isEmpty
-            ? const Text(
+    AppDialog.info(
+      context,
+      title: 'Jadwal Minum Obat',
+      content: scheds.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.0),
+              child: Text(
                 'Belum ada jadwal minum obat',
+                textAlign: TextAlign.center,
                 style: TextStyle(color: AppColor.neutralGray),
-              )
-            : SizedBox(
-                width: double.maxFinite,
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: scheds.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final item = scheds[index];
-                    final timeStr =
-                        (item['schedule_time'] as String?)?.substring(0, 5) ??
-                        '-';
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.alarm, color: AppColor.primary),
-                      title: Text(item['med_name'] ?? '-'),
-                      trailing: Text(
-                        timeStr,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.primary,
-                        ),
-                      ),
-                    );
-                  },
-                ),
               ),
-        actions: [
-          AppButton(
-            text: 'Tutup',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColor.neutralGray,
+            )
+          : SizedBox(
+              width: double.maxFinite,
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: scheds.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final item = scheds[index];
+                  final timeStr =
+                      (item['schedule_time'] as String?)?.substring(0, 5) ??
+                      '-';
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.alarm, color: AppColor.primary),
+                    title: Text(item['med_name'] ?? '-'),
+                    trailing: Text(
+                      '$timeStr WIB',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.primary,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ),
-        const Text(': '),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColor.darkGray,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
   void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Keluar Akun',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
-        actions: [
-          AppButton(
-            text: 'Batal',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
-          ),
-          AppButton(
-            text: 'Keluar',
-            color: AppButtonColor.danger,
-            width: null,
-            height: 40,
-            onPressed: () async {
-              Navigator.pop(context);
-              await context.read<AuthViewModel>().logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
-      ),
+    AppDialog.confirm(
+      context,
+      title: 'Keluar Akun',
+      message: 'Apakah Anda yakin ingin keluar dari akun ini?',
+      confirmLabel: 'Keluar',
+      confirmColor: AppButtonColor.danger,
+      icon: Icons.logout,
+      onConfirm: () async {
+        await context.read<AuthViewModel>().logout();
+        if (context.mounted) {
+          context.go('/login');
+        }
+      },
     );
   }
 }

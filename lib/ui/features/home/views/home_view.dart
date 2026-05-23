@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
+import '../../../../core/widgets/app_dialog_info_row.dart';
 import '../view_models/home_view_model.dart';
 
 class HomeView extends StatelessWidget {
@@ -766,99 +768,65 @@ class HomeView extends StatelessWidget {
   ) {
     final codeCtrl = TextEditingController();
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: AppColor.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    AppDialog.form(
+      context,
+      title: 'Hubungkan Pengawas',
+      confirmLabel: 'Kirim Permintaan',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Masukkan kode unik pengawas yang diberikan oleh petugas atau PMO Anda untuk terhubung dalam pengawasan obat.',
+            style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Hubungkan Pengawas',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.darkGray,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColor.neutralGray),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+          const SizedBox(height: 20),
+          TextField(
+            controller: codeCtrl,
+            decoration: InputDecoration(
+              labelText: 'Kode Pengawas',
+              hintText: 'TBC-XXXXXX',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Masukkan kode unik pengawas yang diberikan oleh petugas atau PMO Anda untuk terhubung dalam pengawasan obat.',
-                style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: codeCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Kode Pengawas',
-                  hintText: 'TBC-XXXXXX',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColor.primary,
-                      width: 2,
-                    ),
-                  ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColor.primary,
+                  width: 2,
                 ),
               ),
-              const SizedBox(height: 28),
-              AppButton(
-                text: 'Kirim Permintaan',
-                onPressed: () async {
-                  final code = codeCtrl.text.trim();
-                  if (code.isEmpty) return;
-                  Navigator.pop(context);
-                  try {
-                    await viewModel.connectSupervisor(code);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Permintaan pengawasan berhasil dikirim!',
-                          ),
-                          backgroundColor: AppColor.success,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(e.toString()),
-                          backgroundColor: AppColor.error,
-                        ),
-                      );
-                    }
-                  }
-                },
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
+      onConfirm: (dialogContext) async {
+        final code = codeCtrl.text.trim();
+        if (code.isEmpty) return;
+        Navigator.pop(dialogContext);
+        try {
+          await viewModel.connectSupervisor(code);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Permintaan pengawasan berhasil dikirim!',
+                ),
+                backgroundColor: AppColor.success,
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: AppColor.error,
+              ),
+            );
+          }
+        }
+      },
     );
   }
 
@@ -866,40 +834,24 @@ class HomeView extends StatelessWidget {
     final info = viewModel.supervisorInfo;
     if (info == null) return;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Informasi Pengawas',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Nama: ${info['name'] ?? '-'}',
-              style: const TextStyle(fontSize: 15),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Telepon: ${info['telephone'] ?? '-'}',
-              style: const TextStyle(fontSize: 15),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Status Koneksi: ${info['status'] ?? '-'}',
-              style: const TextStyle(fontSize: 15),
-            ),
-          ],
-        ),
-        actions: [
-          AppButton(
-            text: 'Tutup',
-            variant: AppButtonVariant.outline,
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
+    AppDialog.info(
+      context,
+      title: 'Informasi Pengawas',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogInfoRow(
+            label: 'Nama',
+            value: info['name'] ?? '-',
+          ),
+          AppDialogInfoRow(
+            label: 'Telepon',
+            value: info['telephone'] ?? '-',
+          ),
+          AppDialogInfoRow(
+            label: 'Status Koneksi',
+            value: info['status'] ?? '-',
+            isLast: true,
           ),
         ],
       ),
@@ -917,112 +869,29 @@ class HomeView extends StatelessWidget {
     final instructions = sched['instructions'] ?? 'Diminum sesudah makan';
     final status = sched['today_status'] ?? 'Segera';
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColor.primaryLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.medical_services,
-                color: AppColor.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                medName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: AppColor.darkGray,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Divider(),
-            const SizedBox(height: 8),
-            _buildDetailItem('Waktu Minum', '$timeStr WIB', Icons.alarm),
-            const SizedBox(height: 12),
-            _buildDetailItem('Dosis', dosage, Icons.medication_outlined),
-            const SizedBox(height: 12),
-            _buildDetailItem('Aturan Pakai', instructions, Icons.info_outline),
-            const SizedBox(height: 12),
-            _buildDetailItem(
-              'Status Hari Ini',
-              status,
-              Icons.check_circle_outline,
-              isStatus: true,
-              statusText: status,
-            ),
-          ],
-        ),
-        actions: [
-          AppButton(
-            text: 'Tutup',
-            width: null,
-            height: 40,
-            onPressed: () => Navigator.pop(context),
+    Color statusColor = AppColor.darkGray;
+    if (status == 'Di minum') statusColor = AppColor.success;
+    if (status == 'Terlewat') statusColor = AppColor.error;
+    if (status == 'Segera') statusColor = AppColor.warning;
+
+    AppDialog.info(
+      context,
+      title: medName,
+      icon: Icons.medical_services,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogInfoRow(label: 'Waktu Minum', value: '$timeStr WIB'),
+          AppDialogInfoRow(label: 'Dosis', value: dosage),
+          AppDialogInfoRow(label: 'Aturan Pakai', value: instructions),
+          AppDialogInfoRow(
+            label: 'Status Hari Ini',
+            value: status,
+            valueColor: statusColor,
+            isLast: true,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDetailItem(
-    String label,
-    String value,
-    IconData icon, {
-    bool isStatus = false,
-    String? statusText,
-  }) {
-    Color valColor = AppColor.darkGray;
-    if (isStatus) {
-      if (statusText == 'Di minum') valColor = AppColor.success;
-      if (statusText == 'Terlewat') valColor = AppColor.error;
-      if (statusText == 'Segera') valColor = AppColor.warning;
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: AppColor.neutralGray),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColor.neutralGray,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: valColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
