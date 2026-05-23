@@ -6,6 +6,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_dialog_info_row.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../view_models/profile_view_model.dart';
 
@@ -350,27 +351,19 @@ class ProfileView extends StatelessWidget {
             const SizedBox(height: 16),
             const Divider(height: 1, thickness: 1.2),
             const SizedBox(height: 20),
-            TextField(
+            AppTextField(
+              label: 'Nama Lengkap',
+              hint: 'Masukkan nama lengkap',
               controller: nameCtrl,
               enabled: !viewModel.isLoading,
-              decoration: InputDecoration(
-                labelText: 'Nama Lengkap',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
             ),
             const SizedBox(height: 16),
-            TextField(
+            AppTextField(
+              label: 'Nomor Telepon',
+              hint: 'Masukkan nomor telepon',
               controller: phoneCtrl,
               enabled: !viewModel.isLoading,
               keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Nomor Telepon',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
             ),
             const SizedBox(height: 28),
             Row(
@@ -458,16 +451,11 @@ class ProfileView extends StatelessWidget {
               style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
             ),
             const SizedBox(height: 16),
-            TextField(
+            AppTextField(
+              label: 'Kode Pengawas',
+              hint: 'TBC-XXXXXX',
               controller: codeCtrl,
               enabled: !viewModel.isLoading,
-              decoration: InputDecoration(
-                labelText: 'Kode Pengawas',
-                hintText: 'TBC-XXXXXX',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
             ),
             const SizedBox(height: 28),
             Row(

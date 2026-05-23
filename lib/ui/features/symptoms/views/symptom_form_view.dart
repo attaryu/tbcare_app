@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/symptom_model.dart';
 import '../view_models/symptom_view_model.dart';
 
@@ -231,37 +232,12 @@ class _SymptomFormViewState extends State<SymptomFormView> {
               ],
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Catatan Tambahan',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColor.darkGray,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
+            AppTextField(
+              label: 'Catatan Tambahan',
+              hint: 'Ceritakan lebih detail mengenai apa yang Anda rasakan...',
               controller: _noteController,
               maxLines: 6,
-              decoration: InputDecoration(
-                hintText:
-                    'Ceritakan lebih detail mengenai apa yang Anda rasakan...',
-                hintStyle: TextStyle(
-                  color: AppColor.neutralGray.withOpacity(0.7),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColor.neutralGray.withOpacity(0.5),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColor.neutralGray.withOpacity(0.5),
-                  ),
-                ),
-              ),
+              enabled: !_isSaving,
             ),
             const SizedBox(height: 24),
             Container(

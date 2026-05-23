@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../view_models/auth_view_model.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -17,7 +18,6 @@ class _LoginViewState extends State<LoginView>
     with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -133,123 +133,25 @@ class _LoginViewState extends State<LoginView>
                       const SizedBox(height: 48),
 
                       // Input Email
-                      const Text(
-                        'Email',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
+                      AppTextField(
+                        label: 'Email',
+                        hint: 'Masukkan email terdaftar',
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AppColor.darkGray,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Masukkan email terdaftar',
-                          hintStyle: TextStyle(
-                            color: AppColor.neutralGray.withOpacity(0.6),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          filled: true,
-                          fillColor: AppColor.lightGray.withOpacity(0.4),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 16,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: AppColor.neutralGray.withOpacity(0.25),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColor.primary,
-                              width: 2,
-                            ),
-                          ),
-                        ),
+                        enabled: !authViewModel.isLoading,
                       ),
                       const SizedBox(height: 24),
 
                       // Input Password
-                      const Text(
-                        'Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
+                      AppTextField(
+                        label: 'Password',
+                        hint: 'Masukkan password',
                         controller: _passwordController,
-                        obscureText: _obscurePassword,
+                        isPassword: true,
                         textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _performLogin(),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AppColor.darkGray,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Masukkan password',
-                          hintStyle: TextStyle(
-                            color: AppColor.neutralGray.withOpacity(0.6),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          filled: true,
-                          fillColor: AppColor.lightGray.withOpacity(0.4),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 16,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: AppColor.neutralGray.withOpacity(0.25),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColor.primary,
-                              width: 2,
-                            ),
-                          ),
-                          suffixIcon: IconButton(
-                            splashRadius: 24,
-                            icon: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              transitionBuilder: (child, animation) =>
-                                  FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  ),
-                              child: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                key: ValueKey(_obscurePassword),
-                                color: AppColor.neutralGray,
-                              ),
-                            ),
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                        ),
+                        onSubmitted: (_) => _performLogin(),
+                        enabled: !authViewModel.isLoading,
                       ),
                     ],
                   ),

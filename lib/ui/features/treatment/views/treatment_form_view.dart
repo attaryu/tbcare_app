@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/treatment_period_model.dart';
 import '../view_models/treatment_view_model.dart';
 
@@ -111,36 +113,11 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Judul'),
-                    const SizedBox(height: 8),
-                    TextField(
+                    AppTextField(
+                      label: 'Judul',
+                      hint: 'Masukkan judul periode',
                       controller: _titleCtrl,
-                      decoration: InputDecoration(
-                        hintText: 'Masukkan judul periode',
-                        hintStyle: const TextStyle(
-                          color: AppColor.neutralGray,
-                          fontSize: 14,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade400),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade400),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColor.primary,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                      ),
+                      enabled: !_isSubmitting,
                     ),
                     const SizedBox(height: 24),
 
@@ -219,39 +196,12 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                       children: [
                         Expanded(
                           flex: 3,
-                          child: TextField(
+                          child: AppTextField(
                             controller: _durationCtrl,
+                            hint: 'Masukkan durasi pengobatan',
                             keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: 'Masukkan durasi pengobatan',
-                              hintStyle: const TextStyle(
-                                color: AppColor.neutralGray,
-                                fontSize: 14,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade400,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade400,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: AppColor.primary,
-                                  width: 2,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                            ),
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            enabled: !_isSubmitting,
                           ),
                         ),
                         const SizedBox(width: 12),

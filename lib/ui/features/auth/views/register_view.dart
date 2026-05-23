@@ -6,6 +6,7 @@ import '../view_models/auth_view_model.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
+import '../../../../core/widgets/app_text_field.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -54,8 +55,6 @@ class _RegisterViewState extends State<RegisterView>
     ),
   ];
 
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   String? _validationError;
 
   late AnimationController _fadeController;
@@ -287,7 +286,8 @@ class _RegisterViewState extends State<RegisterView>
     final isEdit = editIndex != null;
     final item = isEdit ? _medicationSchedules[editIndex] : null;
     final nameCtrl = TextEditingController(text: item?.medName);
-    TimeOfDay selectedTime = item?.scheduleTime ?? const TimeOfDay(hour: 8, minute: 0);
+    TimeOfDay selectedTime =
+        item?.scheduleTime ?? const TimeOfDay(hour: 8, minute: 0);
 
     AppDialog.custom(
       context,
@@ -309,11 +309,10 @@ class _RegisterViewState extends State<RegisterView>
             const Divider(height: 1, thickness: 1.2),
             const SizedBox(height: 20),
             _buildLabel('Nama Obat'),
-            TextFormField(
+            AppTextField(
               controller: nameCtrl,
               textCapitalization: TextCapitalization.words,
-              style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-              decoration: _buildInputDecoration('Misal: Isoniazid'),
+              hint: 'Misal: Isoniazid',
             ),
             const SizedBox(height: 20),
             _buildLabel('Waktu Minum'),
@@ -390,10 +389,8 @@ class _RegisterViewState extends State<RegisterView>
                       if (name.isNotEmpty) {
                         setState(() {
                           if (isEdit) {
-                            _medicationSchedules[editIndex] = MedicationScheduleItem(
-                              name,
-                              selectedTime,
-                            );
+                            _medicationSchedules[editIndex] =
+                                MedicationScheduleItem(name, selectedTime);
                           } else {
                             _medicationSchedules.add(
                               MedicationScheduleItem(name, selectedTime),
@@ -425,29 +422,6 @@ class _RegisterViewState extends State<RegisterView>
           color: AppColor.darkGray,
         ),
       ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration(String hint, {Widget? suffixIcon}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        color: AppColor.neutralGray.withOpacity(0.6),
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-      ),
-      filled: true,
-      fillColor: AppColor.lightGray.withOpacity(0.4),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColor.neutralGray.withOpacity(0.25)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColor.primary, width: 2),
-      ),
-      suffixIcon: suffixIcon,
     );
   }
 
@@ -561,104 +535,53 @@ class _RegisterViewState extends State<RegisterView>
         const SizedBox(height: 36),
 
         // Input Nama Lengkap
-        _buildLabel('Nama Lengkap'),
-        TextFormField(
+        AppTextField(
+          label: 'Nama Lengkap',
+          hint: 'Masukkan nama lengkap Anda',
           controller: _nameController,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan nama lengkap Anda'),
         ),
         const SizedBox(height: 20),
 
         // Input Email
-        _buildLabel('Email'),
-        TextFormField(
+        AppTextField(
+          label: 'Email',
+          hint: 'Masukkan email aktif',
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan email aktif'),
         ),
         const SizedBox(height: 20),
 
         // Input Nomor Telepon
-        _buildLabel('Nomor Telepon'),
-        TextFormField(
+        AppTextField(
+          label: 'Nomor Telepon',
+          hint: 'Masukkan nomor telepon aktif',
           controller: _phoneController,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan nomor telepon aktif'),
         ),
         const SizedBox(height: 20),
 
         // Input Password
-        _buildLabel('Password'),
-        TextFormField(
+        AppTextField(
+          label: 'Password',
+          hint: 'Buat password (minimal 8 karakter)',
           controller: _passwordController,
-          obscureText: _obscurePassword,
+          isPassword: true,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration(
-            'Buat password (minimal 8 karakter)',
-            suffixIcon: IconButton(
-              splashRadius: 24,
-              icon: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  key: ValueKey(_obscurePassword),
-                  color: AppColor.neutralGray,
-                ),
-              ),
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-            ),
-          ),
         ),
         const SizedBox(height: 20),
 
         // Input Konfirmasi Password
-        _buildLabel('Konfirmasi Password'),
-        TextFormField(
+        AppTextField(
+          label: 'Konfirmasi Password',
+          hint: 'Ketik ulang password Anda',
           controller: _confirmPasswordController,
-          obscureText: _obscureConfirmPassword,
+          isPassword: true,
           textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => _handleStep1Next(),
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration(
-            'Ketik ulang password Anda',
-            suffixIcon: IconButton(
-              splashRadius: 24,
-              icon: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: Icon(
-                  _obscureConfirmPassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  key: ValueKey(_obscureConfirmPassword),
-                  color: AppColor.neutralGray,
-                ),
-              ),
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _obscureConfirmPassword = !_obscureConfirmPassword;
-                });
-              },
-            ),
-          ),
+          onSubmitted: (_) => _handleStep1Next(),
         ),
         const SizedBox(height: 32),
       ],
@@ -758,48 +681,11 @@ class _RegisterViewState extends State<RegisterView>
                   key: const ValueKey('pasien_input'),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Kode Pengawas',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColor.darkGray,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
+                    AppTextField(
+                      label: 'Kode Pengawas',
+                      hint: 'Masukkan kode unik dari pengawas Anda',
                       controller: _supervisionCodeController,
                       textCapitalization: TextCapitalization.characters,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: AppColor.darkGray,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Masukkan kode unik dari pengawas Anda',
-                        hintStyle: TextStyle(
-                          color: AppColor.neutralGray.withOpacity(0.6),
-                          fontSize: 14,
-                        ),
-                        filled: true,
-                        fillColor: AppColor.lightGray.withOpacity(0.4),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: AppColor.neutralGray.withOpacity(0.25),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColor.primary,
-                            width: 2,
-                          ),
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -843,13 +729,12 @@ class _RegisterViewState extends State<RegisterView>
         const SizedBox(height: 36),
 
         // Input Judul
-        _buildLabel('Judul'),
-        TextFormField(
+        AppTextField(
+          label: 'Judul',
+          hint: 'Masukkan judul periode',
           controller: _treatmentNameController,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan judul periode'),
         ),
         const SizedBox(height: 20),
 
@@ -917,13 +802,12 @@ class _RegisterViewState extends State<RegisterView>
           children: [
             Expanded(
               flex: 3,
-              child: TextFormField(
+              child: AppTextField(
                 controller: _treatmentDurationController,
+                hint: 'Masukkan durasi pengobatan',
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
                 onChanged: (_) => setState(() {}),
-                decoration: _buildInputDecoration('Masukkan durasi pengobatan'),
               ),
             ),
             const SizedBox(width: 16),
@@ -1033,7 +917,10 @@ class _RegisterViewState extends State<RegisterView>
         const SizedBox(height: 36),
 
         // Tombol Tambah Jadwal
-        AppButton(text: 'Tambah Jadwal', onPressed: () => _showScheduleDialog()),
+        AppButton(
+          text: 'Tambah Jadwal',
+          onPressed: () => _showScheduleDialog(),
+        ),
         const SizedBox(height: 28),
 
         // Daftar Jadwal
