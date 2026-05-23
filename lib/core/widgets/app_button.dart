@@ -145,7 +145,7 @@ class AppButton extends StatelessWidget {
         case AppButtonVariant.outline:
           backgroundColor = AppColor.white;
           foregroundColor = baseThemeColor;
-          borderSide = BorderSide(color: baseThemeColor, width: 1.5);
+          borderSide = BorderSide(color: baseThemeColor, width: 1);
           break;
         default:
           backgroundColor = baseThemeColor;

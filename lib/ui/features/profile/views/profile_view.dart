@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../view_models/profile_view_model.dart';
 
@@ -22,9 +23,7 @@ class ProfileView extends StatelessWidget {
 
     final user = viewModel.user;
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Gagal memuat profil')),
-      );
+      return const Scaffold(body: Center(child: Text('Gagal memuat profil')));
     }
 
     return Scaffold(
@@ -262,9 +261,14 @@ class ProfileView extends StatelessWidget {
                   border: Border.all(color: Colors.red.shade300),
                 ),
                 child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  leading: const Icon(Icons.logout_outlined, color: AppColor.error),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  leading: const Icon(
+                    Icons.logout_outlined,
+                    color: AppColor.error,
+                  ),
                   title: const Text(
                     'Keluar Akun',
                     style: TextStyle(
@@ -317,15 +321,21 @@ class ProfileView extends StatelessWidget {
   }
 
   void _showEditProfileDialog(
-      BuildContext context, ProfileViewModel viewModel) {
+    BuildContext context,
+    ProfileViewModel viewModel,
+  ) {
     final nameCtrl = TextEditingController(text: viewModel.user?.name);
-    final phoneCtrl =
-        TextEditingController(text: viewModel.user?.telephoneNumber);
+    final phoneCtrl = TextEditingController(
+      text: viewModel.user?.telephoneNumber,
+    );
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Profil', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Edit Profil',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -354,17 +364,17 @@ class ProfileView extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Batal',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+          AppButton(
+            text: 'Simpan',
+            width: null,
+            height: 40,
             onPressed: () async {
               if (nameCtrl.text.trim().isEmpty) return;
               try {
@@ -392,7 +402,6 @@ class ProfileView extends StatelessWidget {
                 }
               }
             },
-            child: const Text('Simpan', style: TextStyle(color: AppColor.white)),
           ),
         ],
       ),
@@ -400,13 +409,18 @@ class ProfileView extends StatelessWidget {
   }
 
   void _showAddSupervisorDialog(
-      BuildContext context, ProfileViewModel viewModel) {
+    BuildContext context,
+    ProfileViewModel viewModel,
+  ) {
     final codeCtrl = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Tambah Pengawas', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Tambah Pengawas',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -428,17 +442,17 @@ class ProfileView extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Batal',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+          AppButton(
+            text: 'Kirim',
+            width: null,
+            height: 40,
             onPressed: () async {
               final code = codeCtrl.text.trim();
               if (code.isEmpty) return;
@@ -464,7 +478,6 @@ class ProfileView extends StatelessWidget {
                 }
               }
             },
-            child: const Text('Kirim', style: TextStyle(color: AppColor.white)),
           ),
         ],
       ),
@@ -472,15 +485,19 @@ class ProfileView extends StatelessWidget {
   }
 
   void _showSupervisorDetailsDialog(
-      BuildContext context, ProfileViewModel viewModel) {
+    BuildContext context,
+    ProfileViewModel viewModel,
+  ) {
     final info = viewModel.supervisorInfo;
     if (info == null) return;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Informasi Pengawas',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Informasi Pengawas',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,9 +512,12 @@ class ProfileView extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Tutup',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: AppColor.primary)),
           ),
         ],
       ),
@@ -505,14 +525,18 @@ class ProfileView extends StatelessWidget {
   }
 
   void _showSupervisorCodeDialog(
-      BuildContext context, ProfileViewModel viewModel) {
+    BuildContext context,
+    ProfileViewModel viewModel,
+  ) {
     final code = viewModel.supervisorCode;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Kode Pengawasan',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Kode Pengawasan',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -542,9 +566,12 @@ class ProfileView extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Tutup',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: AppColor.primary)),
           ),
         ],
       ),
@@ -552,7 +579,9 @@ class ProfileView extends StatelessWidget {
   }
 
   void _showTreatmentPeriodDialog(
-      BuildContext context, ProfileViewModel viewModel) {
+    BuildContext context,
+    ProfileViewModel viewModel,
+  ) {
     final tp = viewModel.treatmentPeriod;
     if (tp == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -565,20 +594,26 @@ class ProfileView extends StatelessWidget {
     String endStr = tp['prediction_end_date'] ?? '-';
     try {
       if (tp['start_date'] != null) {
-        startStr = DateFormat('dd MMMM yyyy', 'id_ID')
-            .format(DateTime.parse(tp['start_date']));
+        startStr = DateFormat(
+          'dd MMMM yyyy',
+          'id_ID',
+        ).format(DateTime.parse(tp['start_date']));
       }
       if (tp['prediction_end_date'] != null) {
-        endStr = DateFormat('dd MMMM yyyy', 'id_ID')
-            .format(DateTime.parse(tp['prediction_end_date']));
+        endStr = DateFormat(
+          'dd MMMM yyyy',
+          'id_ID',
+        ).format(DateTime.parse(tp['prediction_end_date']));
       }
     } catch (_) {}
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Periode Pengobatan',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Periode Pengobatan',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,15 +624,21 @@ class ProfileView extends StatelessWidget {
             const SizedBox(height: 8),
             _buildDetailRow('Prediksi Berakhir', endStr),
             const SizedBox(height: 8),
-            _buildDetailRow('Durasi', '${tp['duration']} ${tp['duration_type'] == 'month' ? 'Bulan' : 'Hari'}'),
+            _buildDetailRow(
+              'Durasi',
+              '${tp['duration']} ${tp['duration_type'] == 'month' ? 'Bulan' : 'Hari'}',
+            ),
             const SizedBox(height: 8),
             _buildDetailRow('Status', tp['status'] ?? '-'),
           ],
         ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Tutup',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: AppColor.primary)),
           ),
         ],
       ),
@@ -605,17 +646,23 @@ class ProfileView extends StatelessWidget {
   }
 
   void _showMedicationSchedulesDialog(
-      BuildContext context, ProfileViewModel viewModel) {
+    BuildContext context,
+    ProfileViewModel viewModel,
+  ) {
     final scheds = viewModel.medicationSchedules;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Jadwal Minum Obat',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Jadwal Minum Obat',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: scheds.isEmpty
-            ? const Text('Belum ada jadwal minum obat',
-                style: TextStyle(color: AppColor.neutralGray))
+            ? const Text(
+                'Belum ada jadwal minum obat',
+                style: TextStyle(color: AppColor.neutralGray),
+              )
             : SizedBox(
                 width: double.maxFinite,
                 child: ListView.separated(
@@ -624,7 +671,9 @@ class ProfileView extends StatelessWidget {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final item = scheds[index];
-                    final timeStr = (item['schedule_time'] as String?)?.substring(0, 5) ?? '-';
+                    final timeStr =
+                        (item['schedule_time'] as String?)?.substring(0, 5) ??
+                        '-';
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.alarm, color: AppColor.primary),
@@ -641,9 +690,12 @@ class ProfileView extends StatelessWidget {
                 ),
               ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Tutup',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: AppColor.primary)),
           ),
         ],
       ),
@@ -682,20 +734,24 @@ class ProfileView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Keluar Akun', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Keluar Akun',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Batal',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.error,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+          AppButton(
+            text: 'Keluar',
+            color: AppButtonColor.danger,
+            width: null,
+            height: 40,
             onPressed: () async {
               Navigator.pop(context);
               await context.read<AuthViewModel>().logout();
@@ -703,7 +759,6 @@ class ProfileView extends StatelessWidget {
                 context.go('/login');
               }
             },
-            child: const Text('Keluar', style: TextStyle(color: AppColor.white)),
           ),
         ],
       ),

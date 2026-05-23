@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
-import '../../auth/view_models/auth_view_model.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../view_models/home_view_model.dart';
 
 class HomeView extends StatelessWidget {
@@ -36,7 +36,10 @@ class HomeView extends StatelessWidget {
       );
     }
 
-    final dateStr = DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now());
+    final dateStr = DateFormat(
+      'EEEE, d MMMM yyyy',
+      'id_ID',
+    ).format(DateTime.now());
 
     return Scaffold(
       backgroundColor: AppColor.white,
@@ -56,7 +59,9 @@ class HomeView extends StatelessWidget {
                         CircleAvatar(
                           radius: 28,
                           backgroundColor: AppColor.primaryLight,
-                          backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+                          backgroundImage: user.photoUrl != null
+                              ? NetworkImage(user.photoUrl!)
+                              : null,
                           child: user.photoUrl == null
                               ? Text(
                                   user.name.substring(0, 1).toUpperCase(),
@@ -105,10 +110,15 @@ class HomeView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.notifications_none_outlined, color: AppColor.white),
+                      icon: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: AppColor.white,
+                      ),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Belum ada notifikasi baru.')),
+                          const SnackBar(
+                            content: Text('Belum ada notifikasi baru.'),
+                          ),
                         );
                       },
                     ),
@@ -120,7 +130,10 @@ class HomeView extends StatelessWidget {
               // Requirement 1: Alert Banner (Jika belum punya pengawas)
               if (!viewModel.hasSupervisor) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColor.white,
                     border: Border.all(color: Colors.grey.shade300),
@@ -141,25 +154,31 @@ class HomeView extends StatelessWidget {
                           color: AppColor.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.info_outline, size: 16, color: AppColor.white),
+                        child: const Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: AppColor.white,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'Anda belum terhubung dengan Pengawas.',
-                          style: TextStyle(fontSize: 13, color: AppColor.darkGray, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColor.darkGray,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColor.primary,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          minimumSize: Size.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        onPressed: () => _showConnectSupervisorModal(context, viewModel),
-                        child: const Text('Hubungkan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColor.white)),
+                      AppButton(
+                        text: 'Hubungkan',
+                        width: null,
+                        height: 36,
+                        borderRadius: 8,
+                        onPressed: () =>
+                            _showConnectSupervisorModal(context, viewModel),
                       ),
                     ],
                   ),
@@ -187,7 +206,9 @@ class HomeView extends StatelessWidget {
                         icon: Icon(
                           Icons.timer_outlined,
                           size: 20,
-                          color: viewModel.isWithin30MinsSimulation ? AppColor.primary : AppColor.neutralGray,
+                          color: viewModel.isWithin30MinsSimulation
+                              ? AppColor.primary
+                              : AppColor.neutralGray,
                         ),
                         onPressed: viewModel.toggleWithin30MinsSimulation,
                       ),
@@ -196,7 +217,9 @@ class HomeView extends StatelessWidget {
                         icon: Icon(
                           Icons.alarm_on_outlined,
                           size: 20,
-                          color: viewModel.isAlarmTriggering ? AppColor.warning : AppColor.neutralGray,
+                          color: viewModel.isAlarmTriggering
+                              ? AppColor.warning
+                              : AppColor.neutralGray,
                         ),
                         onPressed: viewModel.toggleAlarmSimulation,
                       ),
@@ -239,17 +262,28 @@ class HomeView extends StatelessWidget {
                         children: [
                           const Text(
                             'Hari yang terlewat',
-                            style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             '${viewModel.daysPassed} Hari',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColor.white),
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.white,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           const Text(
                             '40 hari menuju kesehatan',
-                            style: TextStyle(fontSize: 11, color: Colors.white70),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
                           ),
                         ],
                       ),
@@ -275,17 +309,28 @@ class HomeView extends StatelessWidget {
                         children: [
                           const Text(
                             'Tingkat kepatuhan',
-                            style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             '${viewModel.complianceRate.round()}%',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColor.white),
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.white,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           const Text(
                             'Pertahankan!',
-                            style: TextStyle(fontSize: 11, color: Colors.white70),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
                           ),
                         ],
                       ),
@@ -320,7 +365,11 @@ class HomeView extends StatelessWidget {
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.bolt, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.bolt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Text(
@@ -341,7 +390,8 @@ class HomeView extends StatelessWidget {
                           _buildQuickActionCard(
                             icon: Icons.alarm,
                             label: 'Atur\nJadwal',
-                            onTap: () => context.push('/profile/treatment-periods'),
+                            onTap: () =>
+                                context.push('/profile/treatment-periods'),
                           ),
                           const SizedBox(width: 14),
                           _buildQuickActionCard(
@@ -401,7 +451,11 @@ class HomeView extends StatelessWidget {
                   itemCount: viewModel.schedules.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    return _buildDailyScheduleCard(context, viewModel.schedules[index], viewModel.nextSchedule);
+                    return _buildDailyScheduleCard(
+                      context,
+                      viewModel.schedules[index],
+                      viewModel.nextSchedule,
+                    );
                   },
                 ),
               const SizedBox(height: 80),
@@ -426,13 +480,18 @@ class HomeView extends StatelessWidget {
         child: const Text(
           'Semua jadwal obat hari ini telah selesai!',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColor.primary, fontWeight: FontWeight.bold, fontSize: 15),
+          style: TextStyle(
+            color: AppColor.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
         ),
       );
     }
 
     final medName = next['med_name'] ?? 'Obat TBC';
-    final timeStr = (next['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
+    final timeStr =
+        (next['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
 
     return InkWell(
       onTap: () => _showMedicationDetailModal(context, next),
@@ -483,55 +542,61 @@ class HomeView extends StatelessWidget {
               children: [
                 if (viewModel.isAlarmTriggering) ...[
                   Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.warning,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
+                    child: AppButton(
+                      text: 'Tunda 5 menit',
+                      color: AppButtonColor.warning,
                       onPressed: () {
                         viewModel.snoozeMedication();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Pengingat ditunda 5 menit'), backgroundColor: AppColor.warning),
+                          const SnackBar(
+                            content: Text('Pengingat ditunda 5 menit'),
+                            backgroundColor: AppColor.warning,
+                          ),
                         );
                       },
-                      child: const Text('Tunda 5 menit', style: TextStyle(fontWeight: FontWeight.bold, color: AppColor.white, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 12),
                 ],
                 if (viewModel.isWithin30MinsSimulation)
                   Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
+                    child: AppButton(
+                      text: 'Konfirmasi minum obat',
                       onPressed: () async {
                         try {
                           await viewModel.confirmMedicationTaken(next['id']);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Konfirmasi minum obat berhasil!'), backgroundColor: AppColor.success),
+                              const SnackBar(
+                                content: Text(
+                                  'Konfirmasi minum obat berhasil!',
+                                ),
+                                backgroundColor: AppColor.success,
+                              ),
                             );
                           }
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString()), backgroundColor: AppColor.error),
+                              SnackBar(
+                                content: Text(e.toString()),
+                                backgroundColor: AppColor.error,
+                              ),
                             );
                           }
                         }
                       },
-                      child: const Text('Konfirmasi minum obat', style: TextStyle(fontWeight: FontWeight.bold, color: AppColor.white, fontSize: 13)),
                     ),
                   )
                 else
                   const Expanded(
                     child: Text(
                       'Belum waktunya konfirmasi minum obat.',
-                      style: TextStyle(color: AppColor.neutralGray, fontSize: 13, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                        color: AppColor.neutralGray,
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
               ],
@@ -595,9 +660,14 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildDailyScheduleCard(BuildContext context, Map<String, dynamic> sched, Map<String, dynamic>? nextSched) {
+  Widget _buildDailyScheduleCard(
+    BuildContext context,
+    Map<String, dynamic> sched,
+    Map<String, dynamic>? nextSched,
+  ) {
     final name = sched['med_name'] ?? 'Obat TBC';
-    final timeStr = (sched['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
+    final timeStr =
+        (sched['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
     final status = sched['today_status'] as String? ?? 'Segera';
 
     final isNext = nextSched != null && nextSched['id'] == sched['id'];
@@ -611,7 +681,9 @@ class HomeView extends StatelessWidget {
       decoration: BoxDecoration(
         color: isNext ? AppColor.primary : AppColor.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isNext ? AppColor.primary : Colors.grey.shade300),
+        border: Border.all(
+          color: isNext ? AppColor.primary : Colors.grey.shade300,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -625,13 +697,21 @@ class HomeView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: status == 'Di minum' ? AppColor.success : (isNext ? AppColor.white.withOpacity(0.2) : AppColor.lightGray),
+              color: status == 'Di minum'
+                  ? AppColor.success
+                  : (isNext
+                        ? AppColor.white.withOpacity(0.2)
+                        : AppColor.lightGray),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              status == 'Di minum' ? Icons.check : Icons.medical_services_outlined,
+              status == 'Di minum'
+                  ? Icons.check
+                  : Icons.medical_services_outlined,
               size: 16,
-              color: status == 'Di minum' ? AppColor.white : (isNext ? AppColor.white : AppColor.neutralGray),
+              color: status == 'Di minum'
+                  ? AppColor.white
+                  : (isNext ? AppColor.white : AppColor.neutralGray),
             ),
           ),
           const SizedBox(width: 14),
@@ -653,11 +733,19 @@ class HomeView extends StatelessWidget {
             ),
             child: Text(
               status,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColor.white),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColor.white,
+              ),
             ),
           ),
           const SizedBox(width: 12),
-          Icon(Icons.alarm, size: 14, color: isNext ? AppColor.white : AppColor.darkGray),
+          Icon(
+            Icons.alarm,
+            size: 14,
+            color: isNext ? AppColor.white : AppColor.darkGray,
+          ),
           const SizedBox(width: 4),
           Text(
             '$timeStr WIB',
@@ -672,7 +760,10 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  void _showConnectSupervisorModal(BuildContext context, HomeViewModel viewModel) {
+  void _showConnectSupervisorModal(
+    BuildContext context,
+    HomeViewModel viewModel,
+  ) {
     final codeCtrl = TextEditingController();
 
     showModalBottomSheet(
@@ -680,7 +771,9 @@ class HomeView extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: const BoxDecoration(
@@ -696,7 +789,11 @@ class HomeView extends StatelessWidget {
                 children: [
                   const Text(
                     'Hubungkan Pengawas',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColor.darkGray),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.darkGray,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: AppColor.neutralGray),
@@ -715,43 +812,48 @@ class HomeView extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'Kode Pengawas',
                   hintText: 'TBC-XXXXXX',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColor.primary, width: 2),
+                    borderSide: const BorderSide(
+                      color: AppColor.primary,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColor.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () async {
-                    final code = codeCtrl.text.trim();
-                    if (code.isEmpty) return;
-                    Navigator.pop(context);
-                    try {
-                      await viewModel.connectSupervisor(code);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Permintaan pengawasan berhasil dikirim!'), backgroundColor: AppColor.success),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString()), backgroundColor: AppColor.error),
-                        );
-                      }
+              AppButton(
+                text: 'Kirim Permintaan',
+                onPressed: () async {
+                  final code = codeCtrl.text.trim();
+                  if (code.isEmpty) return;
+                  Navigator.pop(context);
+                  try {
+                    await viewModel.connectSupervisor(code);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Permintaan pengawasan berhasil dikirim!',
+                          ),
+                          backgroundColor: AppColor.success,
+                        ),
+                      );
                     }
-                  },
-                  child: const Text('Kirim Permintaan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColor.white)),
-                ),
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString()),
+                          backgroundColor: AppColor.error,
+                        ),
+                      );
+                    }
+                  }
+                },
               ),
             ],
           ),
@@ -767,31 +869,50 @@ class HomeView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Informasi Pengawas', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Informasi Pengawas',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Nama: ${info['name'] ?? '-'}', style: const TextStyle(fontSize: 15)),
+            Text(
+              'Nama: ${info['name'] ?? '-'}',
+              style: const TextStyle(fontSize: 15),
+            ),
             const SizedBox(height: 8),
-            Text('Telepon: ${info['telephone'] ?? '-'}', style: const TextStyle(fontSize: 15)),
+            Text(
+              'Telepon: ${info['telephone'] ?? '-'}',
+              style: const TextStyle(fontSize: 15),
+            ),
             const SizedBox(height: 8),
-            Text('Status Koneksi: ${info['status'] ?? '-'}', style: const TextStyle(fontSize: 15)),
+            Text(
+              'Status Koneksi: ${info['status'] ?? '-'}',
+              style: const TextStyle(fontSize: 15),
+            ),
           ],
         ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Tutup',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: AppColor.primary)),
           ),
         ],
       ),
     );
   }
 
-  void _showMedicationDetailModal(BuildContext context, Map<String, dynamic> sched) {
+  void _showMedicationDetailModal(
+    BuildContext context,
+    Map<String, dynamic> sched,
+  ) {
     final medName = sched['med_name'] ?? 'Obat TBC';
-    final timeStr = (sched['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
+    final timeStr =
+        (sched['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
     final dosage = sched['dosage'] ?? '1 Tablet / Kaplet';
     final instructions = sched['instructions'] ?? 'Diminum sesudah makan';
     final status = sched['today_status'] ?? 'Segera';
@@ -804,12 +925,25 @@ class HomeView extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AppColor.primaryLight, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.medical_services, color: AppColor.primary),
+              decoration: BoxDecoration(
+                color: AppColor.primaryLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.medical_services,
+                color: AppColor.primary,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(medName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColor.darkGray)),
+              child: Text(
+                medName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppColor.darkGray,
+                ),
+              ),
             ),
           ],
         ),
@@ -825,24 +959,34 @@ class HomeView extends StatelessWidget {
             const SizedBox(height: 12),
             _buildDetailItem('Aturan Pakai', instructions, Icons.info_outline),
             const SizedBox(height: 12),
-            _buildDetailItem('Status Hari Ini', status, Icons.check_circle_outline, isStatus: true, statusText: status),
+            _buildDetailItem(
+              'Status Hari Ini',
+              status,
+              Icons.check_circle_outline,
+              isStatus: true,
+              statusText: status,
+            ),
           ],
         ),
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+          AppButton(
+            text: 'Tutup',
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: AppColor.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailItem(String label, String value, IconData icon, {bool isStatus = false, String? statusText}) {
+  Widget _buildDetailItem(
+    String label,
+    String value,
+    IconData icon, {
+    bool isStatus = false,
+    String? statusText,
+  }) {
     Color valColor = AppColor.darkGray;
     if (isStatus) {
       if (statusText == 'Di minum') valColor = AppColor.success;
@@ -859,11 +1003,21 @@ class HomeView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 12, color: AppColor.neutralGray)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColor.neutralGray,
+                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: valColor),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: valColor,
+                ),
               ),
             ],
           ),

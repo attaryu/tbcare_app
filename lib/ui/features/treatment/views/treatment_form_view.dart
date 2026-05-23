@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../data/models/treatment_period_model.dart';
 import '../view_models/treatment_view_model.dart';
 
@@ -34,7 +35,8 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
     super.initState();
     _titleCtrl = TextEditingController(text: widget.existingPeriod?.name ?? '');
     _durationCtrl = TextEditingController(
-        text: widget.existingPeriod?.duration.toString() ?? '');
+      text: widget.existingPeriod?.duration.toString() ?? '',
+    );
     _startDate = widget.existingPeriod?.startDate ?? DateTime.now();
     _durationUnit = widget.existingPeriod?.durationType ?? 'month';
 
@@ -84,7 +86,9 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      _isEditing ? 'Edit Periode Penyembuhan' : 'Buat Periode Penyembuhan',
+                      _isEditing
+                          ? 'Edit Periode Penyembuhan'
+                          : 'Buat Periode Penyembuhan',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -100,7 +104,10 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
 
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -110,7 +117,10 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                       controller: _titleCtrl,
                       decoration: InputDecoration(
                         hintText: 'Masukkan judul periode',
-                        hintStyle: const TextStyle(color: AppColor.neutralGray, fontSize: 14),
+                        hintStyle: const TextStyle(
+                          color: AppColor.neutralGray,
+                          fontSize: 14,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: Colors.grey.shade400),
@@ -121,9 +131,15 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColor.primary, width: 2),
+                          borderSide: const BorderSide(
+                            color: AppColor.primary,
+                            width: 2,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -146,9 +162,14 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                             },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
-                          color: _isEditing ? AppColor.lightGray : AppColor.white,
+                          color: _isEditing
+                              ? AppColor.lightGray
+                              : AppColor.white,
                           border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -156,15 +177,22 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              DateFormat('dd MMMM yyyy', 'id_ID').format(_startDate),
+                              DateFormat(
+                                'dd MMMM yyyy',
+                                'id_ID',
+                              ).format(_startDate),
                               style: TextStyle(
                                 fontSize: 15,
-                                color: _isEditing ? AppColor.neutralGray : AppColor.darkGray,
+                                color: _isEditing
+                                    ? AppColor.neutralGray
+                                    : AppColor.darkGray,
                               ),
                             ),
                             Icon(
                               Icons.calendar_today_outlined,
-                              color: _isEditing ? AppColor.neutralGray : AppColor.primary,
+                              color: _isEditing
+                                  ? AppColor.neutralGray
+                                  : AppColor.primary,
                               size: 20,
                             ),
                           ],
@@ -176,7 +204,11 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                         padding: EdgeInsets.only(top: 6, left: 4),
                         child: Text(
                           '*Tanggal mulai tidak dapat diubah saat mengedit.',
-                          style: TextStyle(fontSize: 12, color: AppColor.neutralGray, fontStyle: FontStyle.italic),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColor.neutralGray,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
                     const SizedBox(height: 24),
@@ -192,20 +224,33 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               hintText: 'Masukkan durasi pengobatan',
-                              hintStyle: const TextStyle(color: AppColor.neutralGray, fontSize: 14),
+                              hintStyle: const TextStyle(
+                                color: AppColor.neutralGray,
+                                fontSize: 14,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey.shade400),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey.shade400),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: AppColor.primary, width: 2),
+                                borderSide: const BorderSide(
+                                  color: AppColor.primary,
+                                  width: 2,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                             ),
                           ),
                         ),
@@ -213,7 +258,10 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                         Expanded(
                           flex: 2,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey.shade400),
                               borderRadius: BorderRadius.circular(12),
@@ -222,10 +270,19 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                               child: DropdownButton<String>(
                                 value: _durationUnit,
                                 isExpanded: true,
-                                icon: const Icon(Icons.keyboard_arrow_down, color: AppColor.neutralGray),
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: AppColor.neutralGray,
+                                ),
                                 items: const [
-                                  DropdownMenuItem(value: 'month', child: Text('Bulan')),
-                                  DropdownMenuItem(value: 'day', child: Text('Hari')),
+                                  DropdownMenuItem(
+                                    value: 'month',
+                                    child: Text('Bulan'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'day',
+                                    child: Text('Hari'),
+                                  ),
                                 ],
                                 onChanged: (val) {
                                   if (val != null) {
@@ -244,45 +301,32 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
                     const SizedBox(height: 8),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColor.lightGray,
                         border: Border.all(color: Colors.grey.shade300),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        DateFormat('dd MMMM yyyy', 'id_ID').format(_calculatedPrediction),
-                        style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
+                        DateFormat(
+                          'dd MMMM yyyy',
+                          'id_ID',
+                        ).format(_calculatedPrediction),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColor.darkGray,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 48),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColor.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: _isSubmitting ? null : _submit,
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(color: AppColor.white, strokeWidth: 2.5),
-                              )
-                            : Text(
-                                _isEditing ? 'Simpan Perubahan' : 'Buat',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColor.white,
-                                ),
-                              ),
-                      ),
+                    AppButton(
+                      text: _isEditing ? 'Simpan Perubahan' : 'Buat',
+                      isLoading: _isSubmitting,
+                      onPressed: _submit,
                     ),
                   ],
                 ),
@@ -343,9 +387,11 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing
-                ? 'Periode pengobatan berhasil diperbarui!'
-                : 'Periode baru berhasil dibuat!'),
+            content: Text(
+              _isEditing
+                  ? 'Periode pengobatan berhasil diperbarui!'
+                  : 'Periode baru berhasil dibuat!',
+            ),
             backgroundColor: AppColor.success,
           ),
         );
@@ -353,7 +399,10 @@ class _TreatmentFormViewState extends State<TreatmentFormView> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColor.error),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColor.error,
+          ),
         );
       }
     } finally {

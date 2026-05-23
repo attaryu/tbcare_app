@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../data/models/treatment_period_model.dart';
 import '../view_models/treatment_view_model.dart';
 
@@ -19,7 +20,8 @@ class TreatmentView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColor.primary,
         shape: const CircleBorder(),
-        onPressed: () => context.push('/profile/treatment-periods/add', extra: viewModel),
+        onPressed: () =>
+            context.push('/profile/treatment-periods/add', extra: viewModel),
         child: const Icon(Icons.add, color: AppColor.white, size: 28),
       ),
       body: SafeArea(
@@ -55,14 +57,21 @@ class TreatmentView extends StatelessWidget {
               ),
             ),
 
-            if (viewModel.isLoading && viewModel.activePeriod == null && viewModel.historyPeriods.isEmpty)
+            if (viewModel.isLoading &&
+                viewModel.activePeriod == null &&
+                viewModel.historyPeriods.isEmpty)
               const Expanded(
-                child: Center(child: CircularProgressIndicator(color: AppColor.primary)),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColor.primary),
+                ),
               )
             else
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -78,19 +87,18 @@ class TreatmentView extends StatelessWidget {
                       const SizedBox(height: 12),
 
                       if (viewModel.activePeriod != null) ...[
-                        _buildActivePeriodCard(context, viewModel.activePeriod!, viewModel.compliancePercentage),
+                        _buildActivePeriodCard(
+                          context,
+                          viewModel.activePeriod!,
+                          viewModel.compliancePercentage,
+                        ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  side: const BorderSide(color: AppColor.primary, width: 1.5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                              child: AppButton(
+                                text: 'Edit Periode',
+                                variant: AppButtonVariant.outline,
                                 onPressed: () => context.push(
                                   '/profile/treatment-periods/edit',
                                   extra: {
@@ -98,35 +106,14 @@ class TreatmentView extends StatelessWidget {
                                     'period': viewModel.activePeriod!,
                                   },
                                 ),
-                                child: const Text(
-                                  'Edit Periode',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.primary,
-                                  ),
-                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColor.primary,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () => _confirmMarkCompleted(context, viewModel),
-                                child: const Text(
-                                  'Tandai Selesai',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.white,
-                                  ),
-                                ),
+                              child: AppButton(
+                                text: 'Tandai Selesai',
+                                onPressed: () =>
+                                    _confirmMarkCompleted(context, viewModel),
                               ),
                             ),
                           ],
@@ -142,22 +129,26 @@ class TreatmentView extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              const Icon(Icons.calendar_today_outlined, size: 40, color: AppColor.neutralGray),
+                              const Icon(
+                                Icons.calendar_today_outlined,
+                                size: 40,
+                                color: AppColor.neutralGray,
+                              ),
                               const SizedBox(height: 12),
                               const Text(
                                 'Belum ada periode pengobatan aktif.',
-                                style: TextStyle(color: AppColor.neutralGray, fontSize: 15),
+                                style: TextStyle(
+                                  color: AppColor.neutralGray,
+                                  fontSize: 15,
+                                ),
                               ),
                               const SizedBox(height: 16),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColor.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                              AppButton(
+                                text: 'Buat Periode Baru',
+                                onPressed: () => context.push(
+                                  '/profile/treatment-periods/add',
+                                  extra: viewModel,
                                 ),
-                                onPressed: () => context.push('/profile/treatment-periods/add', extra: viewModel),
-                                child: const Text('Buat Periode Baru', style: TextStyle(color: AppColor.white)),
                               ),
                             ],
                           ),
@@ -187,7 +178,10 @@ class TreatmentView extends StatelessWidget {
                           child: const Text(
                             'Belum ada riwayat periode pengobatan.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColor.neutralGray, fontSize: 14),
+                            style: TextStyle(
+                              color: AppColor.neutralGray,
+                              fontSize: 14,
+                            ),
                           ),
                         )
                       else
@@ -195,9 +189,13 @@ class TreatmentView extends StatelessWidget {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: viewModel.historyPeriods.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
-                            return _buildHistoryPeriodCard(context, viewModel.historyPeriods[index]);
+                            return _buildHistoryPeriodCard(
+                              context,
+                              viewModel.historyPeriods[index],
+                            );
                           },
                         ),
                       const SizedBox(height: 80),
@@ -211,12 +209,22 @@ class TreatmentView extends StatelessWidget {
     );
   }
 
-  Widget _buildActivePeriodCard(BuildContext context, TreatmentPeriodModel period, double percentage) {
+  Widget _buildActivePeriodCard(
+    BuildContext context,
+    TreatmentPeriodModel period,
+    double percentage,
+  ) {
     String dateRange = '-';
     try {
-      final startStr = DateFormat('dd MMMM yyyy', 'id_ID').format(period.startDate);
+      final startStr = DateFormat(
+        'dd MMMM yyyy',
+        'id_ID',
+      ).format(period.startDate);
       final endStr = period.predictionEndDate != null
-          ? DateFormat('dd MMMM yyyy', 'id_ID').format(period.predictionEndDate!)
+          ? DateFormat(
+              'dd MMMM yyyy',
+              'id_ID',
+            ).format(period.predictionEndDate!)
           : '-';
       dateRange = '$startStr - $endStr';
     } catch (_) {}
@@ -256,7 +264,11 @@ class TreatmentView extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.white70),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 16,
+                color: Colors.white70,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -306,15 +318,24 @@ class TreatmentView extends StatelessWidget {
     );
   }
 
-  Widget _buildHistoryPeriodCard(BuildContext context, TreatmentPeriodModel period) {
+  Widget _buildHistoryPeriodCard(
+    BuildContext context,
+    TreatmentPeriodModel period,
+  ) {
     String dateRange = '-';
     try {
-      final startStr = DateFormat('dd MMMM yyyy', 'id_ID').format(period.startDate);
+      final startStr = DateFormat(
+        'dd MMMM yyyy',
+        'id_ID',
+      ).format(period.startDate);
       final endStr = period.actualEndDate != null
           ? DateFormat('dd MMMM yyyy', 'id_ID').format(period.actualEndDate!)
           : (period.predictionEndDate != null
-              ? DateFormat('dd MMMM yyyy', 'id_ID').format(period.predictionEndDate!)
-              : '-');
+                ? DateFormat(
+                    'dd MMMM yyyy',
+                    'id_ID',
+                  ).format(period.predictionEndDate!)
+                : '-');
       dateRange = '$startStr - $endStr';
     } catch (_) {}
 
@@ -347,7 +368,11 @@ class TreatmentView extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColor.primary),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: AppColor.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -362,22 +387,32 @@ class TreatmentView extends StatelessWidget {
     );
   }
 
-  void _confirmMarkCompleted(BuildContext context, TreatmentViewModel viewModel) {
+  void _confirmMarkCompleted(
+    BuildContext context,
+    TreatmentViewModel viewModel,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Tandai Selesai', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Apakah Anda yakin periode pengobatan ini telah selesai?'),
+        title: const Text(
+          'Tandai Selesai',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Apakah Anda yakin periode pengobatan ini telah selesai?',
+        ),
         actions: [
-          TextButton(
+          AppButton(
+            text: 'Batal',
+            variant: AppButtonVariant.outline,
+            width: null,
+            height: 40,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+          AppButton(
+            text: 'Ya, Selesai',
+            width: null,
+            height: 40,
             onPressed: () async {
               Navigator.pop(context);
               try {
@@ -393,12 +428,14 @@ class TreatmentView extends StatelessWidget {
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString()), backgroundColor: AppColor.error),
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: AppColor.error,
+                    ),
                   );
                 }
               }
             },
-            child: const Text('Ya, Selesai', style: TextStyle(color: AppColor.white)),
           ),
         ],
       ),

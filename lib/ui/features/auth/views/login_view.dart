@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../view_models/auth_view_model.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -12,7 +13,8 @@ class LoginView extends StatefulWidget {
   State<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMixin {
+class _LoginViewState extends State<LoginView>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -46,17 +48,18 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
     HapticFeedback.lightImpact();
     FocusScope.of(context).unfocus();
     final authViewModel = context.read<AuthViewModel>();
-    authViewModel.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    authViewModel.login(_emailController.text.trim(), _passwordController.text);
   }
 
   @override
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
     final mediaQuery = MediaQuery.of(context);
-    final totalMinHeight = mediaQuery.size.height - mediaQuery.padding.top - mediaQuery.padding.bottom - 72;
+    final totalMinHeight =
+        mediaQuery.size.height -
+        mediaQuery.padding.top -
+        mediaQuery.padding.bottom -
+        72;
 
     return Scaffold(
       backgroundColor: AppColor.white,
@@ -65,7 +68,10 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
           opacity: _fadeAnimation,
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 36.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28.0,
+              vertical: 36.0,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 minHeight: totalMinHeight > 0 ? totalMinHeight : 500,
@@ -140,7 +146,10 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColor.darkGray,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Masukkan email terdaftar',
                           hintStyle: TextStyle(
@@ -186,7 +195,10 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _performLogin(),
-                        style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColor.darkGray,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Masukkan password',
                           hintStyle: TextStyle(
@@ -218,7 +230,10 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
                             icon: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 200),
                               transitionBuilder: (child, animation) =>
-                                  FadeTransition(opacity: animation, child: child),
+                                  FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
                               child: Icon(
                                 _obscurePassword
                                     ? Icons.visibility_off_outlined
@@ -285,49 +300,10 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
                               )
                             : const SizedBox.shrink(),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColor.primary.withOpacity(0.25),
-                              blurRadius: 16,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: authViewModel.isLoading ? null : _performLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColor.primary,
-                            foregroundColor: AppColor.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: authViewModel.isLoading
-                                ? const SizedBox(
-                                    height: 22,
-                                    width: 22,
-                                    child: CircularProgressIndicator(
-                                      color: AppColor.white,
-                                      strokeWidth: 2.5,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Masuk',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                          ),
-                        ),
+                      AppButton(
+                        text: 'Masuk',
+                        isLoading: authViewModel.isLoading,
+                        onPressed: _performLogin,
                       ),
                       const SizedBox(height: 28),
                       Row(
