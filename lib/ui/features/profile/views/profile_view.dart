@@ -330,62 +330,100 @@ class ProfileView extends StatelessWidget {
       text: viewModel.user?.telephoneNumber,
     );
 
-    AppDialog.form(
+    AppDialog.custom(
       context,
-      title: 'Edit Profil',
-      confirmLabel: 'Simpan',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: nameCtrl,
-            decoration: InputDecoration(
-              labelText: 'Nama Lengkap',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+      barrierDismissible: false,
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: viewModel,
+        builder: (_, __) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Edit Profil',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColor.darkGray,
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: phoneCtrl,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: 'Nomor Telepon',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 16),
+            const Divider(height: 1, thickness: 1.2),
+            const SizedBox(height: 20),
+            TextField(
+              controller: nameCtrl,
+              enabled: !viewModel.isLoading,
+              decoration: InputDecoration(
+                labelText: 'Nama Lengkap',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            TextField(
+              controller: phoneCtrl,
+              enabled: !viewModel.isLoading,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: 'Nomor Telepon',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Batal',
+                    variant: AppButtonVariant.outline,
+                    height: 48,
+                    isDisabled: viewModel.isLoading,
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton(
+                    text: 'Simpan',
+                    height: 48,
+                    isLoading: viewModel.isLoading,
+                    onPressed: () async {
+                      if (nameCtrl.text.trim().isEmpty) return;
+                      try {
+                        await viewModel.updateUserProfile(
+                          nameCtrl.text.trim(),
+                          phoneCtrl.text.trim(),
+                        );
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profil berhasil diperbarui'),
+                              backgroundColor: AppColor.success,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (dialogContext.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: AppColor.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      onConfirm: (dialogContext) async {
-        if (nameCtrl.text.trim().isEmpty) return;
-        try {
-          await viewModel.updateUserProfile(
-            nameCtrl.text.trim(),
-            phoneCtrl.text.trim(),
-          );
-          if (dialogContext.mounted) {
-            Navigator.pop(dialogContext);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profil berhasil diperbarui'),
-                backgroundColor: AppColor.success,
-              ),
-            );
-          }
-        } catch (e) {
-          if (dialogContext.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.toString()),
-                backgroundColor: AppColor.error,
-              ),
-            );
-          }
-        }
-      },
     );
   }
 
@@ -395,55 +433,92 @@ class ProfileView extends StatelessWidget {
   ) {
     final codeCtrl = TextEditingController();
 
-    AppDialog.form(
+    AppDialog.custom(
       context,
-      title: 'Tambah Pengawas',
-      confirmLabel: 'Kirim',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Masukkan kode pengawas yang diberikan oleh PMO Anda untuk terhubung.',
-            style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: codeCtrl,
-            decoration: InputDecoration(
-              labelText: 'Kode Pengawas',
-              hintText: 'TBC-XXXXXX',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+      barrierDismissible: false,
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: viewModel,
+        builder: (_, __) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Tambah Pengawas',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColor.darkGray,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            const Divider(height: 1, thickness: 1.2),
+            const SizedBox(height: 20),
+            const Text(
+              'Masukkan kode pengawas yang diberikan oleh PMO Anda untuk terhubung.',
+              style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: codeCtrl,
+              enabled: !viewModel.isLoading,
+              decoration: InputDecoration(
+                labelText: 'Kode Pengawas',
+                hintText: 'TBC-XXXXXX',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Batal',
+                    variant: AppButtonVariant.outline,
+                    height: 48,
+                    isDisabled: viewModel.isLoading,
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton(
+                    text: 'Kirim',
+                    height: 48,
+                    isLoading: viewModel.isLoading,
+                    onPressed: () async {
+                      final code = codeCtrl.text.trim();
+                      if (code.isEmpty) return;
+                      try {
+                        await viewModel.addSupervisor(code);
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Permintaan pengawasan berhasil dikirim'),
+                              backgroundColor: AppColor.success,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (dialogContext.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: AppColor.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      onConfirm: (dialogContext) async {
-        final code = codeCtrl.text.trim();
-        if (code.isEmpty) return;
-        try {
-          await viewModel.addSupervisor(code);
-          if (dialogContext.mounted) {
-            Navigator.pop(dialogContext);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Permintaan pengawasan berhasil dikirim'),
-                backgroundColor: AppColor.success,
-              ),
-            );
-          }
-        } catch (e) {
-          if (dialogContext.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.toString()),
-                backgroundColor: AppColor.error,
-              ),
-            );
-          }
-        }
-      },
     );
   }
 

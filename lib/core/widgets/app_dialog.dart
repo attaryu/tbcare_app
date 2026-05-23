@@ -10,8 +10,7 @@ import 'app_button.dart';
 /// ### Jenis Dialog yang Didukung:
 /// 1. **`AppDialog.confirm`**: Mengonfirmasi aksi sensitif/destruktif (Logout, Hapus, dsb).
 /// 2. **`AppDialog.info`**: Menampilkan detail data informasi terstruktur dengan rapi.
-/// 3. **`AppDialog.form`**: Menyediakan kerangka dialog untuk isian formulir (Edit profil, dsb).
-/// 4. **`AppDialog.custom`**: Kerangka kosong fleksibel dengan sudut membulat standar untuk desain bebas.
+/// 3. **`AppDialog.custom`**: Kerangka kosong fleksibel dengan sudut membulat standar untuk desain bebas.
 ///
 /// ### Contoh Penggunaan:
 /// ```dart
@@ -23,18 +22,6 @@ import 'app_button.dart';
 ///   confirmLabel: 'Hapus',
 ///   confirmColor: AppButtonColor.danger,
 ///   onConfirm: () => _deleteLog(),
-/// );
-///
-/// // Contoh 2: Dialog Form (Edit Data)
-/// AppDialog.form(
-///   context,
-///   title: 'Ubah Data',
-///   content: Column(
-///     children: [
-///       TextField(decoration: InputDecoration(labelText: 'Nama')),
-///     ],
-///   ),
-///   onConfirm: () => _saveData(),
 /// );
 /// ```
 class AppDialog extends StatelessWidget {
@@ -264,82 +251,7 @@ class AppDialog extends StatelessWidget {
     );
   }
 
-  /// **3. Constructor Formulir (Form Dialog)**
-  ///
-  /// Menyediakan struktur dialog standar untuk memproses isian data form (biasanya input fields).
-  /// Tombol konfirmasi mendukung parameter [isLoading] bawaan secara interaktif.
-  static Future<void> form(
-    BuildContext context, {
-    required String title,
-    required Widget content,
-    String confirmLabel = 'Simpan',
-    String cancelLabel = 'Batal',
-    required Function(BuildContext dialogContext) onConfirm, // <-- Menerima dialogContext
-    VoidCallback? onCancel,
-    bool isLoading = false,
-    bool barrierDismissible = false,
-  }) {
-    return _show<void>(
-      context: context,
-      barrierDismissible: barrierDismissible,
-      builder: (dialogContext) => AppDialog(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColor.darkGray,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Divider(height: 1, thickness: 1.2),
-            const SizedBox(height: 20),
-            Flexible(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: content,
-              ),
-            ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    text: cancelLabel,
-                    variant: AppButtonVariant.outline,
-                    height: 48,
-                    isDisabled: isLoading,
-                    onPressed: () {
-                      if (!isLoading) {
-                        Navigator.pop(dialogContext);
-                        onCancel?.call();
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppButton(
-                    text: confirmLabel,
-                    height: 48,
-                    isLoading: isLoading,
-                    onPressed: () => onConfirm(dialogContext), // <-- Meneruskan dialogContext
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// **4. Constructor Kustom (Custom Dialog)**
+  /// **3. Constructor Kustom (Custom Dialog)**
   ///
   /// Menyediakan wadah dialog bebas dengan kebulatan sudut standar untuk diisi konten kustom penuh.
   static Future<T?> custom<T>(

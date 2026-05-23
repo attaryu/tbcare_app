@@ -768,65 +768,101 @@ class HomeView extends StatelessWidget {
   ) {
     final codeCtrl = TextEditingController();
 
-    AppDialog.form(
+    AppDialog.custom(
       context,
-      title: 'Hubungkan Pengawas',
-      confirmLabel: 'Kirim Permintaan',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Masukkan kode unik pengawas yang diberikan oleh petugas atau PMO Anda untuk terhubung dalam pengawasan obat.',
-            style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: codeCtrl,
-            decoration: InputDecoration(
-              labelText: 'Kode Pengawas',
-              hintText: 'TBC-XXXXXX',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+      barrierDismissible: false,
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: viewModel,
+        builder: (_, __) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Hubungkan Pengawas',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColor.darkGray,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppColor.primary,
-                  width: 2,
+            ),
+            const SizedBox(height: 16),
+            const Divider(height: 1, thickness: 1.2),
+            const SizedBox(height: 20),
+            const Text(
+              'Masukkan kode unik pengawas yang diberikan oleh petugas atau PMO Anda untuk terhubung dalam pengawasan obat.',
+              style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: codeCtrl,
+              enabled: !viewModel.isLoading,
+              decoration: InputDecoration(
+                labelText: 'Kode Pengawas',
+                hintText: 'TBC-XXXXXX',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColor.primary,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      onConfirm: (dialogContext) async {
-        final code = codeCtrl.text.trim();
-        if (code.isEmpty) return;
-        Navigator.pop(dialogContext);
-        try {
-          await viewModel.connectSupervisor(code);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Permintaan pengawasan berhasil dikirim!',
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Batal',
+                    variant: AppButtonVariant.outline,
+                    height: 48,
+                    isDisabled: viewModel.isLoading,
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
                 ),
-                backgroundColor: AppColor.success,
-              ),
-            );
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.toString()),
-                backgroundColor: AppColor.error,
-              ),
-            );
-          }
-        }
-      },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton(
+                    text: 'Kirim Permintaan',
+                    height: 48,
+                    isLoading: viewModel.isLoading,
+                    onPressed: () async {
+                      final code = codeCtrl.text.trim();
+                      if (code.isEmpty) return;
+                      try {
+                        await viewModel.connectSupervisor(code);
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Permintaan pengawasan berhasil dikirim!',
+                              ),
+                              backgroundColor: AppColor.success,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (dialogContext.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: AppColor.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
