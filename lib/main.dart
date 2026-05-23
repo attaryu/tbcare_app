@@ -23,11 +23,17 @@ void main() async {
     anonKey: AppEnv.supabaseAnonKey,
   );
 
-  runApp(const MainApp());
+  final supabaseService = SupabaseService.instance;
+  final authViewModel = AuthViewModel(supabaseService);
+  await authViewModel.tryRestoreSession();
+
+  runApp(MainApp(authViewModel: authViewModel));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  final AuthViewModel authViewModel;
+
+  const MainApp({super.key, required this.authViewModel});
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +57,8 @@ class MainApp extends StatelessWidget {
         ProxyProvider<SupabaseService, HistoryRepository>(
           update: (_, supabase, __) => HistoryRepository(supabase),
         ),
-        ChangeNotifierProvider<AuthViewModel>(
-          create: (context) => AuthViewModel(context.read<SupabaseService>()),
+        ChangeNotifierProvider<AuthViewModel>.value(
+          value: authViewModel,
         ),
       ],
       child: Consumer<AuthViewModel>(

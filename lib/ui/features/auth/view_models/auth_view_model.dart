@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/supabase_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final SupabaseService _supabase;
+  static const String _sessionKey = 'user_session';
 
   AuthViewModel(this._supabase);
 
@@ -18,6 +21,59 @@ class AuthViewModel extends ChangeNotifier {
 
   String? _error;
   String? get error => _error;
+
+  Future<void> tryRestoreSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedSession = prefs.getString(_sessionKey);
+      
+      if (cachedSession == null) {
+        return;
+      }
+
+      // Restore locally cached session temporarily
+      final localUser = UserModel.fromJson(jsonDecode(cachedSession));
+      _currentUser = localUser;
+      notifyListeners();
+
+      // DB First: Verify and fetch fresh user data from database
+      try {
+        final dbUserResponse = await _supabase.client
+            .from('users')
+            .select()
+            .eq('id', localUser.id)
+            .maybeSingle();
+
+        if (dbUserResponse != null) {
+          // Fresh user found, update local model & save fresh cache
+          final freshUser = UserModel.fromJson(dbUserResponse);
+          _currentUser = freshUser;
+          await _saveSession(freshUser);
+        } else {
+          // User was deleted/no longer exists in DB, clear session
+          _currentUser = null;
+          await _clearSession();
+        }
+      } catch (dbError) {
+        // Network or DB error: keep using cached localUser (fallback)
+        debugPrint('DB session verification failed: $dbError. Falling back to local cache.');
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Failed to restore session: $e');
+    }
+  }
+
+  Future<void> _saveSession(UserModel user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_sessionKey, jsonEncode(user.toJson()));
+  }
+
+  Future<void> _clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_sessionKey);
+  }
 
   Future<void> login(String email, String password) async {
     _isLoading = true;
@@ -46,7 +102,9 @@ class AuthViewModel extends ChangeNotifier {
       }
 
       // 3. Set custom session
-      _currentUser = UserModel.fromJson(response);
+      final user = UserModel.fromJson(response);
+      _currentUser = user;
+      await _saveSession(user);
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -179,7 +237,9 @@ class AuthViewModel extends ChangeNotifier {
       }
 
       // 7. Set custom session
-      _currentUser = UserModel.fromJson(userResponse);
+      final user = UserModel.fromJson(userResponse);
+      _currentUser = user;
+      await _saveSession(user);
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -192,6 +252,7 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await _clearSession();
     _currentUser = null;
     notifyListeners();
   }
