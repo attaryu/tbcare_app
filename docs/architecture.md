@@ -95,4 +95,33 @@ Navigasi dikelola secara terpusat di `lib/ui/router/`. Kami menggunakan `GoRoute
 
 ---
 
+## 6. Standar & Konvensi Dialog
+
+Semua dialog di dalam modul fitur (`lib/ui/features/`) wajib menggunakan komponen UI global `AppDialog` (`lib/core/widgets/app_dialog.dart`).
+
+### A. Jenis Dialog yang Didukung
+1.  **`AppDialog.confirm`**: Konfirmasi aksi sensitif/destruktif (Logout, Hapus, Selesai).
+2.  **`AppDialog.info`**: Menyajikan informasi detail data terstruktur statis.
+3.  **`AppDialog.custom`**: Wadah dialog kustom dengan sudut membulat standar untuk desain bebas.
+
+*Catatan: Konstruktor `AppDialog.form` telah dihapus secara resmi karena redundansi state.*
+
+### B. Aturan Emas Dialog Form & API (Pattern 3)
+Jika sebuah dialog berfungsi sebagai formulir input data atau melakukan pemanggilan API (async/await), wajib mematuhi aturan berikut:
+
+1.  **Wajib Menggunakan `AppDialog.custom` + `ListenableBuilder`**
+    Bungkus seluruh konten dialog dengan `ListenableBuilder` yang mendengarkan `ChangeNotifier` ViewModel secara langsung. Hindari membuat state lokal (`StatefulBuilder` atau `ValueNotifier` baru) secara berlebihan.
+2.  **Anti-Tutup Luar (`barrierDismissible: false`)**
+    Dialog yang memicu operasi tulis/API tidak boleh ditutup secara tidak sengaja dengan mengklik area luar (background).
+3.  **Tombol Reaktif Loading State**
+    Tombol konfirmasi/kirim wajib menampilkan loading spinner dengan mengikat parameter `isLoading: viewModel.isLoading`.
+4.  **Tombol Batal Dikunci saat Loading**
+    Tombol Batal/Tutup wajib dikunci (`isDisabled: viewModel.isLoading`) saat API sedang bekerja agar tidak mengacaukan proses navigasi.
+5.  **Form Fields Dikunci saat Loading**
+    Semua `TextField` atau widget input dalam dialog wajib dikunci via parameter `enabled: !viewModel.isLoading` ketika state ViewModel sedang loading.
+6.  **Urutan `Navigator.pop` yang Aman**
+    `Navigator.pop` hanya boleh dipanggil **setelah** operasi async/API mengembalikan respons sukses di dalam blok `try`. Jangan memanggil `Navigator.pop` sebelum await.
+
+---
+
 _Dokumentasi ini mencerminkan arsitektur TBCare per Mei 2026._
