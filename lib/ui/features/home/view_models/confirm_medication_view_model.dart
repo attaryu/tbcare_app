@@ -33,6 +33,9 @@ class ConfirmMedicationViewModel extends ChangeNotifier {
 
   final ImagePicker _picker = ImagePicker();
 
+  bool _showSimulationOption = false;
+  bool get showSimulationOption => _showSimulationOption;
+
   Future<void> pickImage(ImageSource source) async {
     _error = null;
     notifyListeners();
@@ -44,10 +47,52 @@ class ConfirmMedicationViewModel extends ChangeNotifier {
       );
       if (pickedFile != null) {
         _imageFile = File(pickedFile.path);
+        _showSimulationOption = false;
         notifyListeners();
       }
     } catch (e) {
-      _error = 'Gagal mengambil gambar: $e';
+      final errorStr = e.toString();
+      if (errorStr.contains('PlatformException') ||
+          errorStr.contains('channel-error') ||
+          errorStr.contains('connection')) {
+        _error = 'Platform Channel belum terhubung.\n\n'
+            'Penyebab: Anda baru saja menginstal paket baru (image_picker) tanpa melakukan rebuild/restart aplikasi.\n\n'
+            'Solusi:\n'
+            '1. Hentikan/stop aplikasi yang sedang berjalan.\n'
+            '2. Jalankan ulang dengan "flutter run" agar kode native image_picker terkompilasi.\n\n'
+            'Untuk keperluan testing saat ini, Anda dapat menggunakan tombol "Gunakan Foto Simulasi" di bawah.';
+        _showSimulationOption = true;
+      } else {
+        _error = 'Gagal mengambil gambar: $e';
+      }
+      notifyListeners();
+    }
+  }
+
+  Future<void> useSimulatedPhoto() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final image = img.Image(width: 300, height: 300);
+      for (final pixel in image) {
+        pixel.r = 2;
+        pixel.g = 160;
+        pixel.b = 112;
+      }
+      final bytes = img.encodeJpg(image);
+
+      final tempDir = Directory.systemTemp;
+      final tempFile = File('${tempDir.path}/simulated_evidence.jpg');
+      await tempFile.writeAsBytes(bytes);
+
+      _imageFile = tempFile;
+      _showSimulationOption = false;
+      _error = null;
+    } catch (e) {
+      _error = 'Gagal membuat foto simulasi: $e';
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }

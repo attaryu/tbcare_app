@@ -17,6 +17,9 @@ Dokumen ini mencatat riwayat pembaruan, perbaikan bug, dan penyesuaian arsitektu
 - **Integrasi Supabase Storage & Database**:
   - Unggah foto biner terkompresi secara dinamis ke bucket `medication_evidence` di Supabase Storage.
   - Memperbarui riwayat kepatuhan (`compliance_logs`) dengan menyimpan URL publik foto tersebut beserta status `taken` dan waktu penyelesaian `taken_at`.
+- **Mekanisme Fallback Foto Simulasi**:
+  - Menambahkan deteksi `PlatformException` (akibat belum rebuild aplikasi saat paket native baru ditambahkan).
+  - Menyediakan opsi interaktif "Gunakan Foto Simulasi" yang menggambar gambar biner hijau teal solid di memori menggunakan pure Dart agar proses upload dan database tetap dapat diuji tanpa harus menghentikan sesi testing saat itu juga.
 
 ---
 

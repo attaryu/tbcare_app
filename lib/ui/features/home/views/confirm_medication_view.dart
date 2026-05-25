@@ -279,6 +279,14 @@ class ConfirmMedicationView extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (viewModel.showSimulationOption) ...[
+                        const SizedBox(height: 16),
+                        AppButton(
+                          text: 'Gunakan Foto Simulasi',
+                          variant: AppButtonVariant.outline,
+                          onPressed: () => viewModel.useSimulatedPhoto(),
+                        ),
+                      ],
                       const SizedBox(height: 20),
                     ],
                   ],
