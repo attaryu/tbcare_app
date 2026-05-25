@@ -103,14 +103,18 @@ class _SymptomFormViewState extends State<SymptomFormView> {
     setState(() => _isSaving = true);
     try {
       if (widget.log == null) {
-        // Since ViewModel addLog currently uses DateTime.now(),
-        // we might need to modify it or handle it here if we want custom date.
-        // But for this task, I'll stick to the UI logic.
-        await widget.viewModel.addLog(_selectedLevel, _noteController.text);
+        await widget.viewModel.addLog(
+          _selectedLevel,
+          _noteController.text,
+          createdAt: _selectedDate,
+        );
       } else {
-        final updatedLog = widget.log!.copyWith(
+        final updatedLog = SymptomLog(
+          id: widget.log!.id,
+          treatmentPeriodId: widget.log!.treatmentPeriodId,
           level: _selectedLevel,
           note: _noteController.text,
+          createdAt: _selectedDate,
           editedAt: DateTime.now(),
         );
         await widget.viewModel.updateLog(updatedLog);

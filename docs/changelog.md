@@ -4,6 +4,24 @@ Dokumen ini mencatat riwayat pembaruan, perbaikan bug, dan penyesuaian arsitektu
 
 ---
 
+## [v1.4.0-dev] - 25 Mei 2026
+
+### ✨ Fitur Baru & Sinkronisasi Real-Time (Peran Pasien)
+- **Beranda Terintegrasi (`HomeView` & `HomeRepository`)**:
+  - Sinkronisasi area **Jadwal Harian** dan **Jadwal Terdekat** dengan data riil Supabase menggunakan rentang waktu `taken_at` hari ini, menyelesaikan isu kegagalan kueri `log_date` yang usang.
+  - Implementasi seeder otomatis di `HomeRepository` untuk memastikan data beranda terisi saat pengguna baru masuk pertama kali.
+  - Logika penentuan jadwal terdekat (`nextSchedule`) yang reaktif berdasarkan selisih waktu terkecil ke waktu saat ini.
+- **Konfirmasi Kepatuhan dari Jadwal Harian**:
+  - Mengubah daftar kartu Jadwal Harian agar dapat diklik secara interaktif.
+  - Mendesain ulang `_showMedicationDetailModal` menggunakan `AppDialog.custom` + `ListenableBuilder` mematuhi **Pattern 3** (Anti-tutup luar, loading spinner reaktif pada tombol konfirmasi, penonaktifan tombol tutup saat loading, dan urutan `Navigator.pop` aman pasca operasi async sukses).
+  - Pengguna kini dapat mengonfirmasi minum obat langsung dari modal detail obat yang dibuka via daftar Jadwal Harian maupun Jadwal Terdekat.
+
+### 🛠️ Pembersihan & Perbaikan CRUD Gejala (`SymptomRepository` & `SymptomFormView`)
+- Menghapus pemanggilan seeder otomatis data gejala statis di `SymptomRepository.getSymptomLogs`.
+- Menyelaraskan input DateTime kustom dari form picker di `SymptomFormView` agar disimpan langsung ke tabel `symptom_logs` Supabase (baik saat `addLog` maupun `updateLog`).
+
+---
+
 ## [v1.3.0-dev] - 25 Mei 2026
 
 ### ✨ Fitur Baru & UI Premium (Peran Pasien)

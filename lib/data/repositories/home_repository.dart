@@ -65,11 +65,32 @@ class HomeRepository {
     int daysPassed = 0;
 
     try {
-      final tpList = await _supabase.client
+      var tpList = await _supabase.client
           .from('treatment_periods')
           .select()
           .eq('patients_id', userId)
           .eq('status', 'active');
+
+      // Seeder: If no active treatment period exists, create one with schedules
+      if (tpList.isEmpty) {
+        final now = DateTime.now();
+        final start = DateTime(now.year, now.month, 1);
+        final pred = DateTime(now.year, now.month + 6, 29);
+
+        final insertedTpList = await _supabase.client.from('treatment_periods').insert({
+          'patients_id': userId,
+          'name': 'Fase Intensif',
+          'start_date': start.toIso8601String().split('T')[0],
+          'prediction_end_date': pred.toIso8601String().split('T')[0],
+          'duration': 6,
+          'duration_type': 'month',
+          'status': 'active',
+        }).select();
+
+        if (insertedTpList.isNotEmpty) {
+          tpList = insertedTpList;
+        }
+      }
 
       if (tpList.isNotEmpty) {
         final tpRes = tpList.first;
@@ -81,24 +102,42 @@ class HomeRepository {
         daysPassed = DateTime.now().difference(startDate).inDays;
         if (daysPassed < 0) daysPassed = 0;
 
-        // Fetch schedules safely
-        final schedRes = await _supabase.client
+        // Fetch medication schedules
+        var schedRes = await _supabase.client
             .from('medication_schedules')
             .select()
             .eq('treatment_period_id', tpId)
             .order('schedule_time');
 
-        final todayStr = DateTime.now().toIso8601String().split('T')[0];
-        final schedList = List<Map<String, dynamic>>.from(schedRes);
+        var schedList = List<Map<String, dynamic>>.from(schedRes);
+
+        // Seeder: If treatment period has no schedules, seed 5 medication schedules
+        if (schedList.isEmpty) {
+          final schedsToInsert = [
+            {'treatment_period_id': tpId, 'med_name': 'Obat TBC - Isoniazid', 'schedule_time': '08:45:00'},
+            {'treatment_period_id': tpId, 'med_name': 'Obat TBC - Rifampicin', 'schedule_time': '12:10:00'},
+            {'treatment_period_id': tpId, 'med_name': 'Obat Flu', 'schedule_time': '12:10:00'},
+            {'treatment_period_id': tpId, 'med_name': 'Obat Nyeri Otot', 'schedule_time': '19:25:00'},
+            {'treatment_period_id': tpId, 'med_name': 'Obat TBC - Isoniazid', 'schedule_time': '19:25:00'},
+          ];
+
+          final insertedScheds = await _supabase.client.from('medication_schedules').insert(schedsToInsert).select();
+          schedList = List<Map<String, dynamic>>.from(insertedScheds);
+        }
 
         if (schedList.isNotEmpty) {
           final schedIds = schedList.map((s) => s['id'] as int).toList();
 
-          // Fetch compliance logs for today
+          final todayStr = DateTime.now().toIso8601String().split('T')[0];
+          final startOfDay = '${todayStr}T00:00:00';
+          final endOfDay = '${todayStr}T23:59:59';
+
+          // Fetch compliance logs for today using taken_at range
           final compRes = await _supabase.client
               .from('compliance_logs')
               .select()
-              .eq('log_date', todayStr)
+              .gte('taken_at', startOfDay)
+              .lte('taken_at', endOfDay)
               .inFilter('schedule_id', schedIds);
 
           final compMap = {
@@ -158,7 +197,7 @@ class HomeRepository {
       'activeTreatment': activeTreatment,
       'schedules': schedules,
       'complianceRate': totalCount > 0 ? (takenCount / totalCount * 100.0) : 98.0,
-      'daysPassed': daysPassed > 0 ? daysPassed : 50, // Default mockup 50 if new
+      'daysPassed': daysPassed > 0 ? daysPassed : 50,
     };
   }
 
@@ -201,26 +240,43 @@ class HomeRepository {
   }
 
   Future<void> logMedicationTaken(int scheduleId) async {
-    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+    final now = DateTime.now();
+    final todayStr = now.toIso8601String().split('T')[0];
+    final startOfDay = '${todayStr}T00:00:00';
+    final endOfDay = '${todayStr}T23:59:59';
+
+    // Get medicine name first
+    final schedRes = await _supabase.client
+        .from('medication_schedules')
+        .select('med_name')
+        .eq('id', scheduleId);
+    String medName = 'Obat TBC';
+    if (schedRes.isNotEmpty) {
+      medName = schedRes.first['med_name'] ?? 'Obat TBC';
+    }
 
     final existingList = await _supabase.client
         .from('compliance_logs')
         .select()
         .eq('schedule_id', scheduleId)
-        .eq('log_date', todayStr);
+        .gte('taken_at', startOfDay)
+        .lte('taken_at', endOfDay);
 
     if (existingList.isNotEmpty) {
       final existing = existingList.first;
       await _supabase.client
           .from('compliance_logs')
-          .update({'status': 'taken', 'taken_at': DateTime.now().toIso8601String()})
+          .update({
+            'status': 'taken',
+            'taken_at': now.toIso8601String(),
+          })
           .eq('id', existing['id']);
     } else {
       await _supabase.client.from('compliance_logs').insert({
         'schedule_id': scheduleId,
-        'log_date': todayStr,
+        'med_name': medName,
         'status': 'taken',
-        'taken_at': DateTime.now().toIso8601String(),
+        'taken_at': now.toIso8601String(),
       });
     }
   }

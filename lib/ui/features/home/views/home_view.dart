@@ -457,6 +457,7 @@ class HomeView extends StatelessWidget {
                       context,
                       viewModel.schedules[index],
                       viewModel.nextSchedule,
+                      viewModel,
                     );
                   },
                 ),
@@ -496,7 +497,7 @@ class HomeView extends StatelessWidget {
         (next['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
 
     return InkWell(
-      onTap: () => _showMedicationDetailModal(context, next),
+      onTap: () => _showMedicationDetailModal(context, next, viewModel),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -666,6 +667,7 @@ class HomeView extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> sched,
     Map<String, dynamic>? nextSched,
+    HomeViewModel viewModel,
   ) {
     final name = sched['med_name'] ?? 'Obat TBC';
     final timeStr =
@@ -678,86 +680,90 @@ class HomeView extends StatelessWidget {
     if (status == 'Di minum') badgeBg = AppColor.success;
     if (status == 'Terlewat') badgeBg = AppColor.error;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: isNext ? AppColor.primary : AppColor.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isNext ? AppColor.primary : Colors.grey.shade300,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return InkWell(
+      onTap: () => _showMedicationDetailModal(context, sched, viewModel),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: isNext ? AppColor.primary : AppColor.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isNext ? AppColor.primary : Colors.grey.shade300,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: status == 'Di minum'
-                  ? AppColor.success
-                  : (isNext
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: status == 'Di minum'
+                    ? AppColor.success
+                    : (isNext
                         ? AppColor.white.withOpacity(0.2)
                         : AppColor.lightGray),
-              shape: BoxShape.circle,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                status == 'Di minum'
+                    ? Icons.check
+                    : Icons.medical_services_outlined,
+                size: 16,
+                color: status == 'Di minum'
+                    ? AppColor.white
+                    : (isNext ? AppColor.white : AppColor.neutralGray),
+              ),
             ),
-            child: Icon(
-              status == 'Di minum'
-                  ? Icons.check
-                  : Icons.medical_services_outlined,
-              size: 16,
-              color: status == 'Di minum'
-                  ? AppColor.white
-                  : (isNext ? AppColor.white : AppColor.neutralGray),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                name,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: isNext ? AppColor.white : AppColor.darkGray,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              name,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: badgeBg,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                status,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              Icons.alarm,
+              size: 14,
+              color: isNext ? AppColor.white : AppColor.darkGray,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '$timeStr WIB',
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: isNext ? AppColor.white : AppColor.darkGray,
               ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: badgeBg,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              status,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppColor.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Icon(
-            Icons.alarm,
-            size: 14,
-            color: isNext ? AppColor.white : AppColor.darkGray,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$timeStr WIB',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isNext ? AppColor.white : AppColor.darkGray,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -897,36 +903,113 @@ class HomeView extends StatelessWidget {
   void _showMedicationDetailModal(
     BuildContext context,
     Map<String, dynamic> sched,
+    HomeViewModel viewModel,
   ) {
     final medName = sched['med_name'] ?? 'Obat TBC';
     final timeStr =
         (sched['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
     final dosage = sched['dosage'] ?? '1 Tablet / Kaplet';
     final instructions = sched['instructions'] ?? 'Diminum sesudah makan';
-    final status = sched['today_status'] ?? 'Segera';
 
-    Color statusColor = AppColor.darkGray;
-    if (status == 'Di minum') statusColor = AppColor.success;
-    if (status == 'Terlewat') statusColor = AppColor.error;
-    if (status == 'Segera') statusColor = AppColor.warning;
-
-    AppDialog.info(
+    AppDialog.custom(
       context,
-      title: medName,
-      icon: Icons.medical_services,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppDialogInfoRow(label: 'Waktu Minum', value: '$timeStr WIB'),
-          AppDialogInfoRow(label: 'Dosis', value: dosage),
-          AppDialogInfoRow(label: 'Aturan Pakai', value: instructions),
-          AppDialogInfoRow(
-            label: 'Status Hari Ini',
-            value: status,
-            valueColor: statusColor,
-            isLast: true,
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: viewModel,
+        builder: (_, __) {
+          final currentSched = viewModel.schedules.firstWhere(
+            (s) => s['id'] == sched['id'],
+            orElse: () => sched,
+          );
+          final status = currentSched['today_status'] ?? 'Segera';
+
+          Color statusColor = AppColor.darkGray;
+          if (status == 'Di minum') statusColor = AppColor.success;
+          if (status == 'Terlewat') statusColor = AppColor.error;
+          if (status == 'Segera') statusColor = AppColor.warning;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.medical_services, color: AppColor.primary, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      medName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColor.darkGray,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1, thickness: 1.2),
+              const SizedBox(height: 16),
+              AppDialogInfoRow(label: 'Waktu Minum', value: '$timeStr WIB'),
+              AppDialogInfoRow(label: 'Dosis', value: dosage),
+              AppDialogInfoRow(label: 'Aturan Pakai', value: instructions),
+              AppDialogInfoRow(
+                label: 'Status Hari Ini',
+                value: status,
+                valueColor: statusColor,
+                isLast: true,
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      text: 'Tutup',
+                      variant: AppButtonVariant.outline,
+                      height: 48,
+                      isDisabled: viewModel.isLoading,
+                      onPressed: () => Navigator.pop(dialogContext),
+                    ),
+                  ),
+                  if (status != 'Di minum') ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppButton(
+                        text: 'Konfirmasi',
+                        height: 48,
+                        isLoading: viewModel.isLoading,
+                        onPressed: () async {
+                          try {
+                            await viewModel.confirmMedicationTaken(sched['id']);
+                            if (dialogContext.mounted) {
+                              Navigator.pop(dialogContext);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Konfirmasi minum obat berhasil!'),
+                                  backgroundColor: AppColor.success,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (dialogContext.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.toString()),
+                                  backgroundColor: AppColor.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
