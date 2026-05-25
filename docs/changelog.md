@@ -4,6 +4,22 @@ Dokumen ini mencatat riwayat pembaruan, perbaikan bug, dan penyesuaian arsitektu
 
 ---
 
+## [v1.3.0-dev] - 25 Mei 2026
+
+### ✨ Fitur Baru & UI Premium (Peran Pasien)
+- **Halaman Jadwal Minum Obat Harian (`MedicationScheduleView`)**:
+  - Implementasi halaman baru yang menampilkan daftar jadwal minum obat harian pasien.
+  - Sesuai dengan desain lampiran: menyajikan header dengan tombol kembali kustom berbentuk kotak hijau/teal, judul besar, dan informasi "Periode Jadwal" dalam bentuk kartu hijau/teal solid yang berisi nama periode dan rentang tanggal.
+  - Daftar kartu jadwal obat harian lengkap dengan nama obat, ikon jam, waktu dalam WIB, dan tombol opsi menu (`...`) hijau/teal.
+  - Implementasi fungsionalitas CRUD lengkap:
+    - **Create (Tambah Jadwal)**: tombol "Tambah Jadwal" di bawah daftar dan tombol FAB (+) di pojok kanan bawah memunculkan dialog/bottom sheet premium untuk memasukkan nama obat dan memilih waktu.
+    - **Read**: Memuat data real-time langsung dari tabel `medication_schedules` di database Supabase Cloud.
+    - **Update (Edit Jadwal)**: Mengedit nama obat dan jam minum obat melalui bottom sheet yang sama.
+    - **Delete (Hapus Jadwal)**: Menghapus jadwal obat secara aman dengan dialog konfirmasi.
+  - Penerapan arsitektur MVVM secara disiplin melalui `MedicationScheduleViewModel` dan `MedicationScheduleRepository`.
+
+---
+
 ## [v1.2.0-dev] - 17 Mei 2026
 
 ### ✨ Fitur Baru & UI Premium (Peran Pasien)

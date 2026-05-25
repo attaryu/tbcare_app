@@ -244,8 +244,7 @@ class ProfileView extends StatelessWidget {
                       _buildListItem(
                         icon: Icons.alarm,
                         title: 'Jadwal Minum Obat Harian',
-                        onTap: () =>
-                            _showMedicationSchedulesDialog(context, viewModel),
+                        onTap: () => context.push('/profile/medication-schedules'),
                       ),
                     ],
                   ),

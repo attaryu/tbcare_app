@@ -7,6 +7,7 @@ import 'core/config/app_env.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/history_repository.dart';
 import 'data/repositories/home_repository.dart';
+import 'data/repositories/medication_schedule_repository.dart';
 import 'data/repositories/profile_repository.dart';
 import 'data/repositories/symptom_repository.dart';
 import 'data/repositories/treatment_repository.dart';
@@ -56,6 +57,9 @@ class MainApp extends StatelessWidget {
         ),
         ProxyProvider<SupabaseService, HistoryRepository>(
           update: (_, supabase, __) => HistoryRepository(supabase),
+        ),
+        ProxyProvider<SupabaseService, MedicationScheduleRepository>(
+          update: (_, supabase, __) => MedicationScheduleRepository(supabase),
         ),
         ChangeNotifierProvider<AuthViewModel>.value(
           value: authViewModel,

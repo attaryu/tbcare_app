@@ -10,6 +10,7 @@ import '../../data/repositories/home_repository.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/repositories/symptom_repository.dart';
 import '../../data/repositories/treatment_repository.dart';
+import '../../data/repositories/medication_schedule_repository.dart';
 import '../features/auth/view_models/auth_view_model.dart';
 import '../features/auth/views/login_view.dart';
 import '../features/auth/views/register_view.dart';
@@ -25,6 +26,8 @@ import '../features/symptoms/views/symptom_list_view.dart';
 import '../features/treatment/view_models/treatment_view_model.dart';
 import '../features/treatment/views/treatment_form_view.dart';
 import '../features/treatment/views/treatment_view.dart';
+import '../features/medication_schedule/view_models/medication_schedule_view_model.dart';
+import '../features/medication_schedule/views/medication_schedule_view.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -189,6 +192,28 @@ class AppRouter {
                     );
                   },
                   routes: [
+                    GoRoute(
+                      path: 'medication-schedules',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      builder: (context, state) {
+                        final userId = authViewModel.currentUser?.id;
+                        if (userId == null) {
+                          return const Scaffold(
+                            body: Center(child: Text('Sesi berakhir')),
+                          );
+                        }
+                        return ChangeNotifierProvider(
+                          create: (_) => MedicationScheduleViewModel(
+                            repository: context.read<MedicationScheduleRepository>(),
+                            userId: userId,
+                          ),
+                          child: Consumer<MedicationScheduleViewModel>(
+                            builder: (context, viewModel, _) =>
+                                MedicationScheduleView(viewModel: viewModel),
+                          ),
+                        );
+                      },
+                    ),
                     GoRoute(
                       path: 'treatment-periods',
                       parentNavigatorKey: _rootNavigatorKey,
