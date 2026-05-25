@@ -112,13 +112,13 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> confirmMedicationTaken(int scheduleId) async {
+  Future<void> confirmMedicationTaken(int scheduleId, {String? photoUrl}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _repository.logMedicationTaken(scheduleId);
+      await _repository.logMedicationTaken(scheduleId, photoUrl: photoUrl);
       await fetchHomeData();
     } catch (e) {
       _error = e.toString();

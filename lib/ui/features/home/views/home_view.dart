@@ -565,29 +565,16 @@ class HomeView extends StatelessWidget {
                   Expanded(
                     child: AppButton(
                       text: 'Konfirmasi minum obat',
-                      onPressed: () async {
-                        try {
-                          await viewModel.confirmMedicationTaken(next['id']);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Konfirmasi minum obat berhasil!',
-                                ),
-                                backgroundColor: AppColor.success,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(e.toString()),
-                                backgroundColor: AppColor.error,
-                              ),
-                            );
-                          }
-                        }
+                      onPressed: () {
+                        context.push(
+                          '/confirm-medication',
+                          extra: {
+                            'scheduleId': next['id'],
+                            'medName': medName,
+                            'scheduleTime': timeStr,
+                            'homeViewModel': viewModel,
+                          },
+                        );
                       },
                     ),
                   )
@@ -979,28 +966,17 @@ class HomeView extends StatelessWidget {
                         text: 'Konfirmasi',
                         height: 48,
                         isLoading: viewModel.isLoading,
-                        onPressed: () async {
-                          try {
-                            await viewModel.confirmMedicationTaken(sched['id']);
-                            if (dialogContext.mounted) {
-                              Navigator.pop(dialogContext);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Konfirmasi minum obat berhasil!'),
-                                  backgroundColor: AppColor.success,
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (dialogContext.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(e.toString()),
-                                  backgroundColor: AppColor.error,
-                                ),
-                              );
-                            }
-                          }
+                        onPressed: () {
+                          Navigator.pop(dialogContext);
+                          context.push(
+                            '/confirm-medication',
+                            extra: {
+                              'scheduleId': sched['id'],
+                              'medName': medName,
+                              'scheduleTime': timeStr,
+                              'homeViewModel': viewModel,
+                            },
+                          );
                         },
                       ),
                     ),

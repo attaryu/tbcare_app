@@ -239,7 +239,7 @@ class HomeRepository {
     }
   }
 
-  Future<void> logMedicationTaken(int scheduleId) async {
+  Future<void> logMedicationTaken(int scheduleId, {String? photoUrl}) async {
     final now = DateTime.now();
     final todayStr = now.toIso8601String().split('T')[0];
     final startOfDay = '${todayStr}T00:00:00';
@@ -269,6 +269,7 @@ class HomeRepository {
           .update({
             'status': 'taken',
             'taken_at': now.toIso8601String(),
+            'photo_url': photoUrl,
           })
           .eq('id', existing['id']);
     } else {
@@ -277,6 +278,7 @@ class HomeRepository {
         'med_name': medName,
         'status': 'taken',
         'taken_at': now.toIso8601String(),
+        'photo_url': photoUrl,
       });
     }
   }

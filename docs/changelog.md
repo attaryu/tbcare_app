@@ -4,6 +4,22 @@ Dokumen ini mencatat riwayat pembaruan, perbaikan bug, dan penyesuaian arsitektu
 
 ---
 
+## [v1.5.0-dev] - 25 Mei 2026
+
+### ✨ Fitur Baru & Optimalisasi Penyimpanan (Peran Pasien)
+- **Halaman Konfirmasi Minum Obat dengan Foto (`ConfirmMedicationView`)**:
+  - Implementasi alur konfirmasi minum obat interaktif menggunakan bukti foto langsung dari Kamera atau Galeri.
+  - Membuka halaman secara otomatis ketika menekan tombol "Konfirmasi minum obat" di area Jadwal Terdekat maupun tombol "Konfirmasi" pada modal detail obat.
+  - Tampilan UI premium berlatar belakang putih bersih dengan tombol kembali berbingkai hijau teal melengkung (sudut bulat) khas TBCare.
+- **Kompresi Gambar Ultra Ringan**:
+  - Mengintegrasikan pustaka `image` berbasis Dart untuk memproses dan mengompresi byte foto sebelum diunggah ke storage.
+  - Mengurangi resolusi foto secara otomatis (maksimal 400px pada sisi terlebar) dan menyimpannya sebagai JPEG dengan kualitas 30%, meminimalkan ukuran file menjadi sangat kecil (~15-30 KB) untuk optimalisasi penyimpanan database & cloud storage Supabase.
+- **Integrasi Supabase Storage & Database**:
+  - Unggah foto biner terkompresi secara dinamis ke bucket `medication_evidence` di Supabase Storage.
+  - Memperbarui riwayat kepatuhan (`compliance_logs`) dengan menyimpan URL publik foto tersebut beserta status `taken` dan waktu penyelesaian `taken_at`.
+
+---
+
 ## [v1.4.0-dev] - 25 Mei 2026
 
 ### ✨ Fitur Baru & Sinkronisasi Real-Time (Peran Pasien)

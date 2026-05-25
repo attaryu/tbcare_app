@@ -28,6 +28,9 @@ import '../features/treatment/views/treatment_form_view.dart';
 import '../features/treatment/views/treatment_view.dart';
 import '../features/medication_schedule/view_models/medication_schedule_view_model.dart';
 import '../features/medication_schedule/views/medication_schedule_view.dart';
+import '../../data/services/supabase_service.dart';
+import '../features/home/view_models/confirm_medication_view_model.dart';
+import '../features/home/views/confirm_medication_view.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -77,6 +80,30 @@ class AppRouter {
                       child: const HomeView(),
                     );
                   },
+                  routes: [
+                    GoRoute(
+                      path: 'confirm-medication',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      builder: (context, state) {
+                        final extras = state.extra as Map<String, dynamic>;
+                        final scheduleId = extras['scheduleId'] as int;
+                        final medName = extras['medName'] as String;
+                        final scheduleTime = extras['scheduleTime'] as String;
+                        final homeViewModel = extras['homeViewModel'] as HomeViewModel;
+
+                        return ChangeNotifierProvider(
+                          create: (_) => ConfirmMedicationViewModel(
+                            homeViewModel: homeViewModel,
+                            scheduleId: scheduleId,
+                            medName: medName,
+                            scheduleTime: scheduleTime,
+                            supabaseService: context.read<SupabaseService>(),
+                          ),
+                          child: const ConfirmMedicationView(),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
