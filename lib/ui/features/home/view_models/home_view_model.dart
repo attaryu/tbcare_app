@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/home_repository.dart';
@@ -5,11 +6,26 @@ import '../../../../data/repositories/home_repository.dart';
 class HomeViewModel extends ChangeNotifier {
   final HomeRepository _repository;
   final int _userId;
+  Timer? _timer;
 
   HomeViewModel({required HomeRepository repository, required int userId})
       : _repository = repository,
         _userId = userId {
     fetchHomeData();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      autoMarkMissedSchedules();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   bool _isLoading = false;
@@ -52,9 +68,9 @@ class HomeViewModel extends ChangeNotifier {
     final todayPrefix =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    // Hanya jadwal yang belum diminum
+    // Hanya jadwal yang berstatus Segera (akan datang dan belum lewat/diminum)
     final pending = _schedules
-        .where((s) => s['today_status'] != 'Di minum')
+        .where((s) => s['today_status'] == 'Segera')
         .toList();
 
     if (pending.isEmpty) return [];
@@ -137,11 +153,73 @@ class HomeViewModel extends ChangeNotifier {
 
       _isWithin30MinsSimulation = true;
       _error = null;
+
+      // Panggil auto-mark setelah load
+      await autoMarkMissedSchedules();
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  bool _isTimePassed(String scheduleTimeStr) {
+    try {
+      final now = DateTime.now();
+      final parts = scheduleTimeStr.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+
+      final scheduleDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        hour,
+        minute,
+        parts.length > 2 ? int.parse(parts[2]) : 0,
+      );
+
+      return now.isAfter(scheduleDateTime);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> autoMarkMissedSchedules() async {
+    if (_schedules.isEmpty) return;
+
+    bool hasChanges = false;
+    for (final s in _schedules) {
+      final status = s['today_status'] as String? ?? 'Segera';
+      if (status == 'Segera') {
+        final timeStr = s['schedule_time'] as String?;
+        if (timeStr != null && _isTimePassed(timeStr)) {
+          try {
+            await _repository.upsertMissedLog(s['id'] as int, s['med_name'] as String? ?? 'Obat TBC');
+            hasChanges = true;
+          } catch (e) {
+            debugPrint('Failed to auto-mark missed schedule ${s['id']}: $e');
+          }
+        }
+      }
+    }
+
+    if (hasChanges) {
+      // Refresh home data secara internal tanpa set loading flag untuk user experience yang seamless
+      try {
+        final data = await _repository.getHomeData(_userId);
+        _schedules = List<Map<String, dynamic>>.from(data['schedules'] as List);
+        _schedules.sort((a, b) {
+          final timeA = a['schedule_time'] as String? ?? '';
+          final timeB = b['schedule_time'] as String? ?? '';
+          return timeA.compareTo(timeB);
+        });
+        _complianceRate = data['complianceRate'] as double;
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Failed to refresh home data after auto-mark: $e');
+      }
     }
   }
 

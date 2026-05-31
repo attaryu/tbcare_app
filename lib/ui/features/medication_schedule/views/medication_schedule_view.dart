@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../data/models/medication_schedule_model.dart';
@@ -16,6 +16,7 @@ class MedicationScheduleView extends StatefulWidget {
 }
 
 class _MedicationScheduleViewState extends State<MedicationScheduleView> {
+
   @override
   void initState() {
     super.initState();
@@ -164,70 +165,76 @@ class _MedicationScheduleViewState extends State<MedicationScheduleView> {
                               final s = schedules[index];
                               final timeStr = s.scheduleTime.substring(0, 5);
 
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                decoration: BoxDecoration(
-                                  color: AppColor.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.02),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: AppColor.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.02),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                      color: AppColor.lightGray,
+                                      width: 1,
                                     ),
-                                  ],
-                                  border: Border.all(
-                                    color: AppColor.lightGray,
-                                    width: 1,
                                   ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        s.medName,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColor.darkGray,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              s.medName,
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColor.darkGray,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.access_time,
+                                                  size: 14,
+                                                  color: AppColor.neutralGray,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '$timeStr WIB',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: AppColor.neutralGray,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.access_time,
-                                          size: 16,
-                                          color: AppColor.darkGray,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          '$timeStr WIB',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColor.darkGray,
+                                      const SizedBox(width: 12),
+                                      GestureDetector(
+                                        onTap: () => _showOptionsBottomSheet(context, s),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: AppColor.primary,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Icon(
+                                            Icons.more_horiz,
+                                            color: AppColor.white,
+                                            size: 20,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 12),
-                                    GestureDetector(
-                                      onTap: () => _showOptionsBottomSheet(context, s),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: AppColor.primary,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          Icons.more_horiz,
-                                          color: AppColor.white,
-                                          size: 20,
-                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               );

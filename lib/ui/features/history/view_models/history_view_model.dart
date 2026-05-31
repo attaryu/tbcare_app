@@ -76,8 +76,8 @@ class HistoryViewModel extends ChangeNotifier {
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
     final dailySchedules = getSchedulesForSelectedDate();
-    // Only pending schedules (not yet taken)
-    final pending = dailySchedules.where((s) => s['status'] != 'Di minum').toList();
+    // Only pending schedules (upcoming, not yet taken or missed)
+    final pending = dailySchedules.where((s) => s['status'] == 'Segera').toList();
     if (pending.isEmpty) return {};
 
     Duration? minDiff;

@@ -94,15 +94,12 @@ class HomeRepository {
           final schedIds = schedList.map((s) => s['id'] as int).toList();
 
           final todayStr = DateTime.now().toIso8601String().split('T')[0];
-          final startOfDay = '${todayStr}T00:00:00';
-          final endOfDay = '${todayStr}T23:59:59';
 
-          // Fetch compliance logs for today using taken_at range
+          // Fetch compliance logs for today using log_date
           final compRes = await _supabase.client
               .from('compliance_logs')
               .select('schedule_id, status, verified_by')
-              .gte('taken_at', startOfDay)
-              .lte('taken_at', endOfDay)
+              .eq('log_date', todayStr)
               .inFilter('schedule_id', schedIds);
 
           final compMap = {
@@ -146,7 +143,7 @@ class HomeRepository {
                 final sTime = DateTime(now.year, now.month, now.day,
                     int.parse(parts[0]), int.parse(parts[1]));
 
-                if (now.difference(sTime).inMinutes > 60) {
+                if (now.isAfter(sTime)) {
                   status = 'Terlewat';
                 }
               } catch (_) {}
@@ -212,8 +209,6 @@ class HomeRepository {
   Future<void> logMedicationTaken(int scheduleId, {String? photoUrl}) async {
     final now = DateTime.now();
     final todayStr = now.toIso8601String().split('T')[0];
-    final startOfDay = '${todayStr}T00:00:00';
-    final endOfDay = '${todayStr}T23:59:59';
 
     // Get medicine name first
     final schedRes = await _supabase.client
@@ -229,8 +224,7 @@ class HomeRepository {
         .from('compliance_logs')
         .select()
         .eq('schedule_id', scheduleId)
-        .gte('taken_at', startOfDay)
-        .lte('taken_at', endOfDay);
+        .eq('log_date', todayStr);
 
     if (existingList.isNotEmpty) {
       final existing = existingList.first;
@@ -249,7 +243,35 @@ class HomeRepository {
         'status': 'taken',
         'taken_at': now.toIso8601String(),
         'photo_url': photoUrl,
+        'log_date': todayStr,
       });
+    }
+  }
+
+  Future<void> upsertMissedLog(int scheduleId, String medName) async {
+    final today = DateTime.now();
+    final todayStr = today.toIso8601String().substring(0, 10);
+
+    final existing = await _supabase.client
+        .from('compliance_logs')
+        .select('status')
+        .eq('schedule_id', scheduleId)
+        .eq('log_date', todayStr)
+        .maybeSingle();
+
+    if (existing == null) {
+      await _supabase.client.from('compliance_logs').insert({
+        'schedule_id': scheduleId,
+        'med_name': medName,
+        'status': 'missed',
+        'log_date': todayStr,
+      });
+    } else if (existing['status'] == 'pending') {
+      await _supabase.client
+          .from('compliance_logs')
+          .update({'status': 'missed'})
+          .eq('schedule_id', scheduleId)
+          .eq('log_date', todayStr);
     }
   }
 }

@@ -1,3 +1,4 @@
+import '../models/compliance_log_model.dart';
 import '../models/medication_schedule_model.dart';
 import '../services/supabase_service.dart';
 
