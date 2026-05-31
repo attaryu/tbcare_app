@@ -55,7 +55,10 @@ class AppRouter {
       },
       routes: [
         GoRoute(path: '/login', builder: (context, state) => const LoginView()),
-        GoRoute(path: '/register', builder: (context, state) => const RegisterView()),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const RegisterView(),
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             return MainShell(navigationShell: navigationShell);
@@ -89,7 +92,8 @@ class AppRouter {
                         final scheduleId = extras['scheduleId'] as int;
                         final medName = extras['medName'] as String;
                         final scheduleTime = extras['scheduleTime'] as String;
-                        final homeViewModel = extras['homeViewModel'] as HomeViewModel;
+                        final homeViewModel =
+                            extras['homeViewModel'] as HomeViewModel;
 
                         return ChangeNotifierProvider(
                           create: (_) => ConfirmMedicationViewModel(
@@ -135,10 +139,11 @@ class AppRouter {
                   path: '/symptoms',
                   builder: (context, state) {
                     final userId = authViewModel.currentUser?.id;
-                    if (userId == null)
+                    if (userId == null) {
                       return const Scaffold(
                         body: Center(child: Text('Error: Sesi berakhir')),
                       );
+                    }
 
                     return FutureBuilder<int?>(
                       future: context
@@ -231,7 +236,8 @@ class AppRouter {
                         }
                         return ChangeNotifierProvider(
                           create: (_) => MedicationScheduleViewModel(
-                            repository: context.read<MedicationScheduleRepository>(),
+                            repository: context
+                                .read<MedicationScheduleRepository>(),
                             userId: userId,
                           ),
                           child: Consumer<MedicationScheduleViewModel>(
@@ -273,8 +279,10 @@ class AppRouter {
                           parentNavigatorKey: _rootNavigatorKey,
                           builder: (context, state) {
                             final extras = state.extra as Map<String, dynamic>;
-                            final viewModel = extras['viewModel'] as TreatmentViewModel;
-                            final period = extras['period'] as TreatmentPeriodModel;
+                            final viewModel =
+                                extras['viewModel'] as TreatmentViewModel;
+                            final period =
+                                extras['period'] as TreatmentPeriodModel;
                             return TreatmentFormView(
                               viewModel: viewModel,
                               existingPeriod: period,

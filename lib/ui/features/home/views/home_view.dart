@@ -393,7 +393,7 @@ class HomeView extends StatelessWidget {
                             icon: Icons.alarm,
                             label: 'Atur\nJadwal',
                             onTap: () =>
-                                context.push('/profile/treatment-periods'),
+                                context.push('/profile/medication-schedules'),
                           ),
                           const SizedBox(width: 14),
                           _buildQuickActionCard(
