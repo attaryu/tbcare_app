@@ -456,7 +456,6 @@ class HomeView extends StatelessWidget {
                     return _buildDailyScheduleCard(
                       context,
                       viewModel.schedules[index],
-                      viewModel.nextSchedule,
                       viewModel,
                     );
                   },
@@ -470,8 +469,8 @@ class HomeView extends StatelessWidget {
   }
 
   Widget _buildNextScheduleCard(BuildContext context, HomeViewModel viewModel) {
-    final next = viewModel.nextSchedule;
-    if (next == null) {
+    final nextList = viewModel.nextSchedules;
+    if (nextList.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
@@ -492,108 +491,117 @@ class HomeView extends StatelessWidget {
       );
     }
 
-    final medName = next['med_name'] ?? 'Obat TBC';
-    final timeStr =
-        (next['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: nextList.map((next) {
+        final medName = next['med_name'] ?? 'Obat TBC';
+        final timeStr =
+            (next['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
 
-    return InkWell(
-      onTap: () => _showMedicationDetailModal(context, next, viewModel),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColor.primaryLight,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColor.primary, width: 1.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    medName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.primary,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    const Icon(Icons.alarm, color: AppColor.primary, size: 20),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$timeStr WIB',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Buttons Row
-            Row(
-              children: [
-                if (viewModel.isAlarmTriggering) ...[
-                  Expanded(
-                    child: AppButton(
-                      text: 'Tunda 5 menit',
-                      color: AppButtonColor.warning,
-                      onPressed: () {
-                        viewModel.snoozeMedication();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Pengingat ditunda 5 menit'),
-                            backgroundColor: AppColor.warning,
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: InkWell(
+            onTap: () => _showMedicationDetailModal(context, next, viewModel),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColor.primaryLight,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColor.primary, width: 1.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          medName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.primary,
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                if (viewModel.isWithin30MinsSimulation)
-                  Expanded(
-                    child: AppButton(
-                      text: 'Konfirmasi minum obat',
-                      onPressed: () {
-                        context.push(
-                          '/confirm-medication',
-                          extra: {
-                            'scheduleId': next['id'],
-                            'medName': medName,
-                            'scheduleTime': timeStr,
-                            'homeViewModel': viewModel,
-                          },
-                        );
-                      },
-                    ),
-                  )
-                else
-                  const Expanded(
-                    child: Text(
-                      'Belum waktunya konfirmasi minum obat.',
-                      style: TextStyle(
-                        color: AppColor.neutralGray,
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
+                        ),
                       ),
-                    ),
+                      Row(
+                        children: [
+                          const Icon(Icons.alarm, color: AppColor.primary, size: 20),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$timeStr WIB',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-              ],
+                  const SizedBox(height: 20),
+
+                  // Buttons Row
+                  Row(
+                    children: [
+                      if (viewModel.isAlarmTriggering) ...[
+                        Expanded(
+                          child: AppButton(
+                            text: 'Tunda 5 menit',
+                            color: AppButtonColor.warning,
+                            onPressed: () {
+                              viewModel.snoozeMedication();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Pengingat ditunda 5 menit'),
+                                  backgroundColor: AppColor.warning,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      if (viewModel.isWithin30MinsSimulation)
+                        Expanded(
+                          child: AppButton(
+                            text: 'Konfirmasi minum obat',
+                            onPressed: () {
+                              context.push(
+                                '/confirm-medication',
+                                extra: {
+                                  'scheduleId': next['id'],
+                                  'medName': medName,
+                                  'scheduleTime': timeStr,
+                                  'homeViewModel': viewModel,
+                                },
+                              );
+                            },
+                          ),
+                        )
+                      else
+                        const Expanded(
+                          child: Text(
+                            'Belum waktunya konfirmasi minum obat.',
+                            style: TextStyle(
+                              color: AppColor.neutralGray,
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -653,7 +661,6 @@ class HomeView extends StatelessWidget {
   Widget _buildDailyScheduleCard(
     BuildContext context,
     Map<String, dynamic> sched,
-    Map<String, dynamic>? nextSched,
     HomeViewModel viewModel,
   ) {
     final name = sched['med_name'] ?? 'Obat TBC';
@@ -661,7 +668,7 @@ class HomeView extends StatelessWidget {
         (sched['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
     final status = sched['today_status'] as String? ?? 'Segera';
 
-    final isNext = nextSched != null && nextSched['id'] == sched['id'];
+    final isNext = viewModel.nextSchedules.any((ns) => ns['id'] == sched['id']);
 
     Color badgeBg = AppColor.warning;
     if (status == 'Di minum') badgeBg = AppColor.success;
@@ -710,13 +717,29 @@ class HomeView extends StatelessWidget {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                name,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: isNext ? AppColor.white : AppColor.darkGray,
-                ),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: isNext ? AppColor.white : AppColor.darkGray,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (sched['is_verified'] == true) ...[
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.verified,
+                      size: 16,
+                      color: isNext ? AppColor.white : AppColor.primary,
+                    ),
+                  ],
+                ],
               ),
             ),
             Container(

@@ -135,13 +135,17 @@ class HomeRepository {
           // Fetch compliance logs for today using taken_at range
           final compRes = await _supabase.client
               .from('compliance_logs')
-              .select()
+              .select('schedule_id, status, verified_by')
               .gte('taken_at', startOfDay)
               .lte('taken_at', endOfDay)
               .inFilter('schedule_id', schedIds);
 
           final compMap = {
-            for (var item in compRes) item['schedule_id'] as int: item['status']
+            for (var item in compRes)
+              item['schedule_id'] as int: {
+                'status': item['status'],
+                'verified_by': item['verified_by'],
+              }
           };
 
           // Fetch all compliance logs to calculate overall compliance
@@ -164,8 +168,13 @@ class HomeRepository {
           for (var s in schedList) {
             final sId = s['id'] as int;
             String status = 'Segera';
+            bool isVerified = false;
+
             if (compMap.containsKey(sId)) {
-              final st = compMap[sId];
+              final logData = compMap[sId];
+              final st = logData?['status'];
+              isVerified = logData?['verified_by'] != null;
+
               if (st == 'taken') status = 'Di minum';
               if (st == 'missed') status = 'Terlewat';
             } else {
@@ -184,6 +193,7 @@ class HomeRepository {
             }
 
             s['today_status'] = status;
+            s['is_verified'] = isVerified;
             schedules.add(s);
           }
         }

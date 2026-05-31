@@ -45,8 +45,8 @@ class HomeViewModel extends ChangeNotifier {
   bool _isWithin30MinsSimulation = true;
   bool get isWithin30MinsSimulation => _isWithin30MinsSimulation;
 
-  Map<String, dynamic>? get nextSchedule {
-    if (_schedules.isEmpty) return null;
+  List<Map<String, dynamic>> get nextSchedules {
+    if (_schedules.isEmpty) return [];
 
     final now = DateTime.now();
     final todayPrefix =
@@ -57,12 +57,10 @@ class HomeViewModel extends ChangeNotifier {
         .where((s) => s['today_status'] != 'Di minum')
         .toList();
 
-    if (pending.isEmpty) return null;
+    if (pending.isEmpty) return [];
 
-    // Cari jadwal dengan waktu paling dekat dari sekarang
-    Map<String, dynamic>? closest;
-    Duration? closestDiff;
-
+    // Cari jadwal dengan waktu paling dekat dari sekarang (selisih terkecil)
+    Duration? minDiff;
     for (final s in pending) {
       final timeStr = s['schedule_time'] as String?;
       if (timeStr == null) continue;
@@ -71,13 +69,34 @@ class HomeViewModel extends ChangeNotifier {
       if (schedDateTime == null) continue;
 
       final diff = schedDateTime.difference(now).abs();
-      if (closestDiff == null || diff < closestDiff) {
-        closestDiff = diff;
-        closest = s;
+      if (minDiff == null || diff < minDiff) {
+        minDiff = diff;
       }
     }
 
-    return closest ?? pending.first;
+    if (minDiff == null) return [];
+
+    // Ambil semua jadwal dari pending yang memiliki selisih waktu terdekat yang sama
+    final closestSchedules = <Map<String, dynamic>>[];
+    for (final s in pending) {
+      final timeStr = s['schedule_time'] as String?;
+      if (timeStr == null) continue;
+      final timePart = timeStr.substring(0, 5);
+      final schedDateTime = DateTime.tryParse('${todayPrefix}T$timePart:00');
+      if (schedDateTime == null) continue;
+
+      final diff = schedDateTime.difference(now).abs();
+      if ((diff - minDiff).inSeconds.abs() == 0) {
+        closestSchedules.add(s);
+      }
+    }
+
+    return closestSchedules;
+  }
+
+  Map<String, dynamic>? get nextSchedule {
+    final list = nextSchedules;
+    return list.isNotEmpty ? list.first : null;
   }
 
   void toggleAlarmSimulation() {
@@ -107,7 +126,12 @@ class HomeViewModel extends ChangeNotifier {
       _hasSupervisor = data['hasSupervisor'] as bool;
       _supervisorInfo = data['supervisorInfo'] as Map<String, dynamic>?;
       _activeTreatment = data['activeTreatment'] as Map<String, dynamic>?;
-      _schedules = data['schedules'] as List<Map<String, dynamic>>;
+      _schedules = List<Map<String, dynamic>>.from(data['schedules'] as List);
+      _schedules.sort((a, b) {
+        final timeA = a['schedule_time'] as String? ?? '';
+        final timeB = b['schedule_time'] as String? ?? '';
+        return timeA.compareTo(timeB);
+      });
       _complianceRate = data['complianceRate'] as double;
       _daysPassed = data['daysPassed'] as int;
 
