@@ -43,6 +43,56 @@ class HistoryViewModel extends ChangeNotifier {
   };
   Map<String, dynamic> get stats => _stats;
 
+  /// Getter to calculate active schedule IDs (closest upcoming schedules)
+  /// only if the selected date is today.
+  Set<int> get activeScheduleIds {
+    final now = DateTime.now();
+    final isToday = _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+    if (!isToday || _schedules.isEmpty) return {};
+
+    final todayPrefix =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    final dailySchedules = getSchedulesForSelectedDate();
+    // Only pending schedules (not yet taken)
+    final pending = dailySchedules.where((s) => s['status'] != 'Di minum').toList();
+    if (pending.isEmpty) return {};
+
+    Duration? minDiff;
+    for (final s in pending) {
+      final timeStr = s['schedule_time'] as String?;
+      if (timeStr == null) continue;
+      final timePart = timeStr.length >= 5 ? timeStr.substring(0, 5) : timeStr;
+      final schedDateTime = DateTime.tryParse('${todayPrefix}T$timePart:00');
+      if (schedDateTime == null) continue;
+
+      final diff = schedDateTime.difference(now).abs();
+      if (minDiff == null || diff < minDiff) {
+        minDiff = diff;
+      }
+    }
+
+    if (minDiff == null) return {};
+
+    final closestIds = <int>{};
+    for (final s in pending) {
+      final timeStr = s['schedule_time'] as String?;
+      if (timeStr == null) continue;
+      final timePart = timeStr.length >= 5 ? timeStr.substring(0, 5) : timeStr;
+      final schedDateTime = DateTime.tryParse('${todayPrefix}T$timePart:00');
+      if (schedDateTime == null) continue;
+
+      final diff = schedDateTime.difference(now).abs();
+      if ((diff - minDiff).inSeconds.abs() == 0) {
+        closestIds.add(s['id'] as int);
+      }
+    }
+
+    return closestIds;
+  }
+
   void selectDate(DateTime date) {
     _selectedDate = date;
     if (date.month != _currentMonth.month || date.year != _currentMonth.year) {
@@ -121,7 +171,7 @@ class HistoryViewModel extends ChangeNotifier {
     final dateStr = _selectedDate.toIso8601String().split('T')[0];
     final dateLogs = {
       for (var l in _logs.where((l) => l['taken_at'] != null && (l['taken_at'] as String).startsWith(dateStr)))
-        l['schedule_id'] as int: l['status'] as String
+        l['schedule_id'] as int: l
     };
 
     List<Map<String, dynamic>> items = [];
@@ -131,10 +181,13 @@ class HistoryViewModel extends ChangeNotifier {
       for (var s in _schedules) {
         final sId = s['id'] as int;
         String st = 'Segera';
+        bool isVerified = false;
         if (dateLogs.containsKey(sId)) {
-          final lSt = dateLogs[sId];
+          final log = dateLogs[sId];
+          final lSt = log?['status'] as String?;
           if (lSt == 'taken') st = 'Di minum';
           if (lSt == 'missed') st = 'Terlewat';
+          isVerified = log?['verified_by'] != null;
         } else {
           if (isTodayOrPast && _selectedDate.day < DateTime.now().day) {
             st = 'Terlewat';
@@ -145,8 +198,16 @@ class HistoryViewModel extends ChangeNotifier {
           'med_name': s['med_name'],
           'schedule_time': s['schedule_time'],
           'status': st,
+          'is_verified': isVerified,
         });
       }
+      
+      // Sort items chronologically (ascending) by schedule_time
+      items.sort((a, b) {
+        final timeA = a['schedule_time'] as String? ?? '';
+        final timeB = b['schedule_time'] as String? ?? '';
+        return timeA.compareTo(timeB);
+      });
     }
 
     return items;

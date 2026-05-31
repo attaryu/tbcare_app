@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_medication_schedule_card.dart';
 import '../view_models/history_view_model.dart';
 
 class HistoryView extends StatelessWidget {
@@ -448,6 +449,8 @@ class HistoryView extends StatelessWidget {
       );
     }
 
+    final activeIds = viewModel.activeScheduleIds;
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -455,74 +458,20 @@ class HistoryView extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final item = items[index];
-        final name = item['med_name'];
-        final timeStr = (item['schedule_time'] as String).substring(0, 5);
-        final status = item['status'];
+        final id = item['id'] as int;
+        final name = item['med_name'] as String;
+        final timeStr = item['schedule_time'] as String;
+        final status = item['status'] as String;
+        final isVerified = item['is_verified'] as bool? ?? false;
+        final isActive = activeIds.contains(id);
 
-        Color badgeBg = AppColor.warning;
-        if (status == 'Di minum') badgeBg = AppColor.success;
-        if (status == 'Terlewat') badgeBg = AppColor.error;
-
-        return InkWell(
-          onTap: () => viewModel.toggleLogStatus(item['id'], status),
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColor.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade300),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: status == 'Di minum' ? AppColor.success : AppColor.lightGray,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    status == 'Di minum' ? Icons.check : Icons.medical_services_outlined,
-                    size: 16,
-                    color: status == 'Di minum' ? AppColor.white : AppColor.neutralGray,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.darkGray,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(16)),
-                  child: Text(
-                    status,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColor.white),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Icon(Icons.alarm, size: 14, color: AppColor.darkGray),
-                const SizedBox(width: 4),
-                Text(
-                  '$timeStr WIB',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.darkGray,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        return AppMedicationScheduleCard(
+          medName: name,
+          scheduleTime: timeStr,
+          status: status,
+          isVerified: isVerified,
+          isActive: isActive,
+          onTap: () => viewModel.toggleLogStatus(id, status),
         );
       },
     );

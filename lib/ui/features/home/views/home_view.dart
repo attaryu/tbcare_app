@@ -7,6 +7,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_dialog_info_row.dart';
+import '../../../../core/widgets/app_medication_schedule_card.dart';
 import '../view_models/home_view_model.dart';
 
 class HomeView extends StatelessWidget {
@@ -695,117 +696,18 @@ class HomeView extends StatelessWidget {
     HomeViewModel viewModel,
   ) {
     final name = sched['med_name'] ?? 'Obat TBC';
-    final timeStr =
-        (sched['schedule_time'] as String?)?.substring(0, 5) ?? '00:00';
+    final timeStr = sched['schedule_time'] as String? ?? '00:00:00';
     final status = sched['today_status'] as String? ?? 'Segera';
-
     final isNext = viewModel.nextSchedules.any((ns) => ns['id'] == sched['id']);
+    final isVerified = sched['is_verified'] == true;
 
-    Color badgeBg = AppColor.warning;
-    if (status == 'Di minum') badgeBg = AppColor.success;
-    if (status == 'Terlewat') badgeBg = AppColor.error;
-
-    return InkWell(
+    return AppMedicationScheduleCard(
+      medName: name,
+      scheduleTime: timeStr,
+      status: status,
+      isVerified: isVerified,
+      isActive: isNext,
       onTap: () => _showMedicationDetailModal(context, sched, viewModel),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: isNext ? AppColor.primary : AppColor.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isNext ? AppColor.primary : Colors.grey.shade300,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: status == 'Di minum'
-                    ? AppColor.success
-                    : (isNext
-                        ? AppColor.white.withOpacity(0.2)
-                        : AppColor.lightGray),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                status == 'Di minum'
-                    ? Icons.check
-                    : Icons.medical_services_outlined,
-                size: 16,
-                color: status == 'Di minum'
-                    ? AppColor.white
-                    : (isNext ? AppColor.white : AppColor.neutralGray),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: isNext ? AppColor.white : AppColor.darkGray,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (sched['is_verified'] == true) ...[
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.verified,
-                      size: 16,
-                      color: isNext ? AppColor.white : AppColor.primary,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: badgeBg,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                status,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.white,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              Icons.alarm,
-              size: 14,
-              color: isNext ? AppColor.white : AppColor.darkGray,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '$timeStr WIB',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isNext ? AppColor.white : AppColor.darkGray,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
