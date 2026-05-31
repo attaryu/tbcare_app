@@ -74,8 +74,8 @@ class HomeRepository {
       // Seeder: If no active treatment period exists, create one with schedules
       if (tpList.isEmpty) {
         final now = DateTime.now();
-        final start = DateTime(now.year, now.month, 1);
-        final pred = DateTime(now.year, now.month + 6, 29);
+        final start = now;
+        final pred = DateTime(now.year, now.month + 6, now.day);
 
         final insertedTpList = await _supabase.client.from('treatment_periods').insert({
           'patients_id': userId,
@@ -159,11 +159,6 @@ class HomeRepository {
             if (c['status'] == 'taken') takenCount++;
           }
 
-          if (totalCount == 0) {
-            totalCount = 100;
-            takenCount = 98; // Default mockup percentage if no records
-          }
-
           // Build schedule items with today's status
           for (var s in schedList) {
             final sId = s['id'] as int;
@@ -206,8 +201,8 @@ class HomeRepository {
       'supervisorInfo': supervisorInfo,
       'activeTreatment': activeTreatment,
       'schedules': schedules,
-      'complianceRate': totalCount > 0 ? (takenCount / totalCount * 100.0) : 98.0,
-      'daysPassed': daysPassed > 0 ? daysPassed : 50,
+      'complianceRate': totalCount > 0 ? (takenCount / totalCount * 100.0) : 0.0,
+      'daysPassed': daysPassed,
     };
   }
 

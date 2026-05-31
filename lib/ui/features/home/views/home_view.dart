@@ -43,6 +43,37 @@ class HomeView extends StatelessWidget {
       'id_ID',
     ).format(DateTime.now());
 
+    // Hitung Sisa Hari & Label Kepatuhan
+    String remainingDayText = 'Estimasi belum tersedia';
+    final activeTreatment = viewModel.activeTreatment;
+    if (activeTreatment != null) {
+      final predEndStr = activeTreatment['prediction_end_date'] as String?;
+      if (predEndStr != null) {
+        final predEnd = DateTime.tryParse(predEndStr);
+        if (predEnd != null) {
+          final today = DateTime.now();
+          final todayMidnight = DateTime(today.year, today.month, today.day);
+          final predEndMidnight = DateTime(predEnd.year, predEnd.month, predEnd.day);
+          final remaining = predEndMidnight.difference(todayMidnight).inDays;
+          remainingDayText = remaining > 0
+              ? '$remaining hari lagi menuju selesai'
+              : 'Jadwal selesai hari ini';
+        }
+      }
+    }
+
+    final rate = viewModel.complianceRate;
+    String complianceLabel;
+    if (rate >= 90) {
+      complianceLabel = 'Luar biasa!';
+    } else if (rate >= 75) {
+      complianceLabel = 'Pertahankan!';
+    } else if (rate >= 50) {
+      complianceLabel = 'Butuh peningkatan';
+    } else {
+      complianceLabel = 'Perlu perhatian!';
+    }
+
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(
@@ -263,7 +294,7 @@ class HomeView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Hari yang terlewat',
+                            'Hari Berjalan',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white70,
@@ -280,9 +311,9 @@ class HomeView extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            '40 hari menuju kesehatan',
-                            style: TextStyle(
+                          Text(
+                            remainingDayText,
+                            style: const TextStyle(
                               fontSize: 11,
                               color: Colors.white70,
                             ),
@@ -327,9 +358,9 @@ class HomeView extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Pertahankan!',
-                            style: TextStyle(
+                          Text(
+                            complianceLabel,
+                            style: const TextStyle(
                               fontSize: 11,
                               color: Colors.white70,
                             ),
