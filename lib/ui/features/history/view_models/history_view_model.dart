@@ -35,11 +35,11 @@ class HistoryViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> get logs => _logs;
 
   Map<String, dynamic> _stats = {
-    'terverifikasi': 43,
-    'tidakTerverifikasi': 12,
-    'terlambat': 15,
-    'terlewat': 8,
-    'percentage': 92.5,
+    'terverifikasi': 0,
+    'tidakTerverifikasi': 0,
+    'terlambat': 0,
+    'terlewat': 0,
+    'percentage': 0.0,
   };
   Map<String, dynamic> get stats => _stats;
 
@@ -100,10 +100,7 @@ class HistoryViewModel extends ChangeNotifier {
 
     if (dateLogs.isEmpty) {
       if (dateOnly.isBefore(todayOnly)) {
-        final d = date.day;
-        if (d == 10 || d == 16 || d == 19) return 'Sebagian';
-        if (d == 5 || d == 13 || d == 28) return 'Terlewat';
-        return 'Penuh';
+        return 'Terlewat';
       }
       return 'Mendatang';
     }
@@ -150,14 +147,6 @@ class HistoryViewModel extends ChangeNotifier {
           'status': st,
         });
       }
-    } else {
-      items = [
-        {'id': 1, 'med_name': 'Obat TBC - Isoniazid', 'schedule_time': '08:45:00', 'status': 'Di minum'},
-        {'id': 2, 'med_name': 'Obat TBC - Rifampicin', 'schedule_time': '12:10:00', 'status': 'Di minum'},
-        {'id': 3, 'med_name': 'Obat Flu', 'schedule_time': '12:10:00', 'status': 'Terlewat'},
-        {'id': 4, 'med_name': 'Obat Nyeri Otot', 'schedule_time': '19:25:00', 'status': 'Segera'},
-        {'id': 5, 'med_name': 'Obat TBC - Isoniazid', 'schedule_time': '19:25:00', 'status': 'Segera'},
-      ];
     }
 
     return items;

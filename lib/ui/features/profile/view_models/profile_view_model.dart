@@ -21,10 +21,10 @@ class ProfileViewModel extends ChangeNotifier {
   UserModel? _user;
   UserModel? get user => _user;
 
-  String _roleSlug = 'pasien';
+  String _roleSlug = '';
   String get roleSlug => _roleSlug;
 
-  String _roleName = 'Pasien';
+  String _roleName = '';
   String get roleName => _roleName;
 
   Map<String, dynamic>? _supervisorInfo;

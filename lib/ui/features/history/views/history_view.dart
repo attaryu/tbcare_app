@@ -20,13 +20,13 @@ class HistoryView extends StatelessWidget {
     }
 
     final activeTp = viewModel.activeTreatment;
-    String startDateStr = '01 Mei 2026';
-    String endDateStr = '29 Desember 2026';
+    String startDateStr = '-';
+    String endDateStr = '-';
 
     if (activeTp != null) {
       try {
         final st = DateTime.parse(activeTp['start_date']);
-        final ed = DateTime.parse(activeTp['end_date_estimated']);
+        final ed = DateTime.parse(activeTp['prediction_end_date']);
         startDateStr = DateFormat('dd MMMM yyyy', 'id_ID').format(st);
         endDateStr = DateFormat('dd MMMM yyyy', 'id_ID').format(ed);
       } catch (_) {}
@@ -459,7 +459,6 @@ class HistoryView extends StatelessWidget {
         final timeStr = (item['schedule_time'] as String).substring(0, 5);
         final status = item['status'];
 
-        final isGreenCard = name.toString().contains('Nyeri'); // Matching screenshot highlighting
         Color badgeBg = AppColor.warning;
         if (status == 'Di minum') badgeBg = AppColor.success;
         if (status == 'Terlewat') badgeBg = AppColor.error;
@@ -470,9 +469,9 @@ class HistoryView extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: isGreenCard ? AppColor.primary : AppColor.white,
+              color: AppColor.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isGreenCard ? AppColor.primary : Colors.grey.shade300),
+              border: Border.all(color: Colors.grey.shade300),
               boxShadow: [
                 BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
               ],
@@ -482,23 +481,23 @@ class HistoryView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: status == 'Di minum' ? AppColor.success : (isGreenCard ? Colors.white.withOpacity(0.2) : AppColor.lightGray),
+                    color: status == 'Di minum' ? AppColor.success : AppColor.lightGray,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     status == 'Di minum' ? Icons.check : Icons.medical_services_outlined,
                     size: 16,
-                    color: status == 'Di minum' ? AppColor.white : (isGreenCard ? AppColor.white : AppColor.neutralGray),
+                    color: status == 'Di minum' ? AppColor.white : AppColor.neutralGray,
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     name,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: isGreenCard ? AppColor.white : AppColor.darkGray,
+                      color: AppColor.darkGray,
                     ),
                   ),
                 ),
@@ -511,14 +510,14 @@ class HistoryView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Icon(Icons.alarm, size: 14, color: isGreenCard ? AppColor.white : AppColor.darkGray),
+                const Icon(Icons.alarm, size: 14, color: AppColor.darkGray),
                 const SizedBox(width: 4),
                 Text(
                   '$timeStr WIB',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: isGreenCard ? AppColor.white : AppColor.darkGray,
+                    color: AppColor.darkGray,
                   ),
                 ),
               ],

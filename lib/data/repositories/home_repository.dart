@@ -65,32 +65,11 @@ class HomeRepository {
     int daysPassed = 0;
 
     try {
-      var tpList = await _supabase.client
+      final tpList = await _supabase.client
           .from('treatment_periods')
           .select()
           .eq('patients_id', userId)
           .eq('status', 'active');
-
-      // Seeder: If no active treatment period exists, create one with schedules
-      if (tpList.isEmpty) {
-        final now = DateTime.now();
-        final start = now;
-        final pred = DateTime(now.year, now.month + 6, now.day);
-
-        final insertedTpList = await _supabase.client.from('treatment_periods').insert({
-          'patients_id': userId,
-          'name': 'Fase Intensif',
-          'start_date': start.toIso8601String().split('T')[0],
-          'prediction_end_date': pred.toIso8601String().split('T')[0],
-          'duration': 6,
-          'duration_type': 'month',
-          'status': 'active',
-        }).select();
-
-        if (insertedTpList.isNotEmpty) {
-          tpList = insertedTpList;
-        }
-      }
 
       if (tpList.isNotEmpty) {
         final tpRes = tpList.first;
@@ -103,27 +82,13 @@ class HomeRepository {
         if (daysPassed < 0) daysPassed = 0;
 
         // Fetch medication schedules
-        var schedRes = await _supabase.client
+        final schedRes = await _supabase.client
             .from('medication_schedules')
             .select()
             .eq('treatment_period_id', tpId)
             .order('schedule_time');
 
-        var schedList = List<Map<String, dynamic>>.from(schedRes);
-
-        // Seeder: If treatment period has no schedules, seed 5 medication schedules
-        if (schedList.isEmpty) {
-          final schedsToInsert = [
-            {'treatment_period_id': tpId, 'med_name': 'Obat TBC - Isoniazid', 'schedule_time': '08:45:00'},
-            {'treatment_period_id': tpId, 'med_name': 'Obat TBC - Rifampicin', 'schedule_time': '12:10:00'},
-            {'treatment_period_id': tpId, 'med_name': 'Obat Flu', 'schedule_time': '12:10:00'},
-            {'treatment_period_id': tpId, 'med_name': 'Obat Nyeri Otot', 'schedule_time': '19:25:00'},
-            {'treatment_period_id': tpId, 'med_name': 'Obat TBC - Isoniazid', 'schedule_time': '19:25:00'},
-          ];
-
-          final insertedScheds = await _supabase.client.from('medication_schedules').insert(schedsToInsert).select();
-          schedList = List<Map<String, dynamic>>.from(insertedScheds);
-        }
+        final schedList = List<Map<String, dynamic>>.from(schedRes);
 
         if (schedList.isNotEmpty) {
           final schedIds = schedList.map((s) => s['id'] as int).toList();

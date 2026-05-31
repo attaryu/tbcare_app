@@ -33,16 +33,16 @@ class HomeViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> _schedules = [];
   List<Map<String, dynamic>> get schedules => _schedules;
 
-  double _complianceRate = 98.0;
+  double _complianceRate = 0.0;
   double get complianceRate => _complianceRate;
 
-  int _daysPassed = 50;
+  int _daysPassed = 0;
   int get daysPassed => _daysPassed;
 
   bool _isAlarmTriggering = false;
   bool get isAlarmTriggering => _isAlarmTriggering;
 
-  bool _isWithin30MinsSimulation = true;
+  bool _isWithin30MinsSimulation = false;
   bool get isWithin30MinsSimulation => _isWithin30MinsSimulation;
 
   List<Map<String, dynamic>> get nextSchedules {

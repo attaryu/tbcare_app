@@ -40,20 +40,11 @@ class _RegisterViewState extends State<RegisterView>
   // Step 3 Controllers
   final _treatmentNameController = TextEditingController();
   DateTime _treatmentStartDate = DateTime.now();
-  final _treatmentDurationController = TextEditingController(text: '6');
+  final _treatmentDurationController = TextEditingController();
   String _treatmentDurationType = 'month';
 
   // Step 4 Controllers
-  final List<MedicationScheduleItem> _medicationSchedules = [
-    MedicationScheduleItem(
-      'Obat TBC - Isoniazid',
-      const TimeOfDay(hour: 8, minute: 45),
-    ),
-    MedicationScheduleItem(
-      'Obat TBC - Rifampicin',
-      const TimeOfDay(hour: 12, minute: 10),
-    ),
-  ];
+  final List<MedicationScheduleItem> _medicationSchedules = [];
 
   String? _validationError;
 
