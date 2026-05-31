@@ -47,12 +47,37 @@ class HomeViewModel extends ChangeNotifier {
 
   Map<String, dynamic>? get nextSchedule {
     if (_schedules.isEmpty) return null;
-    for (var s in _schedules) {
-      if (s['today_status'] == 'Segera') {
-        return s;
+
+    final now = DateTime.now();
+    final todayPrefix =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    // Hanya jadwal yang belum diminum
+    final pending = _schedules
+        .where((s) => s['today_status'] != 'Di minum')
+        .toList();
+
+    if (pending.isEmpty) return null;
+
+    // Cari jadwal dengan waktu paling dekat dari sekarang
+    Map<String, dynamic>? closest;
+    Duration? closestDiff;
+
+    for (final s in pending) {
+      final timeStr = s['schedule_time'] as String?;
+      if (timeStr == null) continue;
+      final timePart = timeStr.substring(0, 5); // "HH:mm"
+      final schedDateTime = DateTime.tryParse('${todayPrefix}T$timePart:00');
+      if (schedDateTime == null) continue;
+
+      final diff = schedDateTime.difference(now).abs();
+      if (closestDiff == null || diff < closestDiff) {
+        closestDiff = diff;
+        closest = s;
       }
     }
-    return _schedules.first;
+
+    return closest ?? pending.first;
   }
 
   void toggleAlarmSimulation() {
