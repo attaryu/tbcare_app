@@ -302,20 +302,48 @@ class HistoryView extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: viewModel.canNavigateToPreviousMonth
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade100,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
                       iconSize: 18,
-                      icon: const Icon(Icons.chevron_left, color: AppColor.darkGray),
-                      onPressed: viewModel.previousMonth,
+                      icon: Icon(
+                        Icons.chevron_left,
+                        color: viewModel.canNavigateToPreviousMonth
+                            ? AppColor.darkGray
+                            : Colors.grey.shade300,
+                      ),
+                      onPressed: viewModel.canNavigateToPreviousMonth
+                          ? viewModel.previousMonth
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: viewModel.canNavigateToNextMonth
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade100,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
                       iconSize: 18,
-                      icon: const Icon(Icons.chevron_right, color: AppColor.darkGray),
-                      onPressed: viewModel.nextMonth,
+                      icon: Icon(
+                        Icons.chevron_right,
+                        color: viewModel.canNavigateToNextMonth
+                            ? AppColor.darkGray
+                            : Colors.grey.shade300,
+                      ),
+                      onPressed: viewModel.canNavigateToNextMonth
+                          ? viewModel.nextMonth
+                          : null,
                     ),
                   ),
                 ],
@@ -361,6 +389,8 @@ class HistoryView extends StatelessWidget {
                   dayDate.month == viewModel.selectedDate.month &&
                   dayDate.day == viewModel.selectedDate.day;
 
+              final isDiluarPeriode = status == 'Diluar Periode';
+
               Color bg = const Color(0xFFE9ECEF);
               Color textColor = AppColor.darkGray;
               if (status == 'Penuh') {
@@ -375,21 +405,21 @@ class HistoryView extends StatelessWidget {
               }
 
               return InkWell(
-                onTap: () => viewModel.selectDate(dayDate),
+                onTap: isDiluarPeriode ? null : () => viewModel.selectDate(dayDate),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: bg,
+                    color: isDiluarPeriode ? Colors.grey.shade100 : bg,
                     borderRadius: BorderRadius.circular(8),
-                    border: isSelected ? Border.all(color: AppColor.darkGray, width: 2.5) : null,
+                    border: isSelected && !isDiluarPeriode ? Border.all(color: AppColor.darkGray, width: 2.5) : null,
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     dayNum.toString(),
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
-                      color: textColor,
+                      fontWeight: isSelected && !isDiluarPeriode ? FontWeight.w900 : FontWeight.bold,
+                      color: isDiluarPeriode ? Colors.grey.shade400 : textColor,
                     ),
                   ),
                 ),
@@ -471,7 +501,7 @@ class HistoryView extends StatelessWidget {
           status: status,
           isVerified: isVerified,
           isActive: isActive,
-          onTap: () => viewModel.toggleLogStatus(id, status),
+          onTap: null,
         );
       },
     );

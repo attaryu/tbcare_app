@@ -43,6 +43,26 @@ class HistoryViewModel extends ChangeNotifier {
   };
   Map<String, dynamic> get stats => _stats;
 
+  DateTime? getTreatmentStartDate() {
+    if (_activeTreatment == null) return null;
+    try {
+      final st = DateTime.parse(_activeTreatment!['start_date']);
+      return DateTime(st.year, st.month, st.day);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  DateTime? getTreatmentEndDate() {
+    if (_activeTreatment == null) return null;
+    try {
+      final ed = DateTime.parse(_activeTreatment!['prediction_end_date']);
+      return DateTime(ed.year, ed.month, ed.day);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Getter to calculate active schedule IDs (closest upcoming schedules)
   /// only if the selected date is today.
   Set<int> get activeScheduleIds {
@@ -103,12 +123,28 @@ class HistoryViewModel extends ChangeNotifier {
     }
   }
 
+  bool get canNavigateToPreviousMonth {
+    final startDate = getTreatmentStartDate();
+    if (startDate == null) return true;
+    final prevMonthLastDay = DateTime(_currentMonth.year, _currentMonth.month, 0);
+    return !prevMonthLastDay.isBefore(startDate);
+  }
+
+  bool get canNavigateToNextMonth {
+    final endDate = getTreatmentEndDate();
+    if (endDate == null) return true;
+    final nextMonthFirstDay = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+    return !nextMonthFirstDay.isAfter(endDate);
+  }
+
   void previousMonth() {
+    if (!canNavigateToPreviousMonth) return;
     _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
     fetchHistoryData();
   }
 
   void nextMonth() {
+    if (!canNavigateToNextMonth) return;
     _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
     fetchHistoryData();
   }
@@ -138,6 +174,17 @@ class HistoryViewModel extends ChangeNotifier {
     final dateOnly = DateTime(date.year, date.month, date.day);
     final todayOnly = DateTime(now.year, now.month, now.day);
 
+    // Filter tanggal di luar periode pengobatan aktif
+    final startDate = getTreatmentStartDate();
+    if (startDate != null && dateOnly.isBefore(startDate)) {
+      return 'Diluar Periode';
+    }
+
+    final endDate = getTreatmentEndDate();
+    if (endDate != null && dateOnly.isAfter(endDate)) {
+      return 'Diluar Periode';
+    }
+
     if (dateOnly.isAfter(todayOnly)) {
       return 'Mendatang';
     }
@@ -149,9 +196,6 @@ class HistoryViewModel extends ChangeNotifier {
     }).toList();
 
     if (dateLogs.isEmpty) {
-      if (dateOnly.isBefore(todayOnly)) {
-        return 'Terlewat';
-      }
       return 'Mendatang';
     }
 
