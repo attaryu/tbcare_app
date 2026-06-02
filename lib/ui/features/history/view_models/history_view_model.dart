@@ -195,7 +195,8 @@ class HistoryViewModel extends ChangeNotifier {
       return (l['taken_at'] as String).startsWith(dateStr);
     }).toList();
 
-    if (dateLogs.isEmpty) {
+    final totalSchedules = _schedules.length;
+    if (totalSchedules == 0) {
       return 'Mendatang';
     }
 
@@ -206,9 +207,44 @@ class HistoryViewModel extends ChangeNotifier {
       if (l['status'] == 'missed') missed++;
     }
 
-    if (taken > 0 && missed == 0) return 'Penuh';
-    if (taken > 0 && missed > 0) return 'Sebagian';
-    return 'Terlewat';
+    if (dateOnly.isBefore(todayOnly)) {
+      // Hari di masa lalu:
+      if (taken == totalSchedules) {
+        return 'Penuh';
+      } else if (taken > 0) {
+        return 'Sebagian';
+      } else {
+        return 'Terlewat';
+      }
+    } else {
+      // Hari ini (dateOnly == todayOnly):
+      if (taken == totalSchedules) {
+        return 'Penuh';
+      } else if (taken > 0) {
+        return 'Sebagian';
+      } else {
+        // Jika belum diminum semua (taken == 0)
+        // Cek apakah ada jadwal yang eksplisit dilewatkan (missed > 0)
+        // atau jika ada jadwal yang sudah lewat waktunya hari ini
+        int passedSchedulesCount = 0;
+        for (var s in _schedules) {
+          try {
+            final timeStr = s['schedule_time'] as String;
+            final parts = timeStr.split(':');
+            final sTime = DateTime(now.year, now.month, now.day,
+                int.parse(parts[0]), int.parse(parts[1]));
+            if (now.isAfter(sTime)) {
+              passedSchedulesCount++;
+            }
+          } catch (_) {}
+        }
+        
+        if (missed > 0 || passedSchedulesCount > 0) {
+          return 'Terlewat';
+        }
+        return 'Mendatang';
+      }
+    }
   }
 
   List<Map<String, dynamic>> getSchedulesForSelectedDate() {

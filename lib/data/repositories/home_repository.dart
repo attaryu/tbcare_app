@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/supabase_service.dart';
 
@@ -91,6 +92,9 @@ class HomeRepository {
         final schedList = List<Map<String, dynamic>>.from(schedRes);
 
         if (schedList.isNotEmpty) {
+          // 3.1 Initialize daily compliance logs dynamically in background
+          await _initializeDailyComplianceLogs(userId, tpRes, schedList);
+
           final schedIds = schedList.map((s) => s['id'] as int).toList();
 
           final todayStr = DateTime.now().toIso8601String().split('T')[0];
@@ -134,8 +138,9 @@ class HomeRepository {
 
               if (st == 'taken') status = 'Di minum';
               if (st == 'missed') status = 'Terlewat';
+              if (st == 'pending') status = 'Segera';
             } else {
-              // Check time comparison safely
+              // Check time comparison safely (fallback if initialization not yet run/failed)
               try {
                 final timeStr = s['schedule_time'] as String;
                 final now = DateTime.now();
@@ -272,6 +277,84 @@ class HomeRepository {
           .update({'status': 'missed'})
           .eq('schedule_id', scheduleId)
           .eq('log_date', todayStr);
+    }
+  }
+
+  Future<void> _initializeDailyComplianceLogs(
+    int userId,
+    Map<String, dynamic> activeTreatment,
+    List<Map<String, dynamic>> schedules,
+  ) async {
+    try {
+      if (schedules.isEmpty) return;
+      final schedIds = schedules.map((s) => s['id'] as int).toList();
+
+      // 1. Dapatkan tanggal kepatuhan terakhir dari database
+      final lastLogRes = await _supabase.client
+          .from('compliance_logs')
+          .select('log_date')
+          .inFilter('schedule_id', schedIds)
+          .order('log_date', ascending: false)
+          .limit(1);
+
+      DateTime startGenerationDate;
+      if (lastLogRes.isNotEmpty) {
+        // Mulai dari satu hari setelah tanggal log terakhir
+        final lastLogDate = DateTime.parse(lastLogRes.first['log_date'] as String);
+        startGenerationDate = DateTime(lastLogDate.year, lastLogDate.month, lastLogDate.day + 1);
+      } else {
+        // Fallback ke start_date dari treatment period
+        final startDate = DateTime.parse(activeTreatment['start_date'] as String);
+        startGenerationDate = DateTime(startDate.year, startDate.month, startDate.day);
+      }
+
+      // 2. Batasi tanggal selesai maksimum tidak melebihi prediction_end_date
+      final now = DateTime.now();
+      final todayOnly = DateTime(now.year, now.month, now.day);
+      final predictionEndDate = DateTime.parse(activeTreatment['prediction_end_date'] as String);
+      final endGenerationDate = todayOnly.isBefore(predictionEndDate) ? todayOnly : predictionEndDate;
+
+      // Jika tanggal mulai melampaui tanggal selesai, tidak perlu generate
+      if (startGenerationDate.isAfter(endGenerationDate)) return;
+
+      List<Map<String, dynamic>> newLogs = [];
+
+      // 3. Iterasi setiap hari dalam rentang yang telah dihitung
+      for (var day = startGenerationDate; !day.isAfter(endGenerationDate); day = day.add(const Duration(days: 1))) {
+        final dateStr = "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
+        final isToday = day.year == todayOnly.year && day.month == todayOnly.month && day.day == todayOnly.day;
+
+        for (var s in schedules) {
+          final sId = s['id'] as int;
+          String status = 'missed';
+
+          if (isToday) {
+            // Periksa waktu hari ini secara real-time
+            final timeStr = s['schedule_time'] as String;
+            final parts = timeStr.split(':');
+            final hour = int.parse(parts[0]);
+            final minute = int.parse(parts[1]);
+            final sTime = DateTime(now.year, now.month, now.day, hour, minute);
+
+            status = now.isAfter(sTime) ? 'missed' : 'pending';
+          }
+
+          newLogs.add({
+            'schedule_id': sId,
+            'med_name': s['med_name'],
+            'status': status,
+            'log_date': dateStr,
+            'taken_at': null,
+          });
+        }
+      }
+
+      // 4. Masukkan log ke database sekaligus menggunakan bulk insert
+      if (newLogs.isNotEmpty) {
+        await _supabase.client.from('compliance_logs').insert(newLogs);
+      }
+    } catch (e) {
+      debugPrint('Error in _initializeDailyComplianceLogs: $e');
     }
   }
 }
