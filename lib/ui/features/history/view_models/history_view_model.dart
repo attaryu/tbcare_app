@@ -63,6 +63,42 @@ class HistoryViewModel extends ChangeNotifier {
     }
   }
 
+  int get totalTreatmentDaysInCurrentMonth {
+    final start = getTreatmentStartDate();
+    final end = getTreatmentEndDate();
+    if (start == null || end == null) return 0;
+
+    final monthStart = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final monthEnd = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
+
+    final activeStart = start.isAfter(monthStart) ? start : monthStart;
+    final activeEnd = end.isBefore(monthEnd) ? end : monthEnd;
+
+    if (activeStart.isAfter(activeEnd)) return 0;
+    return activeEnd.difference(activeStart).inDays + 1;
+  }
+
+  int get passedTreatmentDaysInCurrentMonth {
+    final start = getTreatmentStartDate();
+    final end = getTreatmentEndDate();
+    if (start == null || end == null) return 0;
+
+    final monthStart = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final monthEnd = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
+
+    final activeStart = start.isAfter(monthStart) ? start : monthStart;
+    final activeEnd = end.isBefore(monthEnd) ? end : monthEnd;
+
+    if (activeStart.isAfter(activeEnd)) return 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final effectiveEnd = today.isBefore(activeEnd) ? today : activeEnd;
+
+    if (activeStart.isAfter(effectiveEnd)) return 0;
+    return effectiveEnd.difference(activeStart).inDays + 1;
+  }
+
   /// Getter to calculate active schedule IDs (closest upcoming schedules)
   /// only if the selected date is today.
   Set<int> get activeScheduleIds {
@@ -190,10 +226,7 @@ class HistoryViewModel extends ChangeNotifier {
     }
 
     final dateStr = date.toIso8601String().split('T')[0];
-    final dateLogs = _logs.where((l) {
-      if (l['taken_at'] == null) return false;
-      return (l['taken_at'] as String).startsWith(dateStr);
-    }).toList();
+    final dateLogs = _logs.where((l) => l['log_date'] == dateStr).toList();
 
     final totalSchedules = _schedules.length;
     if (totalSchedules == 0) {
@@ -250,7 +283,7 @@ class HistoryViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> getSchedulesForSelectedDate() {
     final dateStr = _selectedDate.toIso8601String().split('T')[0];
     final dateLogs = {
-      for (var l in _logs.where((l) => l['taken_at'] != null && (l['taken_at'] as String).startsWith(dateStr)))
+      for (var l in _logs.where((l) => l['log_date'] == dateStr))
         l['schedule_id'] as int: l
     };
 

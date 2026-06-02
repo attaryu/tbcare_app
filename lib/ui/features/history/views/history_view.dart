@@ -35,10 +35,6 @@ class HistoryView extends StatelessWidget {
 
     final stats = viewModel.stats;
     final percentage = stats['percentage'] as double;
-    final daysInCurrentMonth = DateTime(viewModel.currentMonth.year, viewModel.currentMonth.month + 1, 0).day;
-    final currentDayOrMax = DateTime.now().month == viewModel.currentMonth.month
-        ? DateTime.now().day
-        : daysInCurrentMonth;
 
     return Scaffold(
       backgroundColor: AppColor.white,
@@ -101,10 +97,10 @@ class HistoryView extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // Laporan Pengobatan Bulan Ini
-              const Text(
-                'Laporan Pengobatan Bulan Ini',
-                style: TextStyle(
+              // Laporan Pengobatan Bulan Ini (Dinamis berdasarkan currentMonth yang aktif)
+              Text(
+                'Laporan Pengobatan ${DateFormat('MMMM yyyy', 'id_ID').format(viewModel.currentMonth)}',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColor.darkGray,
@@ -138,7 +134,7 @@ class HistoryView extends StatelessWidget {
                           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColor.primary),
                         ),
                         Text(
-                          '$currentDayOrMax/$daysInCurrentMonth Hari',
+                          '${viewModel.passedTreatmentDaysInCurrentMonth}/${viewModel.totalTreatmentDaysInCurrentMonth} Hari',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColor.primary),
                         ),
                       ],

@@ -34,11 +34,17 @@ class HistoryRepository {
       if (schedules.isNotEmpty) {
         final schedIds = schedules.map((s) => s['id'] as int).toList();
 
-        // 3. Fetch all compliance logs for these schedules
+        // 3. Fetch all compliance logs for these schedules in currentMonth
+        final firstDayStr = "${currentMonth.year}-${currentMonth.month.toString().padLeft(2, '0')}-01";
+        final lastDay = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
+        final lastDayStr = "${currentMonth.year}-${currentMonth.month.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}";
+
         final compRes = await _supabase.client
             .from('compliance_logs')
             .select()
-            .inFilter('schedule_id', schedIds);
+            .inFilter('schedule_id', schedIds)
+            .gte('log_date', firstDayStr)
+            .lte('log_date', lastDayStr);
 
         logs = List<Map<String, dynamic>>.from(compRes);
       }
