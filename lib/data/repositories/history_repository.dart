@@ -89,28 +89,30 @@ class HistoryRepository {
   }
 
   Future<void> updateLogStatus(int scheduleId, String medName, String dateStr, String newStatus) async {
-    final startOfDay = '${dateStr}T00:00:00';
-    final endOfDay = '${dateStr}T23:59:59';
-
     final existingList = await _supabase.client
         .from('compliance_logs')
         .select()
         .eq('schedule_id', scheduleId)
-        .gte('taken_at', startOfDay)
-        .lte('taken_at', endOfDay);
+        .eq('log_date', dateStr);
+
+    final nowStr = DateTime.now().toIso8601String();
 
     if (existingList.isNotEmpty) {
       final existing = existingList.first;
       await _supabase.client
           .from('compliance_logs')
-          .update({'status': newStatus, 'taken_at': DateTime.now().toIso8601String()})
+          .update({
+            'status': newStatus,
+            'taken_at': newStatus == 'taken' ? nowStr : null,
+          })
           .eq('id', existing['id']);
     } else {
       await _supabase.client.from('compliance_logs').insert({
         'schedule_id': scheduleId,
         'med_name': medName,
         'status': newStatus,
-        'taken_at': DateTime.now().toIso8601String(),
+        'log_date': dateStr,
+        'taken_at': newStatus == 'taken' ? nowStr : null,
       });
     }
   }

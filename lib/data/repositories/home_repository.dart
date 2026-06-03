@@ -289,6 +289,15 @@ class HomeRepository {
       if (schedules.isEmpty) return;
       final schedIds = schedules.map((s) => s['id'] as int).toList();
 
+      // Update compliance logs kemarin yang masih pending menjadi missed secara berkala di database
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      await _supabase.client
+          .from('compliance_logs')
+          .update({'status': 'missed'})
+          .inFilter('schedule_id', schedIds)
+          .eq('status', 'pending')
+          .lt('log_date', todayStr);
+
       // 1. Dapatkan tanggal kepatuhan terakhir dari database
       final lastLogRes = await _supabase.client
           .from('compliance_logs')

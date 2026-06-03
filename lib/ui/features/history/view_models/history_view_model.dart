@@ -290,6 +290,10 @@ class HistoryViewModel extends ChangeNotifier {
     List<Map<String, dynamic>> items = [];
     final isTodayOrPast = !_selectedDate.isAfter(DateTime.now());
 
+    final now = DateTime.now();
+    final todayOnly = DateTime(now.year, now.month, now.day);
+    final isPastDate = _selectedDate.isBefore(todayOnly);
+
     if (_schedules.isNotEmpty) {
       for (var s in _schedules) {
         final sId = s['id'] as int;
@@ -298,11 +302,16 @@ class HistoryViewModel extends ChangeNotifier {
         if (dateLogs.containsKey(sId)) {
           final log = dateLogs[sId];
           final lSt = log?['status'] as String?;
-          if (lSt == 'taken') st = 'Di minum';
-          if (lSt == 'missed') st = 'Terlewat';
+          if (lSt == 'taken') {
+            st = 'Di minum';
+          } else if (lSt == 'missed') {
+            st = 'Terlewat';
+          } else if (lSt == 'pending') {
+            st = isPastDate ? 'Terlewat' : 'Segera';
+          }
           isVerified = log?['verified_by'] != null;
         } else {
-          if (isTodayOrPast && _selectedDate.day < DateTime.now().day) {
+          if (isTodayOrPast && isPastDate) {
             st = 'Terlewat';
           }
         }
