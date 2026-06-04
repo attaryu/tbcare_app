@@ -33,12 +33,12 @@ import '../features/home/view_models/confirm_medication_view_model.dart';
 import '../features/home/views/confirm_medication_view.dart';
 
 class AppRouter {
-  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+  static final rootNavigatorKey = GlobalKey<NavigatorState>();
 
   static GoRouter config(AuthViewModel authViewModel) {
     return GoRouter(
       initialLocation: '/',
-      navigatorKey: _rootNavigatorKey,
+      navigatorKey: rootNavigatorKey,
       refreshListenable: authViewModel,
       redirect: (context, state) {
         final isAuthenticated = authViewModel.isAuthenticated;
@@ -86,7 +86,7 @@ class AppRouter {
                   routes: [
                     GoRoute(
                       path: 'confirm-medication',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final extras = state.extra as Map<String, dynamic>;
                         final scheduleId = extras['scheduleId'] as int;
@@ -183,7 +183,7 @@ class AppRouter {
                   routes: [
                     GoRoute(
                       path: 'add',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final viewModel = state.extra as SymptomViewModel;
                         return SymptomFormView(viewModel: viewModel);
@@ -191,7 +191,7 @@ class AppRouter {
                     ),
                     GoRoute(
                       path: 'edit',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final extras = state.extra as Map<String, dynamic>;
                         final viewModel =
@@ -226,7 +226,7 @@ class AppRouter {
                   routes: [
                     GoRoute(
                       path: 'medication-schedules',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final userId = authViewModel.currentUser?.id;
                         if (userId == null) {
@@ -249,7 +249,7 @@ class AppRouter {
                     ),
                     GoRoute(
                       path: 'treatment-periods',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final userId = authViewModel.currentUser?.id;
                         if (userId == null) {
@@ -268,7 +268,7 @@ class AppRouter {
                       routes: [
                         GoRoute(
                           path: 'add',
-                          parentNavigatorKey: _rootNavigatorKey,
+                          parentNavigatorKey: rootNavigatorKey,
                           builder: (context, state) {
                             final viewModel = state.extra as TreatmentViewModel;
                             return TreatmentFormView(viewModel: viewModel);
@@ -276,7 +276,7 @@ class AppRouter {
                         ),
                         GoRoute(
                           path: 'edit',
-                          parentNavigatorKey: _rootNavigatorKey,
+                          parentNavigatorKey: rootNavigatorKey,
                           builder: (context, state) {
                             final extras = state.extra as Map<String, dynamic>;
                             final viewModel =

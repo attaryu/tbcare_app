@@ -1,7 +1,9 @@
+import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/services/alarm_service.dart';
 
 import 'core/config/app_env.dart';
 import 'core/theme/app_theme.dart';
@@ -18,6 +20,10 @@ import 'ui/router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
+
+  // Inisialisasi Service Alarm untuk PoC Hard Reminder
+  await Alarm.init();
+  AppAlarmService.init();
 
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,

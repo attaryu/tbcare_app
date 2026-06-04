@@ -1,4 +1,31 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Izin untuk eksekusi alarm tepat waktu (diperlukan Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+
+    <!-- Izin untuk membangunkan layar dari kondisi redup/mati -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+    <!-- Izin untuk menggambar di atas aplikasi lain (sistem dialog overlay/overlay window) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
+    <!-- Izin untuk mendeteksi perangkat selesai booting dan menjadwalkan ulang alarm -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- Izin untuk efek getaran pada alarm -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
+    <!-- Izin untuk menampilkan tampilan alarm full-screen ketika layar mati/terkunci -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+
+    <!-- Izin untuk menjalankan service di background / foreground service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+
+    <!-- Izin untuk mengirim notifikasi (diperlukan Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
     <application
         android:label="tbcare_app"
         android:name="${applicationName}"
@@ -25,6 +52,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        
+        <!-- Service untuk mengirim notifikasi peringatan jika aplikasi di-kill (opsional/fitur package alarm) -->
+        <service android:name="com.gdelataillade.alarm.services.NotificationOnKillService" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
