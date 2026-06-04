@@ -180,108 +180,40 @@ class ProfileView extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // Section 1: Akun
-              _buildSectionTitle('Akun'),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Column(
-                  children: [
-                    _buildListItem(
-                      icon: Icons.person_outline,
-                      title: 'Edit Profil',
-                      onTap: () => _showEditProfileDialog(context, viewModel),
-                    ),
-                    Divider(height: 1, color: Colors.grey.shade200),
-                    if (viewModel.roleSlug == 'pasien') ...[
-                      if (viewModel.supervisorInfo != null)
-                        _buildListItem(
-                          icon: Icons.people_outline,
-                          title: 'Lihat Pengawas',
-                          onTap: () =>
-                              _showSupervisorDetailsDialog(context, viewModel),
-                        )
-                      else
-                        _buildListItem(
-                          icon: Icons.shield_outlined,
-                          title: 'Tambah Pengawas',
-                          onTap: () =>
-                              _showAddSupervisorDialog(context, viewModel),
-                        ),
-                    ] else if (viewModel.roleSlug == 'pengawas') ...[
-                      _buildListItem(
-                        icon: Icons.qr_code_outlined,
-                        title: 'Kode Pengawasan Saya',
-                        onTap: () =>
-                            _showSupervisorCodeDialog(context, viewModel),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // Section 2: Informasi Pengobatan (Hanya untuk pasien)
-              if (viewModel.roleSlug == 'pasien') ...[
-                _buildSectionTitle('Informasi Pengobatan'),
+              // Dynamic Menu Sections
+              for (var section in viewModel.menuSections) ...[
+                _buildSectionTitle(section.title),
                 const SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
+                    color: section.items.any((item) => item.isDestructive)
+                        ? const Color(0xFFFFF0F0)
+                        : null,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(
+                      color: section.items.any((item) => item.isDestructive)
+                          ? Colors.red.shade300
+                          : Colors.grey.shade300,
+                    ),
                   ),
                   child: Column(
                     children: [
-                      _buildListItem(
-                        icon: Icons.calendar_today_outlined,
-                        title: 'Periode Pengobatan',
-                        onTap: () => context.push('/profile/treatment-periods'),
-                      ),
-                      Divider(height: 1, color: Colors.grey.shade200),
-                      _buildListItem(
-                        icon: Icons.alarm,
-                        title: 'Jadwal Minum Obat Harian',
-                        onTap: () => context.push('/profile/medication-schedules'),
-                      ),
+                      for (var i = 0; i < section.items.length; i++) ...[
+                        _buildListItem(
+                          icon: section.items[i].icon,
+                          title: section.items[i].title,
+                          isDestructive: section.items[i].isDestructive,
+                          onTap: () => _handleMenuTap(context, viewModel, section.items[i].action),
+                        ),
+                        if (i < section.items.length - 1)
+                          Divider(height: 1, color: Colors.grey.shade200),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 28),
               ],
-
-              // Section 3: Lainnya
-              _buildSectionTitle('Lainnya'),
               const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F0),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.shade300),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  leading: const Icon(
-                    Icons.logout_outlined,
-                    color: AppColor.error,
-                  ),
-                  title: const Text(
-                    'Keluar Akun',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.error,
-                    ),
-                  ),
-                  onTap: () => _confirmLogout(context),
-                ),
-              ),
-              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -304,21 +236,49 @@ class ProfileView extends StatelessWidget {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    bool isDestructive = false,
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Icon(icon, color: AppColor.darkGray),
+      leading: Icon(icon, color: isDestructive ? AppColor.error : AppColor.darkGray),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: AppColor.darkGray,
+          fontWeight: isDestructive ? FontWeight.w600 : FontWeight.w500,
+          color: isDestructive ? AppColor.error : AppColor.darkGray,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: AppColor.neutralGray),
+      trailing: isDestructive ? null : const Icon(Icons.chevron_right, color: AppColor.neutralGray),
       onTap: onTap,
     );
+  }
+
+  void _handleMenuTap(
+    BuildContext context,
+    ProfileViewModel viewModel,
+    ProfileMenuAction action,
+  ) {
+    switch (action) {
+      case ProfileMenuAction.editProfile:
+        _showEditProfileDialog(context, viewModel);
+        break;
+      case ProfileMenuAction.viewSupervisor:
+        _showSupervisorDetailsDialog(context, viewModel);
+        break;
+      case ProfileMenuAction.addSupervisor:
+        _showAddSupervisorDialog(context, viewModel);
+        break;
+      case ProfileMenuAction.treatmentPeriod:
+        context.push('/profile/treatment-periods');
+        break;
+      case ProfileMenuAction.medicationSchedule:
+        context.push('/profile/medication-schedules');
+        break;
+      case ProfileMenuAction.logout:
+        _confirmLogout(context);
+        break;
+    }
   }
 
   void _showEditProfileDialog(
@@ -532,96 +492,6 @@ class ProfileView extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showSupervisorCodeDialog(
-    BuildContext context,
-    ProfileViewModel viewModel,
-  ) {
-    final code = viewModel.supervisorCode;
-
-    AppDialog.info(
-      context,
-      title: 'Kode Pengawasan',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Bagikan kode di bawah ini kepada pasien yang ingin Anda pantau.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: AppColor.primaryLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColor.primary),
-            ),
-            child: Text(
-              code ?? 'Belum ada kode',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColor.primary,
-                letterSpacing: 2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showMedicationSchedulesDialog(
-    BuildContext context,
-    ProfileViewModel viewModel,
-  ) {
-    final scheds = viewModel.medicationSchedules;
-
-    AppDialog.info(
-      context,
-      title: 'Jadwal Minum Obat',
-      content: scheds.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
-              child: Text(
-                'Belum ada jadwal minum obat',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColor.neutralGray),
-              ),
-            )
-          : SizedBox(
-              width: double.maxFinite,
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: scheds.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final item = scheds[index];
-                  final timeStr =
-                      (item['schedule_time'] as String?)?.substring(0, 5) ??
-                      '-';
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.alarm, color: AppColor.primary),
-                    title: Text(item['med_name'] ?? '-'),
-                    trailing: Text(
-                      '$timeStr WIB',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.primary,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
     );
   }
 
