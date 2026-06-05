@@ -165,7 +165,8 @@ class AppAlarmService {
       androidFullScreenIntent: true,
       androidStopAlarmOnTermination: false,
       volumeSettings: const VolumeSettings.fixed(
-        volume: 1.0,
+        // volume: 1.0,
+        volume: 0.5, // test
         volumeEnforced: true,
       ),
       notificationSettings: NotificationSettings(

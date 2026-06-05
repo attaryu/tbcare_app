@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/services/alarm_service.dart';
 import '../../../../data/services/supabase_service.dart';
 import './home_view_model.dart';
 
@@ -20,7 +22,21 @@ class ConfirmMedicationViewModel extends ChangeNotifier {
     required this.medName,
     required this.scheduleTime,
     required SupabaseService supabaseService,
-  }) : _supabaseService = supabaseService;
+  }) : _supabaseService = supabaseService {
+    _stopAlarm();
+  }
+
+  Future<void> _stopAlarm() async {
+    try {
+      if (scheduleId == 999) {
+        await Alarm.stop(999);
+      } else {
+        await AppAlarmService.cancelAlarmForSchedule(scheduleId);
+      }
+    } catch (e) {
+      debugPrint('Error stopping alarm in confirmation view model: $e');
+    }
+  }
 
   File? _imageFile;
   File? get imageFile => _imageFile;

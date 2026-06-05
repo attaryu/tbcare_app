@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/services/alarm_service.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/home_repository.dart';
+import '../../../router/app_router.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final HomeRepository _repository;
@@ -13,18 +17,25 @@ class HomeViewModel extends ChangeNotifier {
         _userId = userId {
     fetchHomeData();
     _startTimer();
+    AppAlarmService.setAlarmRingCallback(_handleAlarmRing);
   }
 
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       autoMarkMissedSchedules();
+      final oldVal = _isWithin30MinsSimulation;
+      _isWithin30MinsSimulation = _checkIfWithin30Mins();
+      if (oldVal != _isWithin30MinsSimulation) {
+        notifyListeners();
+      }
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    AppAlarmService.clearAlarmRingCallback();
     super.dispose();
   }
 
@@ -151,8 +162,16 @@ class HomeViewModel extends ChangeNotifier {
       _complianceRate = data['complianceRate'] as double;
       _daysPassed = data['daysPassed'] as int;
 
-      _isWithin30MinsSimulation = true;
+      _isWithin30MinsSimulation = _checkIfWithin30Mins();
       _error = null;
+
+      // Auto sync alarms to keep OS alarms perfectly up to date
+      try {
+        final syncData = List<Map<String, dynamic>>.from(data['schedules'] as List);
+        await AppAlarmService.syncAlarmsWithSchedules(syncData);
+      } catch (e) {
+        debugPrint('Auto sync alarms on home load failed: $e');
+      }
 
       // Panggil auto-mark setelah load
       await autoMarkMissedSchedules();
@@ -258,5 +277,74 @@ class HomeViewModel extends ChangeNotifier {
   void snoozeMedication() {
     _isAlarmTriggering = false;
     notifyListeners();
+  }
+
+  bool _checkIfWithin30Mins() {
+    if (_schedules.isEmpty) return false;
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    for (final s in _schedules) {
+      if (s['today_status'] != 'Segera') continue;
+      final timeStr = s['schedule_time'] as String?;
+      if (timeStr == null || timeStr.isEmpty) continue;
+      
+      final timePart = timeStr.substring(0, 5);
+      final schedTime = DateTime.tryParse('${todayStr}T$timePart:00');
+      if (schedTime == null) continue;
+
+      final diffInMinutes = schedTime.difference(now).inMinutes.abs();
+      if (diffInMinutes <= 30) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _handleAlarmRing(AlarmSettings alarmSettings) {
+    final alarmId = alarmSettings.id;
+    debugPrint('HomeViewModel received alarm ring event: $alarmId');
+
+    _isAlarmTriggering = true;
+    _isWithin30MinsSimulation = true;
+    notifyListeners();
+
+    final scheduleId = alarmId == 999 ? 999 : alarmId ~/ 10;
+    String medName = 'Obat TBC';
+    String scheduleTime = '00:00';
+
+    if (scheduleId == 999) {
+      medName = 'Obat Test PoC';
+      scheduleTime = DateTime.now().toIso8601String().substring(11, 16);
+    } else {
+      final schedule = _schedules.firstWhere(
+        (s) => s['id'] == scheduleId,
+        orElse: () => <String, dynamic>{},
+      );
+      if (schedule.isNotEmpty) {
+        medName = schedule['med_name'] as String? ?? 'Obat TBC';
+        final timeStr = schedule['schedule_time'] as String?;
+        if (timeStr != null && timeStr.length >= 5) {
+          scheduleTime = timeStr.substring(0, 5);
+        }
+      }
+    }
+
+    final context = AppRouter.rootNavigatorKey.currentContext;
+    if (context != null && context.mounted) {
+      try {
+        context.push(
+          '/confirm-medication',
+          extra: {
+            'scheduleId': scheduleId,
+            'medName': medName,
+            'scheduleTime': scheduleTime,
+            'homeViewModel': this,
+          },
+        );
+      } catch (e) {
+        debugPrint('Navigation to confirm-medication failed: $e');
+      }
+    }
   }
 }

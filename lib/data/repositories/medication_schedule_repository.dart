@@ -1,4 +1,3 @@
-import '../models/compliance_log_model.dart';
 import '../models/medication_schedule_model.dart';
 import '../services/supabase_service.dart';
 
@@ -46,5 +45,58 @@ class MedicationScheduleRepository {
 
   Future<void> deleteMedicationSchedule(int id) async {
     await _supabase.client.from('medication_schedules').delete().eq('id', id);
+  }
+
+  Future<List<Map<String, dynamic>>> getSchedulesForAlarmSync(int userId) async {
+    final period = await getActiveTreatmentPeriod(userId);
+    if (period == null) return [];
+
+    final tpId = period['id'] as int;
+    final schedRes = await _supabase.client
+        .from('medication_schedules')
+        .select()
+        .eq('treatment_period_id', tpId);
+
+    final schedList = List<Map<String, dynamic>>.from(schedRes);
+    if (schedList.isEmpty) return [];
+
+    final schedIds = schedList.map((s) => s['id'] as int).toList();
+    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+
+    final compRes = await _supabase.client
+        .from('compliance_logs')
+        .select('schedule_id, status')
+        .eq('log_date', todayStr)
+        .inFilter('schedule_id', schedIds);
+
+    final compMap = {
+      for (var item in compRes)
+        item['schedule_id'] as int: item['status'] as String
+    };
+
+    for (var s in schedList) {
+      final sId = s['id'] as int;
+      String status = 'Segera';
+      if (compMap.containsKey(sId)) {
+        final st = compMap[sId];
+        if (st == 'taken') status = 'Di minum';
+        if (st == 'missed') status = 'Terlewat';
+        if (st == 'pending') status = 'Segera';
+      } else {
+        try {
+          final timeStr = s['schedule_time'] as String;
+          final now = DateTime.now();
+          final parts = timeStr.split(':');
+          final sTime = DateTime(now.year, now.month, now.day,
+              int.parse(parts[0]), int.parse(parts[1]));
+          if (now.isAfter(sTime)) {
+            status = 'Terlewat';
+          }
+        } catch (_) {}
+      }
+      s['today_status'] = status;
+    }
+
+    return schedList;
   }
 }

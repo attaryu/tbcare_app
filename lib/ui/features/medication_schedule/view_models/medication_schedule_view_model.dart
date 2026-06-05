@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/alarm_service.dart';
 import '../../../../data/models/medication_schedule_model.dart';
 import '../../../../data/repositories/medication_schedule_repository.dart';
 
@@ -68,6 +69,8 @@ class MedicationScheduleViewModel extends ChangeNotifier {
       );
       await _repository.addMedicationSchedule(schedule);
       await loadSchedules();
+      final schedulesForSync = await _repository.getSchedulesForAlarmSync(_userId);
+      await AppAlarmService.syncAlarmsWithSchedules(schedulesForSync);
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -83,6 +86,8 @@ class MedicationScheduleViewModel extends ChangeNotifier {
     try {
       await _repository.updateMedicationSchedule(id, medName, scheduleTime);
       await loadSchedules();
+      final schedulesForSync = await _repository.getSchedulesForAlarmSync(_userId);
+      await AppAlarmService.syncAlarmsWithSchedules(schedulesForSync);
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -98,6 +103,8 @@ class MedicationScheduleViewModel extends ChangeNotifier {
     try {
       await _repository.deleteMedicationSchedule(id);
       await loadSchedules();
+      final schedulesForSync = await _repository.getSchedulesForAlarmSync(_userId);
+      await AppAlarmService.syncAlarmsWithSchedules(schedulesForSync);
     } catch (e) {
       _error = e.toString();
       _isLoading = false;

@@ -24,6 +24,7 @@ void main() async {
   // Inisialisasi Service Alarm untuk PoC Hard Reminder
   await Alarm.init();
   AppAlarmService.init();
+  await AppAlarmService.requestPermissions();
 
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,
