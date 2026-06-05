@@ -9,6 +9,8 @@ class AppAlarmService {
   factory AppAlarmService() => _instance;
   AppAlarmService._internal();
 
+  static const List<int> _countdownOffsets = [-10, -8, -5, -4, -3, -2, -1, 0];
+
   /// Stream subscription for alarm rings
   static StreamSubscription<AlarmSet>? _ringSubscription;
   static Function(AlarmSettings)? _onAlarmRing;
@@ -59,9 +61,10 @@ class AppAlarmService {
 
   /// Cancel alarm for a specific schedule
   static Future<void> cancelAlarmForSchedule(int scheduleId) async {
-    // Cancel both today (dayOffset = 0) and tomorrow (dayOffset = 1)
-    await Alarm.stop(scheduleId * 10);
-    await Alarm.stop((scheduleId * 10) + 1);
+    // Cancel all 16 alarms (8 today + 8 tomorrow) for this schedule
+    for (int i = 0; i < 16; i++) {
+      await Alarm.stop((scheduleId * 20) + i);
+    }
     debugPrint('Alarms cancelled for schedule ID: $scheduleId');
   }
 
@@ -98,45 +101,65 @@ class AppAlarmService {
 
         // Check Status Today
         final todayStatus = sched['today_status'] as String? ?? 'Segera';
-        final todayAlarmId = scheduleId * 10;
 
         if (todayStatus == 'Segera') {
           final todaySchedTime = DateTime.tryParse('${todayStr}T$timePart:00');
           if (todaySchedTime != null) {
-            // Only set if the time is in the future
-            if (todaySchedTime.isAfter(now)) {
-              targetAlarmIds.add(todayAlarmId);
-              if (!activeAlarmIds.contains(todayAlarmId)) {
-                await _setMedAlarm(
-                  id: todayAlarmId,
-                  time: todaySchedTime,
-                  medName: medName,
-                  timeStr: timePart,
-                );
+            for (int i = 0; i < _countdownOffsets.length; i++) {
+              final offset = _countdownOffsets[i];
+              final alarmId = (scheduleId * 20) + i;
+              final alarmTime = todaySchedTime.add(Duration(minutes: offset));
+
+              if (alarmTime.isAfter(now)) {
+                targetAlarmIds.add(alarmId);
+                if (!activeAlarmIds.contains(alarmId)) {
+                  final loop = (offset == 0);
+                  final bodyText = (offset == 0)
+                      ? 'Ambil obat $medName ($timePart WIB) sekarang!'
+                      : 'Persiapkan obat $medName - jadwal minum ${offset.abs()} menit lagi ($timePart WIB).';
+                  await _setMedAlarm(
+                    id: alarmId,
+                    time: alarmTime,
+                    medName: medName,
+                    timeStr: timePart,
+                    bodyText: bodyText,
+                    loopAudio: loop,
+                  );
+                }
               }
             }
           }
         }
 
-        // Set Tomorrow Alarm
-        final tomorrowAlarmId = (scheduleId * 10) + 1;
+        // Set Tomorrow Alarms
         final tomorrowSchedTime = DateTime.tryParse('${tomorrowStr}T$timePart:00');
         if (tomorrowSchedTime != null) {
-          targetAlarmIds.add(tomorrowAlarmId);
-          if (!activeAlarmIds.contains(tomorrowAlarmId)) {
-            await _setMedAlarm(
-              id: tomorrowAlarmId,
-              time: tomorrowSchedTime,
-              medName: medName,
-              timeStr: timePart,
-            );
+          for (int i = 0; i < _countdownOffsets.length; i++) {
+            final offset = _countdownOffsets[i];
+            final alarmId = (scheduleId * 20) + 8 + i;
+            final alarmTime = tomorrowSchedTime.add(Duration(minutes: offset));
+
+            targetAlarmIds.add(alarmId);
+            if (!activeAlarmIds.contains(alarmId)) {
+              final loop = (offset == 0);
+              final bodyText = (offset == 0)
+                  ? 'Ambil obat $medName ($timePart WIB) sekarang!'
+                  : 'Persiapkan obat $medName - jadwal minum ${offset.abs()} menit lagi ($timePart WIB).';
+              await _setMedAlarm(
+                id: alarmId,
+                time: alarmTime,
+                medName: medName,
+                timeStr: timePart,
+                bodyText: bodyText,
+                loopAudio: loop,
+              );
+            }
           }
         }
       }
 
       // Cleanup alarms that are no longer in the targets (e.g. deleted schedules or already taken)
       for (final alarm in activeAlarms) {
-        // Only cancel alarms that belong to the rolling schedule system (e.g. ids like scheduleId*10 or scheduleId*10 + 1)
         // Skip user test alarm (like 999) if any
         if (alarm.id == 999) continue;
 
@@ -155,28 +178,29 @@ class AppAlarmService {
     required DateTime time,
     required String medName,
     required String timeStr,
+    required String bodyText,
+    required bool loopAudio,
   }) async {
     final alarmSettings = AlarmSettings(
       id: id,
       dateTime: time,
       assetAudioPath: 'assets/audio/alarm.mp3',
-      loopAudio: true,
+      loopAudio: loopAudio,
       vibrate: true,
       androidFullScreenIntent: true,
       androidStopAlarmOnTermination: false,
       volumeSettings: const VolumeSettings.fixed(
-        // volume: 1.0,
-        volume: 0.5, // test
+        volume: 0.5,
         volumeEnforced: true,
       ),
       notificationSettings: NotificationSettings(
         title: 'Waktunya Minum Obat!',
-        body: 'Ambil obat $medName ($timeStr WIB) sekarang.',
+        body: bodyText,
         stopButton: 'Matikan Alarm',
       ),
     );
 
     await Alarm.set(alarmSettings: alarmSettings);
-    debugPrint('Scheduled alarm $id for $medName at $time');
+    debugPrint('Scheduled alarm $id for $medName at $time with body: "$bodyText" (loop: $loopAudio)');
   }
 }
