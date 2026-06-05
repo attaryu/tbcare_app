@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/services/alarm_service.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/home_repository.dart';
-import '../../../router/app_router.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final HomeRepository _repository;
@@ -308,43 +306,5 @@ class HomeViewModel extends ChangeNotifier {
     _isAlarmTriggering = true;
     _isWithin30MinsSimulation = true;
     notifyListeners();
-
-    final scheduleId = alarmId == 999 ? 999 : alarmId ~/ 10;
-    String medName = 'Obat TBC';
-    String scheduleTime = '00:00';
-
-    if (scheduleId == 999) {
-      medName = 'Obat Test PoC';
-      scheduleTime = DateTime.now().toIso8601String().substring(11, 16);
-    } else {
-      final schedule = _schedules.firstWhere(
-        (s) => s['id'] == scheduleId,
-        orElse: () => <String, dynamic>{},
-      );
-      if (schedule.isNotEmpty) {
-        medName = schedule['med_name'] as String? ?? 'Obat TBC';
-        final timeStr = schedule['schedule_time'] as String?;
-        if (timeStr != null && timeStr.length >= 5) {
-          scheduleTime = timeStr.substring(0, 5);
-        }
-      }
-    }
-
-    final context = AppRouter.rootNavigatorKey.currentContext;
-    if (context != null && context.mounted) {
-      try {
-        context.push(
-          '/confirm-medication',
-          extra: {
-            'scheduleId': scheduleId,
-            'medName': medName,
-            'scheduleTime': scheduleTime,
-            'homeViewModel': this,
-          },
-        );
-      } catch (e) {
-        debugPrint('Navigation to confirm-medication failed: $e');
-      }
-    }
   }
 }
