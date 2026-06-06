@@ -1,8 +1,6 @@
-import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
@@ -223,45 +221,13 @@ class HomeView extends StatelessWidget {
               ],
 
               // Requirement 2 & 3: Jadwal Terdekat
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Jadwal terdekat',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.darkGray,
-                    ),
-                  ),
-                  // Simulasi Toggles
-                  Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Simulasi Waktu 30 Menit',
-                        icon: Icon(
-                          Icons.timer_outlined,
-                          size: 20,
-                          color: viewModel.isWithin30MinsSimulation
-                              ? AppColor.primary
-                              : AppColor.neutralGray,
-                        ),
-                        onPressed: viewModel.toggleWithin30MinsSimulation,
-                      ),
-                      IconButton(
-                        tooltip: 'Simulasi Alarm Aktif',
-                        icon: Icon(
-                          Icons.alarm_on_outlined,
-                          size: 20,
-                          color: viewModel.isAlarmTriggering
-                              ? AppColor.warning
-                              : AppColor.neutralGray,
-                        ),
-                        onPressed: viewModel.toggleAlarmSimulation,
-                      ),
-                    ],
-                  ),
-                ],
+              const Text(
+                'Jadwal terdekat',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.darkGray,
+                ),
               ),
               const SizedBox(height: 12),
               _buildNextScheduleCard(context, viewModel),
@@ -494,115 +460,6 @@ class HomeView extends StatelessWidget {
                     );
                   },
                 ),
-              // --- PoC Hard Reminder Alarm Trigger (Situs Sementara) ---
-              const SizedBox(height: 28),
-              const Text(
-                'PoC Hard Reminder',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.darkGray,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      text: 'Test Alarm 10 Detik',
-                      onPressed: () async {
-                        // Request necessary permissions at runtime for reliability
-                        try {
-                          final statusNotification = await Permission.notification.status;
-                          if (statusNotification.isDenied) {
-                            await Permission.notification.request();
-                          }
-                          final statusAlarm = await Permission.scheduleExactAlarm.status;
-                          if (statusAlarm.isDenied) {
-                            await Permission.scheduleExactAlarm.request();
-                          }
-                        } catch (e) {
-                          debugPrint('Error requesting permissions: $e');
-                        }
-
-                        final now = DateTime.now();
-                        final alarmSettings = AlarmSettings(
-                          id: 999,
-                          dateTime: now.add(const Duration(seconds: 10)),
-                          assetAudioPath: 'assets/audio/alarm.mp3', // Default sound (jika file asset tidak ditemukan, OS akan fallback ke default alarm)
-                          loopAudio: true,
-                          vibrate: true,
-                          androidFullScreenIntent: true,
-                          androidStopAlarmOnTermination: false, // Wajib false agar alarm tetap aktif ketika app ditutup paksa
-                          volumeSettings: const VolumeSettings.fixed(
-                            volume: 0.5,
-                            volumeEnforced: true,
-                          ),
-                          notificationSettings: const NotificationSettings(
-                            title: 'Waktunya Minum Obat!',
-                            body: 'Segera konfirmasi minum obat TBC Anda sekarang.',
-                            stopButton: 'Matikan Alarm',
-                          ),
-                        );
-                        try {
-                          await Alarm.set(alarmSettings: alarmSettings);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Alarm berhasil di-set 10 detik dari sekarang!'),
-                                backgroundColor: AppColor.success,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Gagal set alarm: $e'),
-                                backgroundColor: AppColor.error,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppButton(
-                      text: 'Stop Alarm',
-                      variant: AppButtonVariant.outline,
-                      onPressed: () async {
-                        try {
-                          final stopped = await Alarm.stop(999);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  stopped 
-                                      ? 'Alarm 999 berhasil dimatikan!' 
-                                      : 'Tidak ada alarm 999 yang aktif/berdering.',
-                                ),
-                                backgroundColor: stopped ? AppColor.success : AppColor.warning,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Gagal mematikan alarm: $e'),
-                                backgroundColor: AppColor.error,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              // ---------------------------------------------------------
               const SizedBox(height: 80),
             ],
           ),
