@@ -33,7 +33,6 @@ import '../features/home/view_models/confirm_medication_view_model.dart';
 import '../features/home/views/confirm_medication_view.dart';
 import '../features/supervisor/views/supervisor_home_view.dart';
 import '../features/supervisor/views/supervisor_patient_list_view.dart';
-import '../features/supervisor/views/supervisor_patient_history_view.dart';
 import '../features/supervisor/views/supervisor_patient_detail_view.dart';
 import '../../data/repositories/supervisor_repository.dart';
 import '../features/supervisor/view_models/supervisor_view_model.dart';
@@ -239,11 +238,6 @@ class AppRouter {
                     );
                   },
                   routes: [
-                    GoRoute(
-                      path: 'history',
-                      parentNavigatorKey: rootNavigatorKey,
-                      builder: (context, state) => const SupervisorPatientHistoryView(),
-                    ),
                     GoRoute(
                       path: 'detail',
                       parentNavigatorKey: rootNavigatorKey,

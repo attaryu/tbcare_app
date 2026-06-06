@@ -270,7 +270,6 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
             Padding(
               padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 16.0, bottom: 8.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Kelola Pasien',
@@ -278,23 +277,6 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: AppColor.darkGray,
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () => context.push('/patients/history'),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColor.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.history_rounded,
-                        color: AppColor.white,
-                        size: 24,
-                      ),
                     ),
                   ),
                 ],
