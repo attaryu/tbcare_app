@@ -13,6 +13,7 @@ import 'data/repositories/medication_schedule_repository.dart';
 import 'data/repositories/profile_repository.dart';
 import 'data/repositories/symptom_repository.dart';
 import 'data/repositories/treatment_repository.dart';
+import 'data/repositories/supervisor_repository.dart';
 import 'data/services/supabase_service.dart';
 import 'ui/features/auth/view_models/auth_view_model.dart';
 import 'ui/router/app_router.dart';
@@ -67,6 +68,9 @@ class MainApp extends StatelessWidget {
         ),
         ProxyProvider<SupabaseService, MedicationScheduleRepository>(
           update: (_, supabase, __) => MedicationScheduleRepository(supabase),
+        ),
+        ProxyProvider<SupabaseService, SupervisorRepository>(
+          update: (_, supabase, __) => SupervisorRepository(supabase),
         ),
         ChangeNotifierProvider<AuthViewModel>.value(
           value: authViewModel,

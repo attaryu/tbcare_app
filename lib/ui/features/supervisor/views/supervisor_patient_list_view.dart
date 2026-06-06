@@ -1,36 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
+import '../view_models/supervisor_view_model.dart';
 
-class PatientDummy {
+class PatientItem {
   final String id;
   final String name;
-  final String avatarUrl;
   final String phase;
 
-  PatientDummy({
+  PatientItem({
     required this.id,
     required this.name,
-    required this.avatarUrl,
     required this.phase,
   });
 }
 
-class RequestDummy {
+class RequestItem {
   final String id;
   final String name;
-  final String avatarUrl;
   final String time;
 
-  RequestDummy({
+  RequestItem({
     required this.id,
     required this.name,
-    required this.avatarUrl,
     required this.time,
   });
+}
+
+String _getInitials(String name) {
+  final cleanName = name.trim().replaceAll(RegExp(r'\s+'), ' ');
+  if (cleanName.isEmpty) return 'P';
+  final words = cleanName.split(' ');
+  if (words.length >= 2) {
+    final firstInitial = words[0].isNotEmpty ? words[0][0].toUpperCase() : '';
+    final secondInitial = words[1].isNotEmpty ? words[1][0].toUpperCase() : '';
+    return '$firstInitial$secondInitial';
+  } else {
+    final word = words[0];
+    if (word.length >= 2) {
+      return word.substring(0, 2).toUpperCase();
+    }
+    return word.toUpperCase();
+  }
+}
+
+Widget _buildAvatar(String name, {double radius = 24}) {
+  return CircleAvatar(
+    radius: radius,
+    backgroundColor: AppColor.primaryLight,
+    child: Text(
+      _getInitials(name),
+      style: TextStyle(
+        color: AppColor.primary,
+        fontWeight: FontWeight.bold,
+        fontSize: radius * 0.5,
+      ),
+    ),
+  );
 }
 
 class SupervisorPatientListView extends StatefulWidget {
@@ -42,8 +73,8 @@ class SupervisorPatientListView extends StatefulWidget {
 
 class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
   // Local state for mockup manipulation
-  late List<RequestDummy> _requests;
-  late List<PatientDummy> _patients;
+  late List<RequestItem> _requests;
+  late List<PatientItem> _patients;
   String _searchQuery = '';
   final TextEditingController _searchCtrl = TextEditingController();
 
@@ -57,34 +88,8 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
   }
 
   void _resetData() {
-    _requests = [
-      RequestDummy(
-        id: 'req1',
-        name: 'Jaxson Donin',
-        avatarUrl: 'https://i.pravatar.cc/150?img=11',
-        time: 'Hari ini, 12:30 WIB',
-      ),
-      RequestDummy(
-        id: 'req2',
-        name: 'Skylar Aminoff',
-        avatarUrl: 'https://i.pravatar.cc/150?img=5',
-        time: 'Kemarin, 14:30 WIB',
-      ),
-    ];
-    _patients = [
-      PatientDummy(
-        id: 'pat1',
-        name: 'Rayna Levin',
-        avatarUrl: 'https://i.pravatar.cc/150?img=9',
-        phase: 'Fase Intensif - Bulan ke-2',
-      ),
-      PatientDummy(
-        id: 'pat2',
-        name: 'Terry Korsgaard',
-        avatarUrl: 'https://i.pravatar.cc/150?img=12',
-        phase: 'Fase Intensif - Bulan ke-2',
-      ),
-    ];
+    _requests = [];
+    _patients = [];
     _searchQuery = '';
     _searchCtrl.clear();
   }
@@ -95,8 +100,8 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
     super.dispose();
   }
 
-  void _copySupervisorCode() {
-    Clipboard.setData(const ClipboardData(text: 'A7B29C'));
+  void _copySupervisorCode(String code) {
+    Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Kode unik pengawas berhasil disalin!'),
@@ -106,41 +111,92 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
     );
   }
 
-  void _acceptRequest(RequestDummy request) {
-    setState(() {
-      _requests.removeWhere((r) => r.id == request.id);
-      _patients.add(
-        PatientDummy(
-          id: 'pat_${DateTime.now().millisecondsSinceEpoch}',
-          name: request.name,
-          avatarUrl: request.avatarUrl,
-          phase: 'Fase Intensif - Bulan ke-1',
+  Future<void> _acceptRequest(RequestItem request) async {
+    final intId = int.tryParse(request.id);
+    if (intId != null) {
+      try {
+        await context.read<SupervisorViewModel>().acceptRequest(intId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Permintaan ${request.name} berhasil diterima'),
+              backgroundColor: AppColor.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal menyetujui permintaan: ${e.toString()}'),
+              backgroundColor: AppColor.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } else {
+      setState(() {
+        _requests.removeWhere((r) => r.id == request.id);
+        _patients.add(
+          PatientItem(
+            id: 'pat_${DateTime.now().millisecondsSinceEpoch}',
+            name: request.name,
+            phase: 'Fase Intensif - Bulan ke-1',
+          ),
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Permintaan ${request.name} diterima'),
+          backgroundColor: AppColor.success,
+          behavior: SnackBarBehavior.floating,
         ),
       );
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Permintaan ${request.name} diterima'),
-        backgroundColor: AppColor.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    }
   }
 
-  void _rejectRequest(RequestDummy request) {
-    setState(() {
-      _requests.removeWhere((r) => r.id == request.id);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Permintaan ${request.name} ditolak'),
-        backgroundColor: AppColor.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _rejectRequest(RequestItem request) async {
+    final intId = int.tryParse(request.id);
+    if (intId != null) {
+      try {
+        await context.read<SupervisorViewModel>().rejectRequest(intId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Permintaan ${request.name} berhasil ditolak'),
+              backgroundColor: AppColor.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal menolak permintaan: ${e.toString()}'),
+              backgroundColor: AppColor.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } else {
+      setState(() {
+        _requests.removeWhere((r) => r.id == request.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Permintaan ${request.name} ditolak'),
+          backgroundColor: AppColor.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
-  void _showPatientDetail(PatientDummy patient) {
+  void _showPatientDetail(PatientItem patient) {
     AppDialog.info(
       context,
       title: 'Detail Pasien',
@@ -150,10 +206,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Center(
-            child: CircleAvatar(
-              radius: 40,
-              backgroundImage: NetworkImage(patient.avatarUrl),
-            ),
+            child: _buildAvatar(patient.name, radius: 40),
           ),
           const SizedBox(height: 16),
           Center(
@@ -209,7 +262,8 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
     );
   }
 
-  void _deletePatient(PatientDummy patient) {
+  void _deletePatient(PatientItem patient) {
+    final intId = int.tryParse(patient.id);
     AppDialog.confirm(
       context,
       title: 'Hapus Pasien',
@@ -218,30 +272,107 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
       cancelLabel: 'Batal',
       confirmColor: AppButtonColor.danger,
       icon: Icons.person_remove_outlined,
-      onConfirm: () {
-        setState(() {
-          _patients.removeWhere((p) => p.id == patient.id);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${patient.name} dihapus dari daftar pengawasan'),
-            backgroundColor: AppColor.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      onConfirm: () async {
+        if (intId != null) {
+          try {
+            await context.read<SupervisorViewModel>().deletePatient(intId);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${patient.name} berhasil dihapus dari daftar pengawasan'),
+                  backgroundColor: AppColor.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Gagal menghapus pasien: ${e.toString()}'),
+                  backgroundColor: AppColor.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          }
+        } else {
+          setState(() {
+            _patients.removeWhere((p) => p.id == patient.id);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${patient.name} dihapus dari daftar pengawasan'),
+              backgroundColor: AppColor.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final supervisorViewModel = context.watch<SupervisorViewModel>();
+    final supervisorCode = supervisorViewModel.supervisorCode ?? '...';
+
+    // Map real database requests from SupervisorViewModel to RequestItem format
+    final List<RequestItem> dbRequests = supervisorViewModel.joinRequests.map((item) {
+      final id = item['id'].toString();
+      final users = item['users'] as Map<String, dynamic>?;
+      final name = users?['name'] as String? ?? 'Pasien';
+      final requestAtStr = item['request_at'] as String?;
+      String formattedTime = 'Baru saja';
+      if (requestAtStr != null) {
+        try {
+          String cleanedStr = requestAtStr;
+          if (!cleanedStr.endsWith('Z') && !cleanedStr.contains('+') && !cleanedStr.contains('-')) {
+            cleanedStr += 'Z';
+          }
+          final dt = DateTime.parse(cleanedStr).toLocal();
+          formattedTime = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(dt);
+        } catch (_) {}
+      }
+      return RequestItem(
+        id: id,
+        name: name,
+        time: formattedTime,
+      );
+    }).toList();
+
+    // Map real database patients from SupervisorViewModel to PatientItem format
+    final List<PatientItem> dbPatients = supervisorViewModel.approvedPatients.map((item) {
+      final id = item['id'].toString();
+      final users = item['users'] as Map<String, dynamic>?;
+      final name = users?['name'] as String? ?? 'Pasien';
+
+      final activePeriod = item['active_period'] as Map<String, dynamic>?;
+      String phase = 'Belum Memulai Pengobatan';
+      if (activePeriod != null) {
+        final periodName = activePeriod['name'] as String? ?? 'Periode Pengobatan';
+        final duration = activePeriod['duration'] as int? ?? 0;
+        final durationType = activePeriod['duration_type'] as String? ?? 'month';
+        final durationUnit = durationType == 'month' ? 'Bulan' : 'Hari';
+        phase = '$periodName - $duration $durationUnit';
+      }
+
+      return PatientItem(
+        id: id,
+        name: name,
+        phase: phase,
+      );
+    }).toList();
+
     // Determine datasets based on mockup UI test states
-    final displayRequests = _uiState == 'normal' ? _requests : <RequestDummy>[];
+    final displayRequests = _uiState == 'normal'
+        ? [...dbRequests, ..._requests]
+        : <RequestItem>[];
     final filteredPatients = _uiState == 'normal'
-        ? _patients
+        ? [...dbPatients, ..._patients]
             .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
             .toList()
-        : <PatientDummy>[];
+        : <PatientItem>[];
 
     return Scaffold(
       backgroundColor: AppColor.white,
@@ -364,9 +495,9 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      'A7B29C',
-                                      style: TextStyle(
+                                    Text(
+                                      supervisorCode,
+                                      style: const TextStyle(
                                         color: AppColor.darkGray,
                                         fontSize: 24,
                                         fontWeight: FontWeight.w800,
@@ -374,7 +505,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                                       ),
                                     ),
                                     InkWell(
-                                      onTap: _copySupervisorCode,
+                                      onTap: () => _copySupervisorCode(supervisorCode),
                                       borderRadius: BorderRadius.circular(8),
                                       child: Container(
                                         padding: const EdgeInsets.all(10.0),
@@ -476,11 +607,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                                 ),
                                 child: Row(
                                   children: [
-                                    CircleAvatar(
-                                      radius: 24,
-                                      backgroundColor: AppColor.primaryLight,
-                                      backgroundImage: NetworkImage(request.avatarUrl),
-                                    ),
+                                    _buildAvatar(request.name, radius: 24),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
@@ -639,11 +766,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                                 ),
                                 child: Row(
                                   children: [
-                                    CircleAvatar(
-                                      radius: 24,
-                                      backgroundColor: AppColor.primaryLight,
-                                      backgroundImage: NetworkImage(patient.avatarUrl),
-                                    ),
+                                    _buildAvatar(patient.name, radius: 24),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(

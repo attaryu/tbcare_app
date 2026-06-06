@@ -34,6 +34,8 @@ import '../features/home/views/confirm_medication_view.dart';
 import '../features/supervisor/views/supervisor_home_view.dart';
 import '../features/supervisor/views/supervisor_patient_list_view.dart';
 import '../features/supervisor/views/supervisor_patient_history_view.dart';
+import '../../data/repositories/supervisor_repository.dart';
+import '../features/supervisor/view_models/supervisor_view_model.dart';
 
 class AppRouter {
   static final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -215,7 +217,19 @@ class AppRouter {
                 GoRoute(
                   path: '/patients',
                   builder: (context, state) {
-                    return const SupervisorPatientListView();
+                    final userId = authViewModel.currentUser?.id;
+                    if (userId == null) {
+                      return const Scaffold(
+                        body: Center(child: Text('Sesi berakhir')),
+                      );
+                    }
+                    return ChangeNotifierProvider(
+                      create: (_) => SupervisorViewModel(
+                        repository: context.read<SupervisorRepository>(),
+                        supervisorId: userId,
+                      ),
+                      child: const SupervisorPatientListView(),
+                    );
                   },
                   routes: [
                     GoRoute(
