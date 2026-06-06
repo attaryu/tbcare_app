@@ -305,7 +305,7 @@ class _SymptomListViewState extends State<SymptomListView> {
               const SizedBox(width: 8),
               Text(
                 DateFormat(
-                  'dd MMMM yyyy, HH:mm WIB',
+                  'dd MMMM yyyy, HH:mm',
                   'id_ID',
                 ).format(log.createdAt),
                 style: const TextStyle(

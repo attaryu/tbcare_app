@@ -237,7 +237,7 @@ class HomeRepository {
           .from('compliance_logs')
           .update({
             'status': 'taken',
-            'taken_at': now.toIso8601String(),
+            'taken_at': now.toUtc().toIso8601String(),
             'photo_url': photoUrl,
           })
           .eq('id', existing['id']);
@@ -246,7 +246,7 @@ class HomeRepository {
         'schedule_id': scheduleId,
         'med_name': medName,
         'status': 'taken',
-        'taken_at': now.toIso8601String(),
+        'taken_at': now.toUtc().toIso8601String(),
         'photo_url': photoUrl,
         'log_date': todayStr,
       });

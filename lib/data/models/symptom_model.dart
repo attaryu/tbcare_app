@@ -41,8 +41,8 @@ class SymptomLog {
         orElse: () => SymptomLevel.normal,
       ),
       note: json['note'],
-      createdAt: DateTime.parse(json['created_at']),
-      editedAt: json['edited_at'] != null ? DateTime.parse(json['edited_at']) : null,
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      editedAt: json['edited_at'] != null ? DateTime.parse(json['edited_at']).toLocal() : null,
     );
   }
 
@@ -51,8 +51,8 @@ class SymptomLog {
       'treatment_period_id': treatmentPeriodId,
       'level': level.name,
       'note': note,
-      'created_at': createdAt.toIso8601String(),
-      'edited_at': editedAt?.toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
+      'edited_at': editedAt?.toUtc().toIso8601String(),
     };
   }
 

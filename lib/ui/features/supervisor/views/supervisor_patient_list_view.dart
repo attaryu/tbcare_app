@@ -326,11 +326,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
       String formattedTime = 'Baru saja';
       if (requestAtStr != null) {
         try {
-          String cleanedStr = requestAtStr;
-          if (!cleanedStr.endsWith('Z') && !cleanedStr.contains('+') && !cleanedStr.contains('-')) {
-            cleanedStr += 'Z';
-          }
-          final dt = DateTime.parse(cleanedStr).toLocal();
+          final dt = DateTime.parse(requestAtStr).toLocal();
           formattedTime = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(dt);
         } catch (_) {}
       }
