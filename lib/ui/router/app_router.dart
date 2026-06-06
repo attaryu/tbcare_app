@@ -33,6 +33,7 @@ import '../features/home/view_models/confirm_medication_view_model.dart';
 import '../features/home/views/confirm_medication_view.dart';
 import '../features/supervisor/views/supervisor_home_view.dart';
 import '../features/supervisor/views/supervisor_patient_list_view.dart';
+import '../features/supervisor/views/supervisor_patient_history_view.dart';
 
 class AppRouter {
   static final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -216,6 +217,13 @@ class AppRouter {
                   builder: (context, state) {
                     return const SupervisorPatientListView();
                   },
+                  routes: [
+                    GoRoute(
+                      path: 'history',
+                      parentNavigatorKey: rootNavigatorKey,
+                      builder: (context, state) => const SupervisorPatientHistoryView(),
+                    ),
+                  ],
                 ),
               ],
             ),
