@@ -86,11 +86,20 @@ class ProfileViewModel extends ChangeNotifier {
 
     if (_roleSlug == 'pasien') {
       if (_supervisorInfo != null) {
-        accountItems.add(const ProfileMenuItem(
-          title: 'Lihat Pengawas',
-          icon: Icons.people_outline,
-          action: ProfileMenuAction.viewSupervisor,
-        ));
+        final status = _supervisorInfo!['status'] as String? ?? '';
+        if (status == 'approved') {
+          accountItems.add(const ProfileMenuItem(
+            title: 'Lihat Pengawas',
+            icon: Icons.people_outline,
+            action: ProfileMenuAction.viewSupervisor,
+          ));
+        } else {
+          accountItems.add(const ProfileMenuItem(
+            title: 'Permintaan Menunggu Persetujuan',
+            icon: Icons.hourglass_empty_rounded,
+            action: ProfileMenuAction.viewSupervisor,
+          ));
+        }
       } else {
         accountItems.add(const ProfileMenuItem(
           title: 'Tambah Pengawas',

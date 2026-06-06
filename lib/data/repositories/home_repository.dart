@@ -25,11 +25,13 @@ class HomeRepository {
       final spList = await _supabase.client
           .from('supervisions_patients')
           .select()
-          .eq('patients_id', userId);
+          .eq('patients_id', userId)
+          .inFilter('status', ['pending', 'approved'])
+          .order('request_at', ascending: false);
 
       if (spList.isNotEmpty) {
-        final spRes = spList.last;
-        hasSupervisor = true;
+        final spRes = spList.first;
+        hasSupervisor = spRes['status'] == 'approved';
         final supervisionId = spRes['supervision_id'] as int;
 
         final supList = await _supabase.client
@@ -186,28 +188,54 @@ class HomeRepository {
     final sup = supList.first;
     final supervisionId = sup['id'] as int;
 
-    final existingList = await _supabase.client
+    // Check if there is an existing relationship with this specific supervisor (any status)
+    final existingRelation = await _supabase.client
         .from('supervisions_patients')
         .select()
-        .eq('patients_id', patientId);
+        .eq('patients_id', patientId)
+        .eq('supervision_id', supervisionId)
+        .maybeSingle();
 
-    if (existingList.isNotEmpty) {
-      final existing = existingList.last;
+    if (existingRelation != null) {
+      // Re-apply to the same supervisor by updating status to pending
       await _supabase.client
           .from('supervisions_patients')
           .update({
-            'supervision_id': supervisionId,
             'status': 'pending',
+            'request_at': DateTime.now().toIso8601String(),
+            'joined_at': null,
           })
-          .eq('id', existing['id']);
+          .eq('id', existingRelation['id']);
     } else {
-      await _supabase.client
+      // If no relationship exists with this supervisor, check if there is an active/pending relationship with a different supervisor
+      final activeOrPendingRelation = await _supabase.client
           .from('supervisions_patients')
-          .insert({
-            'supervision_id': supervisionId,
-            'patients_id': patientId,
-            'status': 'pending',
-          });
+          .select()
+          .eq('patients_id', patientId)
+          .inFilter('status', ['pending', 'approved'])
+          .maybeSingle();
+
+      if (activeOrPendingRelation != null) {
+        // If there's an active/pending relationship with another supervisor, update it to the new supervisor
+        await _supabase.client
+            .from('supervisions_patients')
+            .update({
+              'supervision_id': supervisionId,
+              'status': 'pending',
+              'request_at': DateTime.now().toIso8601String(),
+              'joined_at': null,
+            })
+            .eq('id', activeOrPendingRelation['id']);
+      } else {
+        // Otherwise, insert a new relationship
+        await _supabase.client
+            .from('supervisions_patients')
+            .insert({
+              'supervision_id': supervisionId,
+              'patients_id': patientId,
+              'status': 'pending',
+            });
+      }
     }
   }
 

@@ -82,7 +82,13 @@ class AppRouter {
                       );
                     }
                     if (authViewModel.roleSlug == 'pengawas') {
-                      return const SupervisorHomeView();
+                      return ChangeNotifierProvider(
+                        create: (_) => SupervisorViewModel(
+                          repository: context.read<SupervisorRepository>(),
+                          supervisorId: userId,
+                        ),
+                        child: const SupervisorHomeView(),
+                      );
                     }
                     return ChangeNotifierProvider(
                       create: (_) => HomeViewModel(

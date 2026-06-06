@@ -161,62 +161,85 @@ class HomeView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Requirement 1: Alert Banner (Jika belum punya pengawas)
+              // Requirement 1: Alert Banner (Jika belum punya pengawas atau masih pending)
               if (!viewModel.hasSupervisor) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColor.white,
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                Builder(builder: (context) {
+                  final isPending = viewModel.supervisorInfo != null &&
+                      viewModel.supervisorInfo!['status'] == 'pending';
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isPending
+                          ? const Color(0xFFFFF8E1)
+                          : AppColor.white,
+                      border: Border.all(
+                        color: isPending
+                            ? const Color(0xFFFFCC02)
+                            : Colors.grey.shade300,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppColor.primary,
-                          shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: AppColor.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Anda belum terhubung dengan Pengawas.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColor.darkGray,
-                            fontWeight: FontWeight.w500,
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isPending
+                                ? const Color(0xFFFFCC02)
+                                : AppColor.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isPending
+                                ? Icons.hourglass_top_rounded
+                                : Icons.info_outline,
+                            size: 16,
+                            color: isPending
+                                ? AppColor.darkGray
+                                : AppColor.white,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      AppButton(
-                        text: 'Hubungkan',
-                        width: null,
-                        height: 36,
-                        borderRadius: 8,
-                        onPressed: () =>
-                            _showConnectSupervisorModal(context, viewModel),
-                      ),
-                    ],
-                  ),
-                ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            isPending
+                                ? 'Permintaan pengawasan sedang menunggu persetujuan.'
+                                : 'Anda belum terhubung dengan Pengawas.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isPending
+                                  ? const Color(0xFF5D4037)
+                                  : AppColor.darkGray,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (!isPending) ...[
+                          const SizedBox(width: 8),
+                          AppButton(
+                            text: 'Hubungkan',
+                            width: null,
+                            height: 36,
+                            borderRadius: 8,
+                            onPressed: () =>
+                                _showConnectSupervisorModal(context, viewModel),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
                 const SizedBox(height: 28),
               ],
 

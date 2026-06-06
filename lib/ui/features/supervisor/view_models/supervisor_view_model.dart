@@ -22,6 +22,19 @@ class SupervisorViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> _approvedPatients = [];
   List<Map<String, dynamic>> get approvedPatients => _approvedPatients;
 
+  List<Map<String, dynamic>> _terlewatList = [];
+  List<Map<String, dynamic>> get terlewatList => _terlewatList;
+
+  List<Map<String, dynamic>> _verifikasiList = [];
+  List<Map<String, dynamic>> get verifikasiList => _verifikasiList;
+
+  List<Map<String, dynamic>> _amanList = [];
+  List<Map<String, dynamic>> get amanList => _amanList;
+
+  int get terlewatCount => _terlewatList.length;
+  int get verifikasiCount => _verifikasiList.length;
+  int get amanCount => _amanList.length;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -37,12 +50,20 @@ class SupervisorViewModel extends ChangeNotifier {
       _supervisorCode = await _repository.getSupervisorCode(_supervisorId);
       _joinRequests = await _repository.getJoinRequests(_supervisorId);
       _approvedPatients = await _repository.getApprovedPatients(_supervisorId);
+      await _loadDailySummary();
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadDailySummary() async {
+    final summary = await _repository.getDailyPatientSummary(_supervisorId);
+    _terlewatList = summary.where((s) => s['category'] == 'terlewat').toList();
+    _verifikasiList = summary.where((s) => s['category'] == 'butuh_verifikasi').toList();
+    _amanList = summary.where((s) => s['category'] == 'aman').toList();
   }
 
   Future<void> acceptRequest(int relationshipId) async {
@@ -85,5 +106,23 @@ class SupervisorViewModel extends ChangeNotifier {
       notifyListeners();
       rethrow;
     }
+  }
+
+  Future<void> verifyLog(int logId) async {
+    await _repository.verifyComplianceLog(logId, _supervisorId);
+    await _loadDailySummary();
+    notifyListeners();
+  }
+
+  Future<void> rejectLog(int logId, String scheduleTime) async {
+    await _repository.rejectComplianceLog(logId, scheduleTime);
+    await _loadDailySummary();
+    notifyListeners();
+  }
+
+  Future<void> ignoreEscalation(int escalationId) async {
+    await _repository.ignoreEscalation(escalationId, _supervisorId);
+    await _loadDailySummary();
+    notifyListeners();
   }
 }
