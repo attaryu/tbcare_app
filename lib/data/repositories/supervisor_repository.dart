@@ -44,7 +44,7 @@ class SupervisorRepository {
     // Fetch approved patients and their user profiles
     final res = await _supabase.client
         .from('supervisions_patients')
-        .select('*, users:patients_id(id, name, photo_url)')
+        .select('*, users:patients_id(id, name, email, telephone_number, photo_url)')
         .eq('supervision_id', supervisionId)
         .eq('status', 'approved')
         .order('joined_at', ascending: false);

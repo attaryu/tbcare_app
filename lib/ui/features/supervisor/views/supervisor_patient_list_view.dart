@@ -10,13 +10,21 @@ import '../view_models/supervisor_view_model.dart';
 
 class PatientItem {
   final String id;
+  final int patientUserId;
   final String name;
   final String phase;
+  final String? photoUrl;
+  final String? email;
+  final String? telephone;
 
   PatientItem({
     required this.id,
+    required this.patientUserId,
     required this.name,
     required this.phase,
+    this.photoUrl,
+    this.email,
+    this.telephone,
   });
 }
 
@@ -158,72 +166,6 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
     }
   }
 
-  void _showPatientDetail(PatientItem patient) {
-    AppDialog.info(
-      context,
-      title: 'Detail Pasien',
-      icon: Icons.person_outline,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: _buildAvatar(patient.name, radius: 40),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              patient.name,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColor.darkGray,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              patient.phase,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColor.neutralGray,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Divider(),
-          const SizedBox(height: 10),
-          _buildInfoRow('ID Pasien', patient.id),
-          const SizedBox(height: 8),
-          _buildInfoRow('Status Pengobatan', 'Aktif'),
-          const SizedBox(height: 8),
-          _buildInfoRow('Kepatuhan Minum Obat', '95%'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: AppColor.neutralGray, fontSize: 13),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppColor.darkGray,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-        ),
-      ],
-    );
-  }
-
   void _deletePatient(PatientItem patient) {
     final intId = int.tryParse(patient.id);
     if (intId == null) return;
@@ -305,8 +247,12 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
 
       return PatientItem(
         id: id,
+        patientUserId: item['patients_id'] as int,
         name: name,
         phase: phase,
+        photoUrl: users?['photo_url'] as String?,
+        email: users?['email'] as String?,
+        telephone: users?['telephone_number'] as String?,
       );
     }).toList();
 
@@ -748,7 +694,16 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                                       ),
                                       onSelected: (value) {
                                         if (value == 'detail') {
-                                          _showPatientDetail(patient);
+                                          context.push(
+                                            '/patients/detail',
+                                            extra: {
+                                              'patientUserId': patient.patientUserId,
+                                              'name': patient.name,
+                                              'photoUrl': patient.photoUrl,
+                                              'email': patient.email,
+                                              'telephone': patient.telephone,
+                                            },
+                                          );
                                         } else if (value == 'delete') {
                                           _deletePatient(patient);
                                         }
