@@ -51,6 +51,7 @@ class HomeRepository {
           if (sUserList.isNotEmpty) {
             final sUserRes = sUserList.first;
             supervisorInfo = {
+              'id': supervisorUserId,
               'name': sUserRes['name'],
               'telephone': sUserRes['telephone_number'] ?? '-',
               'status': spRes['status'],

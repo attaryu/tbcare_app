@@ -7,10 +7,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/app_env.dart';
 import 'core/services/alarm_service.dart';
+import 'core/services/fcm_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/history_repository.dart';
 import 'data/repositories/home_repository.dart';
 import 'data/repositories/medication_schedule_repository.dart';
+import 'data/repositories/notification_repository.dart';
 import 'data/repositories/profile_repository.dart';
 import 'data/repositories/supervisor_repository.dart';
 import 'data/repositories/symptom_repository.dart';
@@ -39,6 +41,11 @@ void main() async {
   await authViewModel.tryRestoreSession();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FcmService.instance.init();
+
+  if (authViewModel.isAuthenticated && authViewModel.currentUser != null) {
+    await FcmService.instance.saveTokenToDatabase(authViewModel.currentUser!.id);
+  }
 
   runApp(MainApp(authViewModel: authViewModel));
 }
@@ -73,6 +80,9 @@ class MainApp extends StatelessWidget {
         ),
         ProxyProvider<SupabaseService, SupervisorRepository>(
           update: (_, supabase, __) => SupervisorRepository(supabase),
+        ),
+        ProxyProvider<SupabaseService, NotificationRepository>(
+          update: (_, supabase, __) => NotificationRepository(supabase),
         ),
         ChangeNotifierProvider<AuthViewModel>.value(value: authViewModel),
       ],

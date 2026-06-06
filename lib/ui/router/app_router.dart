@@ -35,7 +35,10 @@ import '../features/supervisor/views/supervisor_home_view.dart';
 import '../features/supervisor/views/supervisor_patient_list_view.dart';
 import '../features/supervisor/views/supervisor_patient_detail_view.dart';
 import '../../data/repositories/supervisor_repository.dart';
+import '../../data/repositories/notification_repository.dart';
 import '../features/supervisor/view_models/supervisor_view_model.dart';
+import '../features/notification/view_models/notification_view_model.dart';
+import '../features/notification/views/notification_view.dart';
 
 class AppRouter {
   static final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -64,8 +67,37 @@ class AppRouter {
           path: '/register',
           builder: (context, state) => const RegisterView(),
         ),
+        GoRoute(
+          path: '/notifications',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) {
+            final userId = authViewModel.currentUser?.id;
+            if (userId == null) {
+              return const Scaffold(
+                body: Center(child: Text('Sesi berakhir')),
+              );
+            }
+            return ChangeNotifierProvider(
+              create: (_) => NotificationViewModel(
+                repository: context.read<NotificationRepository>(),
+                userId: userId,
+              ),
+              child: const NotificationView(),
+            );
+          },
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
+            final userId = authViewModel.currentUser?.id;
+            if (userId != null) {
+              return ChangeNotifierProvider(
+                create: (_) => NotificationViewModel(
+                  repository: context.read<NotificationRepository>(),
+                  userId: userId,
+                ),
+                child: MainShell(navigationShell: navigationShell),
+              );
+            }
             return MainShell(navigationShell: navigationShell);
           },
           branches: [
@@ -84,6 +116,7 @@ class AppRouter {
                       return ChangeNotifierProvider(
                         create: (_) => SupervisorViewModel(
                           repository: context.read<SupervisorRepository>(),
+                          notificationRepository: context.read<NotificationRepository>(),
                           supervisorId: userId,
                         ),
                         child: const SupervisorHomeView(),
@@ -92,6 +125,7 @@ class AppRouter {
                     return ChangeNotifierProvider(
                       create: (_) => HomeViewModel(
                         repository: context.read<HomeRepository>(),
+                        notificationRepository: context.read<NotificationRepository>(),
                         userId: userId,
                       ),
                       child: const HomeView(),
@@ -232,6 +266,7 @@ class AppRouter {
                     return ChangeNotifierProvider(
                       create: (_) => SupervisorViewModel(
                         repository: context.read<SupervisorRepository>(),
+                        notificationRepository: context.read<NotificationRepository>(),
                         supervisorId: userId,
                       ),
                       child: const SupervisorPatientListView(),

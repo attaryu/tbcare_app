@@ -4,14 +4,21 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/alarm_service.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/home_repository.dart';
+import '../../../../data/repositories/notification_repository.dart';
+import '../../../../data/services/supabase_service.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final HomeRepository _repository;
+  final NotificationRepository _notificationRepository;
   final int _userId;
   Timer? _timer;
 
-  HomeViewModel({required HomeRepository repository, required int userId})
-      : _repository = repository,
+  HomeViewModel({
+    required HomeRepository repository,
+    required NotificationRepository notificationRepository,
+    required int userId,
+  })  : _repository = repository,
+        _notificationRepository = notificationRepository,
         _userId = userId {
     fetchHomeData();
     _startTimer();
@@ -247,6 +254,27 @@ class HomeViewModel extends ChangeNotifier {
 
     try {
       await _repository.connectSupervisor(_userId, code);
+      
+      // Fetch supervisor id to notify them
+      final supList = await SupabaseService.instance.client
+          .from('supervisions')
+          .select('supervisor_id')
+          .eq('supervision_code', code);
+      
+      if (supList.isNotEmpty) {
+        final supervisorId = supList.first['supervisor_id'] as int;
+        final patientName = _user?.name ?? 'Pasien';
+        await _notificationRepository.sendNotification(
+          receiverId: supervisorId,
+          senderId: _userId,
+          type: 'supervision_requested',
+          title: 'Permintaan Pengawasan Baru',
+          body: '$patientName mengirimkan permintaan untuk menghubungkan Anda sebagai Pengawas.',
+          relatedId: _userId,
+          relatedTable: 'users',
+        );
+      }
+
       await fetchHomeData();
     } catch (e) {
       _error = e.toString();
@@ -262,8 +290,28 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Get the schedule details before logging to include in notification body/title
+      final sched = _schedules.firstWhere((s) => s['id'] == scheduleId, orElse: () => {});
+      final medName = sched['med_name'] as String? ?? 'Obat TBC';
+      final scheduleTime = sched['schedule_time'] as String? ?? '';
+
       await _repository.logMedicationTaken(scheduleId, photoUrl: photoUrl);
       await fetchHomeData();
+
+      // Trigger notification if supervisor is connected
+      if (_supervisorInfo != null && _supervisorInfo!['id'] != null) {
+        final supervisorId = _supervisorInfo!['id'] as int;
+        final patientName = _user?.name ?? 'Pasien';
+        await _notificationRepository.sendNotification(
+          receiverId: supervisorId,
+          senderId: _userId,
+          type: 'medication_proof_submitted',
+          title: 'Bukti Minum Obat Dikirim',
+          body: '$patientName telah mengunggah bukti minum obat untuk $medName ($scheduleTime).',
+          relatedId: scheduleId,
+          relatedTable: 'medication_schedules',
+        );
+      }
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
