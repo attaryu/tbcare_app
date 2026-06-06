@@ -386,6 +386,156 @@ Widget _thumbnailPlaceholder(Color color) {
   );
 }
 
+void _showVerifikasiDetailDialog(
+  BuildContext context,
+  Map<String, dynamic> item,
+) {
+  final photoUrl = item['photo_evidence'] as String?;
+  final patientName = item['patient_name'] as String? ?? '-';
+  final medName = item['med_name'] as String? ?? '-';
+  final scheduleTime = _formatTime(item['schedule_time'] as String?);
+
+  AppDialog.custom(
+    context,
+    builder: (dialogContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.verified_outlined, color: AppColor.warning, size: 22),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Detail Verifikasi',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColor.darkGray,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        const Divider(height: 1, thickness: 1.2),
+        const SizedBox(height: 16),
+        _DetailInfoRow(label: 'Pasien', value: patientName),
+        _DetailInfoRow(label: 'Obat', value: medName),
+        _DetailInfoRow(label: 'Jadwal', value: scheduleTime),
+        const SizedBox(height: 16),
+        Container(
+          height: 220,
+          decoration: BoxDecoration(
+            color: AppColor.lightGray,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: photoUrl != null
+              ? Image.network(
+                  photoUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : const Center(child: CircularProgressIndicator(color: AppColor.primary)),
+                  errorBuilder: (_, __, ___) => const _PhotoPlaceholder(
+                    color: AppColor.warning,
+                    label: 'Foto tidak dapat dimuat',
+                  ),
+                )
+              : const _PhotoPlaceholder(
+                  color: AppColor.warning,
+                  label: 'Belum ada foto bukti',
+                ),
+        ),
+        const SizedBox(height: 24),
+        AppButton(
+          text: 'Tutup',
+          variant: AppButtonVariant.outline,
+          height: 48,
+          onPressed: () => Navigator.pop(dialogContext),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showAmanDetailDialog(
+  BuildContext context,
+  Map<String, dynamic> item,
+) {
+  final photoUrl = item['photo_evidence'] as String?;
+  final patientName = item['patient_name'] as String? ?? '-';
+  final medName = item['med_name'] as String? ?? '-';
+  final scheduleTime = _formatTime(item['schedule_time'] as String?);
+
+  AppDialog.custom(
+    context,
+    builder: (dialogContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: AppColor.success, size: 22),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Detail Konfirmasi',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColor.darkGray,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        const Divider(height: 1, thickness: 1.2),
+        const SizedBox(height: 16),
+        _DetailInfoRow(label: 'Pasien', value: patientName),
+        _DetailInfoRow(label: 'Obat', value: medName),
+        _DetailInfoRow(label: 'Jadwal', value: scheduleTime),
+        const SizedBox(height: 16),
+        Container(
+          height: 220,
+          decoration: BoxDecoration(
+            color: AppColor.lightGray,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: photoUrl != null
+              ? Image.network(
+                  photoUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : const Center(child: CircularProgressIndicator(color: AppColor.primary)),
+                  errorBuilder: (_, __, ___) => const _PhotoPlaceholder(
+                    color: AppColor.success,
+                    label: 'Foto tidak dapat dimuat',
+                  ),
+                )
+              : const _PhotoPlaceholder(
+                  color: AppColor.success,
+                  label: 'Belum ada foto bukti',
+                ),
+        ),
+        const SizedBox(height: 24),
+        AppButton(
+          text: 'Tutup',
+          variant: AppButtonVariant.outline,
+          height: 48,
+          onPressed: () => Navigator.pop(dialogContext),
+        ),
+      ],
+    ),
+  );
+}
+
 void _onIgnore(
   BuildContext context,
   Map<String, dynamic> item,
@@ -590,80 +740,83 @@ class _VerifikasiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final photoEvidence = item['photo_evidence'] as String?;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _photoThumbnail(photoEvidence, fallbackColor: AppColor.warning),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['patient_name'] as String,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppColor.warning,
-                    fontSize: 15,
+    return GestureDetector(
+      onTap: () => _showVerifikasiDetailDialog(context, item),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _photoThumbnail(photoEvidence, fallbackColor: AppColor.warning),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['patient_name'] as String,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColor.warning,
+                      fontSize: 15,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  item['med_name'] as String,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColor.neutralGray,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time_rounded,
-                      size: 14,
+                  const SizedBox(height: 3),
+                  Text(
+                    item['med_name'] as String,
+                    style: const TextStyle(
+                      fontSize: 13,
                       color: AppColor.neutralGray,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatTime(item['schedule_time'] as String?),
-                      style: const TextStyle(
-                        fontSize: 12,
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 14,
                         color: AppColor.neutralGray,
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatTime(item['schedule_time'] as String?),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColor.neutralGray,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          _ActionButton(
-            icon: Icons.close_rounded,
-            backgroundColor: AppColor.error,
-            iconColor: AppColor.white,
-            onTap: () => _onReject(context, item, vm),
-          ),
-          const SizedBox(width: 8),
-          _ActionButton(
-            icon: Icons.check_rounded,
-            backgroundColor: AppColor.primary,
-            iconColor: AppColor.white,
-            onTap: () => _onVerify(context, item, vm),
-          ),
-        ],
+            const SizedBox(width: 12),
+            _ActionButton(
+              icon: Icons.close_rounded,
+              backgroundColor: AppColor.error,
+              iconColor: AppColor.white,
+              onTap: () => _onReject(context, item, vm),
+            ),
+            const SizedBox(width: 8),
+            _ActionButton(
+              icon: Icons.check_rounded,
+              backgroundColor: AppColor.primary,
+              iconColor: AppColor.white,
+              onTap: () => _onVerify(context, item, vm),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -677,65 +830,147 @@ class _AmanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final photoUrl = item['photo_url'] as String?;
+    final photoEvidence = item['photo_evidence'] as String?;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () => _showAmanDetailDialog(context, item),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _photoThumbnail(photoEvidence, fallbackColor: AppColor.success),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['patient_name'] as String,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColor.darkGray,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    item['med_name'] as String,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColor.neutralGray,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 14,
+                        color: AppColor.neutralGray,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatTime(item['schedule_time'] as String?),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColor.neutralGray,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Dialog Helpers ───────────────────────────────────────────────────────────
+
+class _DetailInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailInfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColor.neutralGray,
+              ),
+            ),
+          ),
+          const Text(
+            ': ',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColor.neutralGray,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColor.darkGray,
+              ),
+            ),
           ),
         ],
       ),
-      child: Row(
+    );
+  }
+}
+
+class _PhotoPlaceholder extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _PhotoPlaceholder({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: color.withOpacity(0.12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _photoThumbnail(photoUrl, fallbackColor: AppColor.success),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['patient_name'] as String,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColor.darkGray,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  item['med_name'] as String,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColor.neutralGray,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time_rounded,
-                      size: 14,
-                      color: AppColor.neutralGray,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatTime(item['schedule_time'] as String?),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColor.neutralGray,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          Icon(Icons.medication_rounded, color: color, size: 48),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: color,
             ),
           ),
         ],
