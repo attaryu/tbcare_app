@@ -107,13 +107,6 @@ class ConfirmMedicationViewModel extends ChangeNotifier {
       final fileName = '${scheduleId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final path = 'evidence/$fileName';
 
-      // Ensure bucket exists in Supabase storage
-      try {
-        await _supabaseService.client.storage.createBucket('medication_evidence');
-      } catch (_) {
-        // Bucket might already exist, ignore error
-      }
-
       // Upload binary to Supabase Storage
       await _supabaseService.client.storage
           .from('medication_evidence')

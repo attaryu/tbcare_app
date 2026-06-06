@@ -222,6 +222,15 @@ class SupervisorRepository {
           'taken_at': null,
         })
         .eq('id', logId);
+
+    if (newStatus == 'missed') {
+      await _supabase.client
+          .from('escalation_logs')
+          .insert({
+            'compliance_log_id': logId,
+            'status': 'triggered',
+          });
+    }
   }
 
   Future<void> ignoreEscalation(int escalationId, int supervisorId) async {
