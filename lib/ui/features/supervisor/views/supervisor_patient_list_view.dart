@@ -72,24 +72,15 @@ class SupervisorPatientListView extends StatefulWidget {
 }
 
 class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
-  // Local state for mockup manipulation
-  late List<RequestItem> _requests;
-  late List<PatientItem> _patients;
   String _searchQuery = '';
   final TextEditingController _searchCtrl = TextEditingController();
-
-  // Mockup testing states: 'normal', 'empty', 'error'
-  String _uiState = 'normal';
 
   @override
   void initState() {
     super.initState();
-    _resetData();
   }
 
   void _resetData() {
-    _requests = [];
-    _patients = [];
     _searchQuery = '';
     _searchCtrl.clear();
   }
@@ -136,24 +127,6 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
           );
         }
       }
-    } else {
-      setState(() {
-        _requests.removeWhere((r) => r.id == request.id);
-        _patients.add(
-          PatientItem(
-            id: 'pat_${DateTime.now().millisecondsSinceEpoch}',
-            name: request.name,
-            phase: 'Fase Intensif - Bulan ke-1',
-          ),
-        );
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Permintaan ${request.name} diterima'),
-          backgroundColor: AppColor.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 
@@ -182,17 +155,6 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
           );
         }
       }
-    } else {
-      setState(() {
-        _requests.removeWhere((r) => r.id == request.id);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Permintaan ${request.name} ditolak'),
-          backgroundColor: AppColor.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 
@@ -264,6 +226,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
 
   void _deletePatient(PatientItem patient) {
     final intId = int.tryParse(patient.id);
+    if (intId == null) return;
     AppDialog.confirm(
       context,
       title: 'Hapus Pasien',
@@ -273,40 +236,27 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
       confirmColor: AppButtonColor.danger,
       icon: Icons.person_remove_outlined,
       onConfirm: () async {
-        if (intId != null) {
-          try {
-            await context.read<SupervisorViewModel>().deletePatient(intId);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${patient.name} berhasil dihapus dari daftar pengawasan'),
-                  backgroundColor: AppColor.error,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Gagal menghapus pasien: ${e.toString()}'),
-                  backgroundColor: AppColor.error,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
+        try {
+          await context.read<SupervisorViewModel>().deletePatient(intId);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${patient.name} berhasil dihapus dari daftar pengawasan'),
+                backgroundColor: AppColor.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           }
-        } else {
-          setState(() {
-            _patients.removeWhere((p) => p.id == patient.id);
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${patient.name} dihapus dari daftar pengawasan'),
-              backgroundColor: AppColor.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Gagal menghapus pasien: ${e.toString()}'),
+                backgroundColor: AppColor.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       },
     );
@@ -360,15 +310,10 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
       );
     }).toList();
 
-    // Determine datasets based on mockup UI test states
-    final displayRequests = _uiState == 'normal'
-        ? [...dbRequests, ..._requests]
-        : <RequestItem>[];
-    final filteredPatients = _uiState == 'normal'
-        ? [...dbPatients, ..._patients]
-            .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-            .toList()
-        : <PatientItem>[];
+    final displayRequests = dbRequests;
+    final filteredPatients = dbPatients
+        .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColor.white,
@@ -422,7 +367,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
                     // Error state top warning banner
-                    if (_uiState == 'error')
+                    if (supervisorViewModel.error != null)
                       SliverToBoxAdapter(
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
@@ -436,10 +381,10 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                             children: [
                               const Icon(Icons.error_outline_rounded, color: AppColor.error),
                               const SizedBox(width: 12),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
-                                  'Gagal memuat data pengawasan. Silakan coba lagi nanti.',
-                                  style: TextStyle(
+                                  supervisorViewModel.error ?? 'Gagal memuat data pengawasan. Silakan coba lagi nanti.',
+                                  style: const TextStyle(
                                     color: AppColor.error,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -449,10 +394,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                               IconButton(
                                 icon: const Icon(Icons.refresh_rounded, color: AppColor.error),
                                 onPressed: () {
-                                  setState(() {
-                                    _uiState = 'normal';
-                                    _resetData();
-                                  });
+                                  supervisorViewModel.loadData();
                                 },
                               ),
                             ],
@@ -571,7 +513,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                     ),
 
                     // Section 2 content
-                    if (_uiState == 'error')
+                    if (supervisorViewModel.error != null)
                       SliverToBoxAdapter(
                         child: _buildSectionErrorPlaceholder(),
                       )
@@ -728,7 +670,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                     ),
 
                     // Section 3 content
-                    if (_uiState == 'error')
+                    if (supervisorViewModel.error != null)
                       SliverToBoxAdapter(
                         child: _buildSectionErrorPlaceholder(),
                       )
@@ -849,55 +791,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                 ),
               ),
             ),
-
-            // Demo/Preview State Toggles (Only visible in prototype to test UI variations)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              color: AppColor.lightGray,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const Text('State Demo:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColor.darkGray)),
-                  _buildStateSelectorButton('Normal', 'normal'),
-                  _buildStateSelectorButton('Kosong', 'empty'),
-                  _buildStateSelectorButton('Error', 'error'),
-                ],
-              ),
-            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStateSelectorButton(String label, String state) {
-    final isSelected = _uiState == state;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _uiState = state;
-          if (state == 'normal') {
-            _resetData();
-          }
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColor.primary : AppColor.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? AppColor.primary : AppColor.neutralGray.withOpacity(0.5),
-            width: 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? AppColor.white : AppColor.darkGray,
-          ),
         ),
       ),
     );
