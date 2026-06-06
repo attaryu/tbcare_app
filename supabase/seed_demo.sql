@@ -147,6 +147,30 @@ insert into auth.users (
     '',
     false,
     false
+),
+(
+    'e0000000-0000-0000-0000-000000000004',
+    '00000000-0000-0000-0000-000000000000',
+    'ahmad.hidayat@tbcare.com',
+    crypt('password', gen_salt('bf', 10)),
+    now(),
+    now(),
+    now(),
+    '{"provider":"email","providers":["email"]}',
+    '{"name":"Ahmad Hidayat"}',
+    false,
+    'authenticated',
+    'authenticated',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    false,
+    false
 );
 
 -- 3. Insert into Supabase auth.identities
@@ -189,6 +213,16 @@ insert into auth.identities (
     now(),
     now(),
     now()
+),
+(
+    'e0000000-0000-0000-0000-000000000004',
+    'e0000000-0000-0000-0000-000000000004',
+    jsonb_build_object('sub', 'e0000000-0000-0000-0000-000000000004', 'email', 'ahmad.hidayat@tbcare.com', 'email_verified', true),
+    'email',
+    'ahmad.hidayat@tbcare.com',
+    now(),
+    now(),
+    now()
 );
 
 -- 4. Insert into public.users with matching auth_user_id
@@ -196,7 +230,8 @@ insert into public.users (name, email, auth_user_id, telephone_number)
 values
     ('Budi Santoso', 'budi.santoso@tbcare.com', 'e0000000-0000-0000-0000-000000000001', '081234567890'),
     ('Rina Wulandari', 'rina.wulandari@tbcare.com', 'e0000000-0000-0000-0000-000000000002', '081234567891'),
-    ('Dika Prasetyo', 'dika.prasetyo@tbcare.com', 'e0000000-0000-0000-0000-000000000003', '081234567892');
+    ('Dika Prasetyo', 'dika.prasetyo@tbcare.com', 'e0000000-0000-0000-0000-000000000003', '081234567892'),
+    ('Ahmad Hidayat', 'ahmad.hidayat@tbcare.com', 'e0000000-0000-0000-0000-000000000004', '081234567893');
 
 -- 5. Map Roles to Users in user_roles
 insert into public.user_roles (user_id, role_id)
@@ -204,7 +239,8 @@ select u.id, r.id
 from (values
     ('budi.santoso@tbcare.com', 'pengawas'),
     ('rina.wulandari@tbcare.com', 'pasien'),
-    ('dika.prasetyo@tbcare.com', 'pasien')
+    ('dika.prasetyo@tbcare.com', 'pasien'),
+    ('ahmad.hidayat@tbcare.com', 'pasien')
 ) as seeded(email, role_slug)
 join public.users u on u.email = seeded.email
 join public.roles r on r.slug = seeded.role_slug;
@@ -240,6 +276,18 @@ cross join public.users u
 where s.supervisor_id = (select id from public.users where email = 'budi.santoso@tbcare.com')
   and u.email = 'dika.prasetyo@tbcare.com';
 
+insert into public.supervisions_patients (supervision_id, patients_id, status, joined_at, request_at)
+select 
+    s.id, 
+    u.id, 
+    'approved'::supervision_status, 
+    '2026-05-22 09:30:00'::timestamp,
+    '2026-05-21 14:15:00'::timestamp
+from public.supervisions s
+cross join public.users u
+where s.supervisor_id = (select id from public.users where email = 'budi.santoso@tbcare.com')
+  and u.email = 'ahmad.hidayat@tbcare.com';
+
 -- 8. Seed Treatment Periods
 -- Rina Wulandari: Started April 7, 2026 (~2 months ago), ends July 7, 2026 (1 month left)
 insert into public.treatment_periods (patients_id, name, start_date, prediction_end_date, duration, duration_type, status)
@@ -266,6 +314,19 @@ select
     'active'::treatment_status
 from public.users u
 where u.email = 'dika.prasetyo@tbcare.com';
+
+-- Ahmad Hidayat: Started May 20, 2026 (~2.5 weeks ago), ends August 20, 2026 (remaining ~2.2 months)
+insert into public.treatment_periods (patients_id, name, start_date, prediction_end_date, duration, duration_type, status)
+select 
+    u.id, 
+    'Periode Pengobatan Utama', 
+    '2026-05-20'::date, 
+    '2026-08-20'::date, 
+    3, 
+    'month'::duration_type, 
+    'active'::treatment_status
+from public.users u
+where u.email = 'ahmad.hidayat@tbcare.com';
 
 -- 9. Seed Medication Schedules
 -- Schedules for Rina Wulandari
@@ -300,6 +361,19 @@ from public.treatment_periods tp
 join public.users u on tp.patients_id = u.id
 where u.email = 'dika.prasetyo@tbcare.com';
 
+-- Schedules for Ahmad Hidayat
+insert into public.medication_schedules (treatment_period_id, med_name, schedule_time)
+select tp.id, 'Isoniazid (INH) 300mg', '08:30:00'::time
+from public.treatment_periods tp
+join public.users u on tp.patients_id = u.id
+where u.email = 'ahmad.hidayat@tbcare.com';
+
+insert into public.medication_schedules (treatment_period_id, med_name, schedule_time)
+select tp.id, 'Rifampisin 450mg', '08:30:00'::time
+from public.treatment_periods tp
+join public.users u on tp.patients_id = u.id
+where u.email = 'ahmad.hidayat@tbcare.com';
+
 -- 10. Seed Compliance Logs
 -- Compliance Logs for Rina Wulandari (April 7, 2026 to June 6, 2026)
 with rina_data as (
@@ -331,7 +405,8 @@ rina_logs as (
             -- Today (2026-06-06)
             when log_date = '2026-06-06' then
                 case 
-                    when schedule_time < '12:00:00'::time then 'taken'::compliance_status
+                    when med_name = 'Isoniazid (INH) 300mg' then 'taken'::compliance_status
+                    when med_name = 'Rifampisin 450mg' then 'taken'::compliance_status
                     else 'pending'::compliance_status
                 end
             -- Missed doses: every 9th day for morning meds, every 13th day for evening meds
@@ -359,7 +434,7 @@ select
     rl.log_date,
     rl.status,
     case 
-        when rl.status = 'taken' then (select supervisor_id from rina_data)
+        when rl.status = 'taken' and not (rl.log_date = '2026-06-06' and rl.med_name = 'Rifampisin 450mg') then (select supervisor_id from rina_data)
         else null
     end as verified_by
 from rina_logs rl;
@@ -394,7 +469,7 @@ dika_logs as (
             -- Today (2026-06-06)
             when log_date = '2026-06-06' then
                 case 
-                    when schedule_time < '12:00:00'::time then 'taken'::compliance_status
+                    when med_name = 'Ethambutol 1000mg' then 'missed'::compliance_status
                     else 'pending'::compliance_status
                 end
             -- Missed doses: every 7th day for evening meds, every 11th day for morning meds
@@ -426,6 +501,67 @@ select
         else null
     end as verified_by
 from dika_logs dl;
+
+-- Compliance Logs for Ahmad Hidayat (May 20, 2026 to June 6, 2026)
+with ahmad_data as (
+    select 
+        u.id as patient_id,
+        (select id from public.users where email = 'budi.santoso@tbcare.com') as supervisor_id,
+        tp.id as tp_id
+    from public.users u
+    join public.treatment_periods tp on tp.patients_id = u.id
+    where u.email = 'ahmad.hidayat@tbcare.com'
+),
+ahmad_series as (
+    select 
+        ms.id as schedule_id,
+        ms.med_name,
+        ms.schedule_time,
+        d.log_date
+    from public.medication_schedules ms
+    cross join generate_series('2026-05-20'::date, '2026-06-06'::date, '1 day'::interval) as d(log_date)
+    where ms.treatment_period_id = (select tp_id from ahmad_data)
+),
+ahmad_logs as (
+    select
+        schedule_id,
+        med_name,
+        log_date,
+        schedule_time,
+        case 
+            -- Today (2026-06-06)
+            when log_date = '2026-06-06' then
+                case 
+                    when med_name = 'Isoniazid (INH) 300mg' then 'taken'::compliance_status
+                    else 'pending'::compliance_status
+                end
+            -- Missed doses: every 8th day
+            when (extract(day from log_date)::int % 8) = 0 then
+                'missed'::compliance_status
+            else
+                'taken'::compliance_status
+        end as status
+    from ahmad_series
+)
+insert into public.compliance_logs (schedule_id, med_name, photo_url, taken_at, log_date, status, verified_by)
+select 
+    al.schedule_id,
+    al.med_name,
+    case 
+        when al.status = 'taken' then 'https://zncqojqhucivhmaeitkk.supabase.co/storage/v1/object/public/evidence/ahmad_evidence_placeholder.jpg'
+        else null
+    end as photo_url,
+    case 
+        when al.status = 'taken' then (al.log_date + al.schedule_time + '12 minutes'::interval)::timestamp
+        else null
+    end as taken_at,
+    al.log_date,
+    al.status,
+    case 
+        when al.status = 'taken' and not (al.log_date = '2026-06-06') then (select supervisor_id from ahmad_data)
+        else null
+    end as verified_by
+from ahmad_logs al;
 
 -- 11. Seed Symptom Logs
 -- Symptom Logs for Rina Wulandari
@@ -468,6 +604,23 @@ cross join (values
     ('normal', 'Sudah kontrol ke puskesmas, kondisi aman.', '2026-06-05 11:00:00')
 ) as s(level, note, created_at)
 where u.email = 'dika.prasetyo@tbcare.com';
+
+-- Symptom Logs for Ahmad Hidayat
+insert into public.symptom_logs (treatment_period_id, level, note, created_at)
+select 
+    tp.id,
+    s.level::symptom_level,
+    s.note,
+    s.created_at::timestamp
+from public.treatment_periods tp
+join public.users u on tp.patients_id = u.id
+cross join (values
+    ('normal', 'Mulai terapi obat Isoniazid & Rifampisin.', '2026-05-22 09:00:00'),
+    ('mild', 'Nafsu makan sedikit menurun dan mual ringan.', '2026-05-27 12:30:00'),
+    ('mild', 'Pusing setelah minum obat pagi hari.', '2026-06-01 10:00:00'),
+    ('normal', 'Kondisi membaik, tidak ada mual lagi.', '2026-06-05 08:30:00')
+) as s(level, note, created_at)
+where u.email = 'ahmad.hidayat@tbcare.com';
 
 -- 12. Seed Escalation Logs
 insert into public.escalation_logs (compliance_log_id, status, action_note, handled_by, created_at, resolved_at)
