@@ -1,20 +1,22 @@
 import 'package:alarm/alarm.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'core/services/alarm_service.dart';
 
 import 'core/config/app_env.dart';
+import 'core/services/alarm_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/history_repository.dart';
 import 'data/repositories/home_repository.dart';
 import 'data/repositories/medication_schedule_repository.dart';
 import 'data/repositories/profile_repository.dart';
+import 'data/repositories/supervisor_repository.dart';
 import 'data/repositories/symptom_repository.dart';
 import 'data/repositories/treatment_repository.dart';
-import 'data/repositories/supervisor_repository.dart';
 import 'data/services/supabase_service.dart';
+import 'firebase_options.dart';
 import 'ui/features/auth/view_models/auth_view_model.dart';
 import 'ui/router/app_router.dart';
 
@@ -36,6 +38,8 @@ void main() async {
   final authViewModel = AuthViewModel(supabaseService);
   await authViewModel.tryRestoreSession();
 
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(MainApp(authViewModel: authViewModel));
 }
 
@@ -48,9 +52,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<SupabaseService>(
-          create: (_) => SupabaseService.instance,
-        ),
+        Provider<SupabaseService>(create: (_) => SupabaseService.instance),
         ProxyProvider<SupabaseService, SymptomRepository>(
           update: (_, supabase, __) => SymptomRepository(supabase),
         ),
@@ -72,9 +74,7 @@ class MainApp extends StatelessWidget {
         ProxyProvider<SupabaseService, SupervisorRepository>(
           update: (_, supabase, __) => SupervisorRepository(supabase),
         ),
-        ChangeNotifierProvider<AuthViewModel>.value(
-          value: authViewModel,
-        ),
+        ChangeNotifierProvider<AuthViewModel>.value(value: authViewModel),
       ],
       child: Consumer<AuthViewModel>(
         builder: (context, authViewModel, _) => MaterialApp.router(
