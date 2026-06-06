@@ -31,6 +31,8 @@ import '../features/medication_schedule/views/medication_schedule_view.dart';
 import '../../data/services/supabase_service.dart';
 import '../features/home/view_models/confirm_medication_view_model.dart';
 import '../features/home/views/confirm_medication_view.dart';
+import '../features/supervisor/views/supervisor_home_view.dart';
+import '../features/supervisor/views/supervisor_patient_list_view.dart';
 
 class AppRouter {
   static final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -74,6 +76,9 @@ class AppRouter {
                       return const Scaffold(
                         body: Center(child: Text('Sesi berakhir')),
                       );
+                    }
+                    if (authViewModel.roleSlug == 'pengawas') {
+                      return const SupervisorHomeView();
                     }
                     return ChangeNotifierProvider(
                       create: (_) => HomeViewModel(
@@ -201,6 +206,16 @@ class AppRouter {
                       },
                     ),
                   ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/patients',
+                  builder: (context, state) {
+                    return const SupervisorPatientListView();
+                  },
                 ),
               ],
             ),

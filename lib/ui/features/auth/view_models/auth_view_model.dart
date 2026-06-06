@@ -11,6 +11,9 @@ class AuthViewModel extends ChangeNotifier {
   UserModel? _currentUser;
   UserModel? get currentUser => _currentUser;
 
+  String? _roleSlug;
+  String? get roleSlug => _roleSlug;
+
   bool get isAuthenticated => _currentUser != null;
 
   bool _isLoading = false;
@@ -26,21 +29,30 @@ class AuthViewModel extends ChangeNotifier {
       final authUser = _supabase.currentUser;
       if (authUser == null) {
         _currentUser = null;
+        _roleSlug = null;
         notifyListeners();
         return;
       }
 
       final dbUserResponse = await _supabase.client
           .from('users')
-          .select()
+          .select('*, user_roles(roles(slug))')
           .eq('auth_user_id', authUser.id)
           .maybeSingle();
 
       if (dbUserResponse != null) {
         _currentUser = UserModel.fromJson(dbUserResponse);
+        final userRoles = dbUserResponse['user_roles'] as List?;
+        if (userRoles != null && userRoles.isNotEmpty) {
+          final rolesMap = userRoles[0]['roles'] as Map?;
+          _roleSlug = rolesMap?['slug'] as String?;
+        } else {
+          _roleSlug = null;
+        }
       } else {
         // Auth user exists but profile row doesn't (could be interrupted registration)
         _currentUser = null;
+        _roleSlug = null;
       }
       notifyListeners();
     } catch (e) {
@@ -65,7 +77,7 @@ class AuthViewModel extends ChangeNotifier {
       // 2. Fetch the corresponding profile row from public.users
       final dbUserResponse = await _supabase.client
           .from('users')
-          .select()
+          .select('*, user_roles(roles(slug))')
           .eq('auth_user_id', authUser.id)
           .maybeSingle();
 
@@ -74,6 +86,13 @@ class AuthViewModel extends ChangeNotifier {
       }
 
       _currentUser = UserModel.fromJson(dbUserResponse);
+      final userRoles = dbUserResponse['user_roles'] as List?;
+      if (userRoles != null && userRoles.isNotEmpty) {
+        final rolesMap = userRoles[0]['roles'] as Map?;
+        _roleSlug = rolesMap?['slug'] as String?;
+      } else {
+        _roleSlug = null;
+      }
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -214,6 +233,7 @@ class AuthViewModel extends ChangeNotifier {
       // Step 6: Map to UserModel local session
       final user = UserModel.fromJson(userResponse);
       _currentUser = user;
+      _roleSlug = roleSlug;
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -243,6 +263,7 @@ class AuthViewModel extends ChangeNotifier {
       debugPrint('Failed to sign out from Supabase: $e');
     }
     _currentUser = null;
+    _roleSlug = null;
     notifyListeners();
   }
 }

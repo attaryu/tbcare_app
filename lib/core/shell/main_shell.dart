@@ -1,6 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../ui/features/auth/view_models/auth_view_model.dart';
 import '../theme/app_color.dart';
+
+class _NavItem {
+  final int branchIndex;
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  const _NavItem({
+    required this.branchIndex,
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
+}
 
 class MainShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -12,15 +28,66 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  void _onTap(int index) {
+  void _onTap(int branchIndex) {
     widget.navigationShell.goBranch(
-      index,
-      initialLocation: index == widget.navigationShell.currentIndex,
+      branchIndex,
+      initialLocation: branchIndex == widget.navigationShell.currentIndex,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final authViewModel = context.watch<AuthViewModel>();
+    final isSupervisor = authViewModel.roleSlug == 'pengawas';
+
+    final items = isSupervisor
+        ? const [
+            _NavItem(
+              branchIndex: 0,
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
+              label: 'Home',
+            ),
+            _NavItem(
+              branchIndex: 3,
+              icon: Icons.people_outline,
+              activeIcon: Icons.people,
+              label: 'Pasien',
+            ),
+            _NavItem(
+              branchIndex: 4,
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              label: 'Profil',
+            ),
+          ]
+        : const [
+            _NavItem(
+              branchIndex: 0,
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
+              label: 'Home',
+            ),
+            _NavItem(
+              branchIndex: 1,
+              icon: Icons.history,
+              activeIcon: Icons.history,
+              label: 'Riwayat',
+            ),
+            _NavItem(
+              branchIndex: 2,
+              icon: Icons.assignment_outlined,
+              activeIcon: Icons.assignment,
+              label: 'Log Gejala',
+            ),
+            _NavItem(
+              branchIndex: 4,
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              label: 'Profil',
+            ),
+          ];
+
     return Scaffold(
       body: widget.navigationShell,
       bottomNavigationBar: Container(
@@ -30,23 +97,18 @@ class _MainShellState extends State<MainShell> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
-            _buildNavItem(1, Icons.history, Icons.history, 'Riwayat'),
-            _buildNavItem(2, Icons.assignment_outlined, Icons.assignment, 'Log Gejala'),
-            _buildNavItem(3, Icons.person_outline, Icons.person, 'Profil'),
-          ],
+          children: items.map((item) => _buildNavItem(item)).toList(),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
-    final isSelected = widget.navigationShell.currentIndex == index;
+  Widget _buildNavItem(_NavItem item) {
+    final isSelected = widget.navigationShell.currentIndex == item.branchIndex;
     
     if (isSelected) {
       return GestureDetector(
-        onTap: () => _onTap(index),
+        onTap: () => _onTap(item.branchIndex),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
@@ -56,10 +118,10 @@ class _MainShellState extends State<MainShell> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(activeIcon, color: AppColor.primary, size: 24),
+              Icon(item.activeIcon, color: AppColor.primary, size: 24),
               const SizedBox(width: 8),
               Text(
-                label,
+                item.label,
                 style: const TextStyle(
                   color: AppColor.primary,
                   fontWeight: FontWeight.bold,
@@ -73,8 +135,9 @@ class _MainShellState extends State<MainShell> {
     }
 
     return IconButton(
-      onPressed: () => _onTap(index),
-      icon: Icon(icon, color: AppColor.white, size: 28),
+      onPressed: () => _onTap(item.branchIndex),
+      icon: Icon(item.icon, color: AppColor.white, size: 28),
     );
   }
 }
+
