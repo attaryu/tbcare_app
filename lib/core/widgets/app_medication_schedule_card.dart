@@ -52,7 +52,7 @@ class AppMedicationScheduleCard extends StatelessWidget {
     if (status == 'Terlewat') badgeBg = AppColor.error;
 
     final cardChild = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isActive ? AppColor.primary : AppColor.white,
         borderRadius: BorderRadius.circular(12),
@@ -68,6 +68,7 @@ class AppMedicationScheduleCard extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Icon indikator di sebelah kiri
           Container(
@@ -90,65 +91,76 @@ class AppMedicationScheduleCard extends StatelessWidget {
           ),
           const SizedBox(width: 14),
 
-          // Nama obat & Badge verifikasi
+          // Kolom utama: nama obat (atas) + status & waktu (bawah)
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(
-                  child: Text(
-                    medName,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                // Baris atas: Nama obat + badge verified
+                Row(
+                  children: [
+                    Text(
+                      medName,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: isActive ? AppColor.white : AppColor.darkGray,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (isVerified) ...[
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.verified,
+                        size: 16,
+                        color: isActive ? AppColor.white : AppColor.primary,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Baris bawah: Badge status + jam
+                Row(
+                  children: [
+                    // Badge status obat
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        status,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.white,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+
+                    // Jam alarm & waktu
+                    Icon(
+                      Icons.alarm,
+                      size: 14,
                       color: isActive ? AppColor.white : AppColor.darkGray,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$timeStr WIB',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isActive ? AppColor.white : AppColor.darkGray,
+                      ),
+                    ),
+                  ],
                 ),
-                if (isVerified) ...[
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.verified,
-                    size: 16,
-                    color: isActive ? AppColor.white : AppColor.primary,
-                  ),
-                ],
               ],
-            ),
-          ),
-
-          // Badge status obat
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: badgeBg,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              status,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppColor.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Jam alarm & waktu
-          Icon(
-            Icons.alarm,
-            size: 14,
-            color: isActive ? AppColor.white : AppColor.darkGray,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$timeStr WIB',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isActive ? AppColor.white : AppColor.darkGray,
             ),
           ),
         ],
