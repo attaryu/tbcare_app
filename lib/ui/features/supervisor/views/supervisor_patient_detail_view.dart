@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_medication_schedule_card.dart';
+import '../../../../core/widgets/symptom_card.dart';
 import '../../history/view_models/history_view_model.dart';
 
 class SupervisorPatientDetailView extends StatelessWidget {
@@ -336,6 +337,19 @@ class SupervisorPatientDetailView extends StatelessWidget {
               const SizedBox(height: 12),
 
               _buildSelectedDateSchedules(context, viewModel),
+              const SizedBox(height: 28),
+
+              // Catatan Gejala
+              const Text(
+                'Catatan Gejala',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.darkGray,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildSymptomSection(context, viewModel),
               const SizedBox(height: 40),
             ],
           ),
@@ -344,6 +358,42 @@ class SupervisorPatientDetailView extends StatelessWidget {
     ),
   );
 }
+
+  Widget _buildSymptomSection(BuildContext context, HistoryViewModel viewModel) {
+    final symptoms = viewModel.symptomsForSelectedDate;
+
+    if (symptoms.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColor.lightGray,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Text(
+          'Tidak ada catatan gejala pada tanggal ini.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColor.neutralGray, fontSize: 14),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: symptoms.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final log = symptoms[index];
+        return SymptomCard(
+          log: log,
+          onDelete: null,
+          onTap: null,
+          margin: EdgeInsets.zero,
+        );
+      },
+    );
+  }
 
   Widget _buildStatCard({required IconData icon, required String title, required int count, required Color iconColor}) {
     return Container(

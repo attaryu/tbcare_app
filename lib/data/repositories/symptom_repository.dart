@@ -16,6 +16,21 @@ class SymptomRepository {
     return (response as List).map((json) => SymptomLog.fromJson(json)).toList();
   }
 
+  Future<List<SymptomLog>> getSymptomLogsByDate(int treatmentPeriodId, DateTime date) async {
+    final dateStr = date.toIso8601String().split('T')[0];
+    final nextDay = date.add(const Duration(days: 1)).toIso8601String().split('T')[0];
+
+    final response = await _supabase.client
+        .from('symptom_logs')
+        .select()
+        .eq('treatment_period_id', treatmentPeriodId)
+        .gte('created_at', '${dateStr}T00:00:00')
+        .lt('created_at', '${nextDay}T00:00:00')
+        .order('created_at', ascending: false);
+
+    return (response as List).map((json) => SymptomLog.fromJson(json)).toList();
+  }
+
   Future<void> addSymptomLog(SymptomLog log) async {
     await _supabase.client.from('symptom_logs').insert(log.toJson());
   }

@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../../data/models/symptom_model.dart';
 import '../../../../data/repositories/history_repository.dart';
+import '../../../../data/repositories/symptom_repository.dart';
 
 class HistoryViewModel extends ChangeNotifier {
   final HistoryRepository _repository;
+  final SymptomRepository? _symptomRepository;
   final int _userId;
 
-  HistoryViewModel({required HistoryRepository repository, required int userId})
-      : _repository = repository,
+  HistoryViewModel({
+    required HistoryRepository repository,
+    required int userId,
+    SymptomRepository? symptomRepository,
+  })  : _repository = repository,
+        _symptomRepository = symptomRepository,
         _userId = userId {
     _selectedDate = DateTime.now();
     _currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
@@ -155,8 +162,13 @@ class HistoryViewModel extends ChangeNotifier {
       _currentMonth = DateTime(date.year, date.month);
       fetchHistoryData();
     } else {
-      notifyListeners();
+      _loadSymptomsForSelectedDate();
     }
+  }
+
+  Future<void> _loadSymptomsForSelectedDate() async {
+    await fetchSymptomsForSelectedDate();
+    notifyListeners();
   }
 
   bool get canNavigateToPreviousMonth {
@@ -196,12 +208,35 @@ class HistoryViewModel extends ChangeNotifier {
       _schedules = res['schedules'];
       _logs = res['logs'];
       _stats = res['stats'];
+      
+      await fetchSymptomsForSelectedDate();
       _error = null;
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  List<SymptomLog> _symptomsForSelectedDate = [];
+  List<SymptomLog> get symptomsForSelectedDate => _symptomsForSelectedDate;
+
+  Future<void> fetchSymptomsForSelectedDate() async {
+    if (_symptomRepository == null || _activeTreatment == null) {
+      _symptomsForSelectedDate = [];
+      return;
+    }
+    final tpId = _activeTreatment!['id'] as int?;
+    if (tpId == null) {
+      _symptomsForSelectedDate = [];
+      return;
+    }
+    try {
+      _symptomsForSelectedDate = await _symptomRepository.getSymptomLogsByDate(tpId, _selectedDate);
+    } catch (e) {
+      debugPrint('Error fetching symptoms: $e');
+      _symptomsForSelectedDate = [];
     }
   }
 

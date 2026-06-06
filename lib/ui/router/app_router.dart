@@ -286,6 +286,7 @@ class AppRouter {
                           create: (_) => HistoryViewModel(
                             repository: context.read<HistoryRepository>(),
                             userId: patientUserId,
+                            symptomRepository: context.read<SymptomRepository>(),
                           ),
                           child: SupervisorPatientDetailView(
                             patientName: extras['name'] as String,
