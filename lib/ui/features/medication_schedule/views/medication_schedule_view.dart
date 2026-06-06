@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../data/models/medication_schedule_model.dart';
+import '../../../router/app_router.dart';
 import '../view_models/medication_schedule_view_model.dart';
 
 class MedicationScheduleView extends StatefulWidget {
@@ -15,7 +16,7 @@ class MedicationScheduleView extends StatefulWidget {
   State<MedicationScheduleView> createState() => _MedicationScheduleViewState();
 }
 
-class _MedicationScheduleViewState extends State<MedicationScheduleView> {
+class _MedicationScheduleViewState extends State<MedicationScheduleView> with RouteAware {
 
   @override
   void initState() {
@@ -23,6 +24,26 @@ class _MedicationScheduleViewState extends State<MedicationScheduleView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.viewModel.loadSchedules();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute != null) {
+      AppRouter.routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    widget.viewModel.loadSchedules();
   }
 
   @override
@@ -48,224 +69,236 @@ class _MedicationScheduleViewState extends State<MedicationScheduleView> {
               } catch (_) {}
             }
 
-            return widget.viewModel.isLoading && schedules.isEmpty
-                ? const Center(child: CircularProgressIndicator(color: AppColor.primary))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            return RefreshIndicator(
+              onRefresh: () => widget.viewModel.loadSchedules(),
+              color: AppColor.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
                       children: [
-                        // Header
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: AppColor.primary,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.arrow_back,
-                                  color: AppColor.white,
-                                ),
-                              ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColor.primary,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 16),
-                            const Text(
-                              'Jadwal Minum Obat Harian',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppColor.darkGray,
-                              ),
+                            child: const Icon(
+                              Icons.arrow_back,
+                              color: AppColor.white,
                             ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 28),
-
-                        // Section Periode Jadwal
+                        const SizedBox(width: 16),
                         const Text(
-                          'Periode Jadwal',
+                          'Jadwal Minum Obat Harian',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: AppColor.darkGray,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
 
-                        // Periode Card
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppColor.primary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                period?['name'] ?? 'Fase Intensif',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColor.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 16,
-                                    color: AppColor.white,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    period != null ? '$startDateStr - $endDateStr' : 'Belum ada periode aktif',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColor.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                    if (widget.viewModel.isLoading && schedules.isEmpty)
+                      const SizedBox(
+                        height: 200,
+                        child: Center(
+                          child: CircularProgressIndicator(color: AppColor.primary),
                         ),
-                        const SizedBox(height: 28),
+                      )
+                    else ...[
+                      // Section Periode Jadwal
+                      const Text(
+                        'Periode Jadwal',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.darkGray,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
-                        // List Jadwal
-                        if (schedules.isEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            width: double.infinity,
-                            alignment: Alignment.center,
-                            child: const Column(
-                              children: [
-                                Icon(Icons.alarm_off, size: 48, color: AppColor.neutralGray),
-                                SizedBox(height: 12),
-                                Text(
-                                  'Belum ada jadwal obat',
-                                  style: TextStyle(color: AppColor.neutralGray),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: schedules.length,
-                            itemBuilder: (context, index) {
-                              final s = schedules[index];
-                              final timeStr = s.scheduleTime.substring(0, 5);
-
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                  decoration: BoxDecoration(
-                                    color: AppColor.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.02),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                    border: Border.all(
-                                      color: AppColor.lightGray,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              s.medName,
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColor.darkGray,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.access_time,
-                                                  size: 14,
-                                                  color: AppColor.neutralGray,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '$timeStr WIB',
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: AppColor.neutralGray,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      GestureDetector(
-                                        onTap: () => _showOptionsBottomSheet(context, s),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: AppColor.primary,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(
-                                            Icons.more_horiz,
-                                            color: AppColor.white,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-
-                        const SizedBox(height: 16),
-
-                        // Tambah Jadwal Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColor.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            onPressed: () => _showAddEditBottomSheet(context),
-                            child: const Text(
-                              'Tambah Jadwal',
-                              style: TextStyle(
-                                fontSize: 16,
+                      // Periode Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColor.primary,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              period?['name'] ?? 'Fase Intensif',
+                              style: const TextStyle(
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppColor.white,
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 16,
+                                  color: AppColor.white,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  period != null ? '$startDateStr - $endDateStr' : 'Belum ada periode aktif',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColor.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // List Jadwal
+                      if (schedules.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          width: double.infinity,
+                          alignment: Alignment.center,
+                          child: const Column(
+                            children: [
+                              Icon(Icons.alarm_off, size: 48, color: AppColor.neutralGray),
+                              SizedBox(height: 12),
+                              Text(
+                                'Belum ada jadwal obat',
+                                style: TextStyle(color: AppColor.neutralGray),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: schedules.length,
+                          itemBuilder: (context, index) {
+                            final s = schedules[index];
+                            final timeStr = s.scheduleTime.substring(0, 5);
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              decoration: BoxDecoration(
+                                color: AppColor.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.02),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: AppColor.lightGray,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          s.medName,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColor.darkGray,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.access_time,
+                                              size: 14,
+                                              color: AppColor.neutralGray,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '$timeStr WIB',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColor.neutralGray,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  GestureDetector(
+                                    onTap: () => _showOptionsBottomSheet(context, s),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppColor.primary,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.more_horiz,
+                                        color: AppColor.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                      const SizedBox(height: 16),
+
+                      // Tambah Jadwal Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColor.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () => _showAddEditBottomSheet(context),
+                          child: const Text(
+                            'Tambah Jadwal',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.white,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  );
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
           },
         ),
       ),

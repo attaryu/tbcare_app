@@ -4,10 +4,33 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../ui/router/app_router.dart';
 import '../view_models/notification_view_model.dart';
 
-class NotificationView extends StatelessWidget {
+class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
+
+  @override
+  State<NotificationView> createState() => _NotificationViewState();
+}
+
+class _NotificationViewState extends State<NotificationView> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<NotificationViewModel>().fetchNotifications();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,51 +67,70 @@ class NotificationView extends StatelessWidget {
             ),
         ],
       ),
-      body: viewModel.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : viewModel.error != null
-              ? Center(child: Text(viewModel.error!))
-              : viewModel.notifications.isEmpty
-                  ? _buildEmptyState()
-                  : _buildNotificationList(context, viewModel),
+      body: RefreshIndicator(
+        onRefresh: () => viewModel.fetchNotifications(),
+        color: AppColor.primary,
+        child: viewModel.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : viewModel.error != null
+                ? Center(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Text(viewModel.error!),
+                      ),
+                    ),
+                  )
+                : viewModel.notifications.isEmpty
+                    ? _buildEmptyState()
+                    : _buildNotificationList(context, viewModel),
+      ),
     );
   }
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_off_outlined,
-            size: 80,
-            color: Colors.grey.shade300,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Tidak Ada Pemberitahuan',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColor.darkGray,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.notifications_off_outlined,
+              size: 80,
+              color: Colors.grey.shade300,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Anda akan menerima pemberitahuan tentang aktivitas pengobatan di sini.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade500,
+            const SizedBox(height: 16),
+            const Text(
+              'Tidak Ada Pemberitahuan',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColor.darkGray,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                'Anda akan menerima pemberitahuan tentang aktivitas pengobatan di sini.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildNotificationList(BuildContext context, NotificationViewModel viewModel) {
     return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: viewModel.notifications.length,
       separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.8),

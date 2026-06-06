@@ -8,6 +8,8 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../view_models/supervisor_view_model.dart';
 
+import '../../../../ui/router/app_router.dart';
+
 class PatientItem {
   final String id;
   final int patientUserId;
@@ -79,24 +81,31 @@ class SupervisorPatientListView extends StatefulWidget {
   State<SupervisorPatientListView> createState() => _SupervisorPatientListViewState();
 }
 
-class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
+class _SupervisorPatientListViewState extends State<SupervisorPatientListView> with RouteAware {
   String _searchQuery = '';
   final TextEditingController _searchCtrl = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<SupervisorViewModel>().loadData();
   }
 
   void _resetData() {
     _searchQuery = '';
     _searchCtrl.clear();
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
   }
 
   void _copySupervisorCode(String code) {
@@ -209,6 +218,25 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
     final supervisorViewModel = context.watch<SupervisorViewModel>();
     final supervisorCode = supervisorViewModel.supervisorCode ?? '...';
 
+    if (supervisorViewModel.isLoading) {
+      return Scaffold(
+        backgroundColor: AppColor.white,
+        appBar: AppBar(
+          title: const Text(
+            'Kelola Pasien',
+            style: TextStyle(
+              color: AppColor.darkGray,
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+            ),
+          ),
+          backgroundColor: AppColor.white,
+          elevation: 0,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: AppColor.primary)),
+      );
+    }
+
     // Map real database requests from SupervisorViewModel to RequestItem format
     final List<RequestItem> dbRequests = supervisorViewModel.joinRequests.map((item) {
       final id = item['id'].toString();
@@ -290,6 +318,7 @@ class _SupervisorPatientListViewState extends State<SupervisorPatientListView> {
                   setState(() {
                     _resetData();
                   });
+                  await supervisorViewModel.loadData();
                 },
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),

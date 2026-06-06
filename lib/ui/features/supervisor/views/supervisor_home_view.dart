@@ -10,101 +10,125 @@ import '../../auth/view_models/auth_view_model.dart';
 import '../../notification/view_models/notification_view_model.dart';
 import '../view_models/supervisor_view_model.dart';
 
-class SupervisorHomeView extends StatelessWidget {
+import '../../../../ui/router/app_router.dart';
+
+class SupervisorHomeView extends StatefulWidget {
   const SupervisorHomeView({super.key});
+
+  @override
+  State<SupervisorHomeView> createState() => _SupervisorHomeViewState();
+}
+
+class _SupervisorHomeViewState extends State<SupervisorHomeView> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<SupervisorViewModel>().loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthViewModel>();
     final user = auth.currentUser;
+    final vm = context.watch<SupervisorViewModel>();
+
+    if (vm.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColor.white,
+        body: Center(child: CircularProgressIndicator(color: AppColor.primary)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(
-        child: Consumer<SupervisorViewModel>(
-          builder: (_, vm, __) {
-            if (vm.isLoading &&
-                vm.terlewatList.isEmpty &&
-                vm.verifikasiList.isEmpty &&
-                vm.amanList.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            return RefreshIndicator(
-              onRefresh: () => vm.loadData(),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        child: RefreshIndicator(
+          onRefresh: () => vm.loadData(),
+          color: AppColor.primary,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+            children: [
+              _Header(user: user),
+              const SizedBox(height: 24),
+              const Text(
+                'Status Pengobatan Pasien',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.darkGray,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
                 children: [
-                  _Header(user: user),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Status Pengobatan Pasien',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.darkGray,
+                  Expanded(
+                    child: _StatCard(
+                      'Terlewat',
+                      vm.terlewatCount,
+                      AppColor.error,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _StatCard(
+                      'Butuh Verifikasi',
+                      vm.verifikasiCount,
+                      AppColor.warning,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _StatCard(
+                      'Aman',
+                      vm.amanCount,
+                      AppColor.success,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              if (vm.error != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColor.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
                     children: [
-                      Expanded(
-                        child: _StatCard(
-                          'Terlewat',
-                          vm.terlewatCount,
-                          AppColor.error,
-                        ),
+                      const Icon(
+                        Icons.error_outline,
+                        color: AppColor.error,
+                        size: 20,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
-                        child: _StatCard(
-                          'Butuh Verifikasi',
-                          vm.verifikasiCount,
-                          AppColor.warning,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _StatCard(
-                          'Aman',
-                          vm.amanCount,
-                          AppColor.success,
+                        child: Text(
+                          vm.error!,
+                          style: const TextStyle(
+                            color: AppColor.error,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 28),
-                  if (vm.error != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColor.error.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: AppColor.error,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              vm.error!,
-                              style: const TextStyle(
-                                color: AppColor.error,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  if (vm.terlewatList.isNotEmpty) ...[
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (vm.terlewatList.isNotEmpty) ...[
                     _SectionHeader('Terlewat'),
                     const SizedBox(height: 12),
                     ...vm.terlewatList.map(
@@ -158,28 +182,17 @@ class SupervisorHomeView extends StatelessWidget {
                               color: AppColor.darkGray,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Tidak ada jadwal yang terlewat atau\nmenunggu verifikasi hari ini.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColor.neutralGray,
-                            ),
-                          ),
                         ],
                       ),
                     ),
                   ],
                 ],
               ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
+            ),
+          ),
+        );
+      }
+    }
 
 // ─── Header ──────────────────────────────────────────────────────────────────
 

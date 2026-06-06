@@ -42,11 +42,13 @@ import '../features/notification/views/notification_view.dart';
 
 class AppRouter {
   static final rootNavigatorKey = GlobalKey<NavigatorState>();
+  static final routeObserver = RouteObserver<ModalRoute<void>>();
 
   static GoRouter config(AuthViewModel authViewModel) {
     return GoRouter(
       initialLocation: '/',
       navigatorKey: rootNavigatorKey,
+      observers: [routeObserver],
       refreshListenable: authViewModel,
       redirect: (context, state) {
         final isAuthenticated = authViewModel.isAuthenticated;

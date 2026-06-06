@@ -8,17 +8,40 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_dialog_info_row.dart';
 import '../../../../core/widgets/app_medication_schedule_card.dart';
+import '../../../../ui/router/app_router.dart';
 import '../../notification/view_models/notification_view_model.dart';
 import '../view_models/home_view_model.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<HomeViewModel>().fetchHomeData();
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
 
-    if (viewModel.isLoading && viewModel.user == null) {
+    if (viewModel.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: AppColor.primary)),
       );
@@ -79,11 +102,15 @@ class HomeView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: () => viewModel.fetchHomeData(),
+          color: AppColor.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Header Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -520,8 +547,9 @@ class HomeView extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNextScheduleCard(BuildContext context, HomeViewModel viewModel) {
     final nextList = viewModel.nextSchedules;

@@ -4,16 +4,39 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_medication_schedule_card.dart';
+import '../../../../ui/router/app_router.dart';
 import '../view_models/history_view_model.dart';
 
-class HistoryView extends StatelessWidget {
+class HistoryView extends StatefulWidget {
   const HistoryView({super.key});
+
+  @override
+  State<HistoryView> createState() => _HistoryViewState();
+}
+
+class _HistoryViewState extends State<HistoryView> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<HistoryViewModel>().fetchHistoryData();
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HistoryViewModel>();
 
-    if (viewModel.isLoading && viewModel.activeTreatment == null) {
+    if (viewModel.isLoading) {
       return const Scaffold(
         backgroundColor: AppColor.lightGray,
         body: Center(child: CircularProgressIndicator(color: AppColor.primary)),
@@ -39,11 +62,15 @@ class HistoryView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: () => viewModel.fetchHistoryData(),
+          color: AppColor.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Title
               const Text(
                 'Riwayat Pengobatan',
@@ -221,8 +248,9 @@ class HistoryView extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatCard({required IconData icon, required String title, required int count, required Color iconColor}) {
     return Container(

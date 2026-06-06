@@ -24,7 +24,7 @@ class SupervisorPatientDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = context.watch<HistoryViewModel>();
 
-    if (viewModel.isLoading && viewModel.activeTreatment == null) {
+    if (viewModel.isLoading) {
       return Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -35,7 +35,6 @@ class SupervisorPatientDetailView extends StatelessWidget {
           foregroundColor: AppColor.darkGray,
           elevation: 0,
         ),
-        backgroundColor: AppColor.lightGray,
         body: const Center(child: CircularProgressIndicator(color: AppColor.primary)),
       );
     }
@@ -68,12 +67,16 @@ class SupervisorPatientDetailView extends StatelessWidget {
         elevation: 0,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Profile Card (Header)
+        child: RefreshIndicator(
+          onRefresh: () => viewModel.fetchHistoryData(),
+          color: AppColor.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Card (Header)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -338,8 +341,9 @@ class SupervisorPatientDetailView extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatCard({required IconData icon, required String title, required int count, required Color iconColor}) {
     return Container(

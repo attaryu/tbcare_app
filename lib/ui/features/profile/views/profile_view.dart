@@ -7,19 +7,54 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_dialog_info_row.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../ui/router/app_router.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../view_models/profile_view_model.dart';
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  State<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<ProfileViewModel>().fetchProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<ProfileViewModel>();
 
-    if (viewModel.isLoading && viewModel.user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppColor.primary)),
+    if (viewModel.isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Profil dan Pengaturan',
+            style: TextStyle(
+              color: AppColor.darkGray,
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+            ),
+          ),
+          backgroundColor: AppColor.white,
+          elevation: 0,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: AppColor.primary)),
       );
     }
 
@@ -31,11 +66,15 @@ class ProfileView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: () => viewModel.fetchProfile(),
+          color: AppColor.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Title
               const Text(
                 'Profil dan Pengaturan',
@@ -218,8 +257,9 @@ class ProfileView extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionTitle(String title) {
     return Text(
