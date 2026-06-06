@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/alarm_service.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/supabase_service.dart';
 
@@ -235,6 +236,7 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Signs out from Supabase Auth and clears the local profile model.
   Future<void> logout() async {
+    await AppAlarmService.cancelAllAlarms();
     try {
       await _supabase.signOut();
     } catch (e) {

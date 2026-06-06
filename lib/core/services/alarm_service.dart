@@ -68,6 +68,19 @@ class AppAlarmService {
     debugPrint('Alarms cancelled for schedule ID: $scheduleId');
   }
 
+  /// Cancel ALL active alarms (called on logout)
+  static Future<void> cancelAllAlarms() async {
+    try {
+      final activeAlarms = await Alarm.getAlarms();
+      for (final alarm in activeAlarms) {
+        await Alarm.stop(alarm.id);
+      }
+      debugPrint('All alarms cancelled (logout).');
+    } catch (e) {
+      debugPrint('Error cancelling all alarms: $e');
+    }
+  }
+
   /// Sync alarms with current active schedules
   static Future<void> syncAlarmsWithSchedules(
     List<Map<String, dynamic>> schedules,
