@@ -142,7 +142,7 @@ class HomeRepository {
               isVerified = logData?['verified_by'] != null;
               takenAt = logData?['taken_at'];
 
-              if (st == 'taken') status = 'Di minum';
+              if (st == 'taken') status = 'Tepat waktu';
               if (st == 'missed') status = 'Terlewat';
               if (st == 'pending') status = 'Segera';
             } else {
