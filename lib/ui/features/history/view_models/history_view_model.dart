@@ -339,7 +339,7 @@ class HistoryViewModel extends ChangeNotifier {
           final log = dateLogs[sId];
           final lSt = log?['status'] as String?;
           if (lSt == 'taken') {
-            st = 'Di minum';
+            st = 'Tepat waktu';
             takenTime = log?['taken_at'] as String?;
           } else if (lSt == 'missed') {
             st = 'Terlewat';
@@ -375,7 +375,7 @@ class HistoryViewModel extends ChangeNotifier {
 
   Future<void> toggleLogStatus(int scheduleId, String currentStatus) async {
     String newStatus = 'taken';
-    if (currentStatus == 'Di minum') newStatus = 'missed';
+    if (currentStatus == 'Tepat waktu') newStatus = 'missed';
     if (currentStatus == 'Terlewat') newStatus = 'pending';
 
     final dateStr = _selectedDate.toIso8601String().split('T')[0];

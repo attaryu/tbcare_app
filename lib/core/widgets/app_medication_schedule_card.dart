@@ -7,7 +7,7 @@ import '../theme/app_color.dart';
 /// Widget ini memvisualisasikan data jadwal minum obat baik untuk halaman Beranda
 /// (HomeView) maupun Riwayat Pengobatan (HistoryView), mendukung kondisi kartu aktif
 /// (sorotan hijau), tanda verifikasi PMO (Pemberi Minum Obat), serta penyesuaian otomatis
-/// badge status obat ('Di minum', 'Terlewat', 'Segera').
+/// badge status obat ('Tepat waktu', 'Terlewat', 'Segera').
 class AppMedicationScheduleCard extends StatelessWidget {
   /// Nama obat (misal: "Obat TBC - Isoniazid").
   final String medName;
@@ -16,7 +16,7 @@ class AppMedicationScheduleCard extends StatelessWidget {
   /// Widget ini akan otomatis menormalkannya menjadi format "HH:mm".
   final String scheduleTime;
 
-  /// Status obat hari ini ('Di minum', 'Terlewat', atau 'Segera').
+  /// Status obat hari ini ('Tepat waktu', 'Terlewat', atau 'Segera').
   final String status;
 
   /// Waktu ketika obat diminum / dikonfirmasi.
@@ -53,7 +53,7 @@ class AppMedicationScheduleCard extends StatelessWidget {
     String displayStatus = status;
     bool isLate = false;
     String? takenHourMin;
-    if (takenTime != null && status == 'Di minum') {
+    if (takenTime != null && status == 'Tepat waktu') {
       final parsedTaken = DateTime.tryParse(takenTime!)?.toLocal();
       if (parsedTaken != null) {
         final takenHourStr = parsedTaken.hour.toString().padLeft(2, '0');
@@ -75,13 +75,13 @@ class AppMedicationScheduleCard extends StatelessWidget {
 
     // Menentukan warna latar belakang badge berdasarkan status
     Color badgeBg = AppColor.warning;
-    if (displayStatus == 'Di minum') badgeBg = AppColor.success;
+    if (displayStatus == 'Tepat waktu') badgeBg = AppColor.success;
     if (displayStatus == 'Terlewat') badgeBg = AppColor.error;
     if (displayStatus == 'Terlambat') badgeBg = AppColor.warning;
 
     // Menentukan background dan icon indikator sebelah kiri
     Color indicatorBg = AppColor.lightGray;
-    if (status == 'Di minum') {
+    if (status == 'Tepat waktu') {
       indicatorBg = isLate ? AppColor.warning : AppColor.success;
     } else if (isActive) {
       indicatorBg = AppColor.white.withOpacity(0.2);
@@ -114,9 +114,9 @@ class AppMedicationScheduleCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              status == 'Di minum' ? Icons.check : Icons.medical_services_outlined,
+              status == 'Tepat waktu' ? Icons.check : Icons.medical_services_outlined,
               size: 16,
-              color: status == 'Di minum'
+              color: status == 'Tepat waktu'
                   ? AppColor.white
                   : (isActive ? AppColor.white : AppColor.neutralGray),
             ),

@@ -894,11 +894,30 @@ class _HomeViewState extends State<HomeView> with RouteAware {
             orElse: () => sched,
           );
           final status = currentSched['today_status'] ?? 'Segera';
+          final takenTime = currentSched['taken_at'] as String?;
+          final scheduleTime = currentSched['schedule_time'] as String? ?? '00:00:00';
+
+          String displayStatus = status;
+          if (takenTime != null && status == 'Tepat waktu') {
+            final parsedTaken = DateTime.tryParse(takenTime)?.toLocal();
+            if (parsedTaken != null) {
+              final parts = scheduleTime.split(':');
+              if (parts.isNotEmpty) {
+                final schedHour = int.tryParse(parts[0]) ?? 0;
+                final schedMin = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                if (parsedTaken.hour > schedHour ||
+                    (parsedTaken.hour == schedHour && parsedTaken.minute > schedMin)) {
+                  displayStatus = 'Terlambat';
+                }
+              }
+            }
+          }
 
           Color statusColor = AppColor.darkGray;
-          if (status == 'Di minum') statusColor = AppColor.success;
-          if (status == 'Terlewat') statusColor = AppColor.error;
-          if (status == 'Segera') statusColor = AppColor.warning;
+          if (displayStatus == 'Tepat waktu') statusColor = AppColor.success;
+          if (displayStatus == 'Terlewat') statusColor = AppColor.error;
+          if (displayStatus == 'Segera') statusColor = AppColor.warning;
+          if (displayStatus == 'Terlambat') statusColor = AppColor.warning;
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -928,7 +947,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
               AppDialogInfoRow(label: 'Aturan Pakai', value: instructions),
               AppDialogInfoRow(
                 label: 'Status Hari Ini',
-                value: status,
+                value: displayStatus,
                 valueColor: statusColor,
                 isLast: true,
               ),
@@ -944,7 +963,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                       onPressed: () => Navigator.pop(dialogContext),
                     ),
                   ),
-                  if (status != 'Di minum') ...[
+                  if (status != 'Tepat waktu') ...[
                     const SizedBox(width: 12),
                     Expanded(
                       child: AppButton(
