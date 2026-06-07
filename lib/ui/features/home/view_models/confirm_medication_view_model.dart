@@ -4,6 +4,7 @@ import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/alarm_service.dart';
 import '../../../../data/services/supabase_service.dart';
@@ -72,7 +73,12 @@ class ConfirmMedicationViewModel extends ChangeNotifier {
     }
   }
 
-  Uint8List _compressImage(Uint8List originalBytes) {
+  Uint8List _compressImage(
+    Uint8List originalBytes, {
+    required String patientName,
+    required String medName,
+    required String timestamp,
+  }) {
     // Decode image safely
     final image = img.decodeImage(originalBytes);
     if (image == null) return originalBytes;
@@ -82,6 +88,57 @@ class ConfirmMedicationViewModel extends ChangeNotifier {
       image,
       width: image.width > image.height ? 400 : null,
       height: image.height >= image.width ? 400 : null,
+    );
+
+    // Burn timestamp info on the bottom right corner
+    // Build metadata text lines
+    final line1 = medName;
+    final line2 = '$patientName • $timestamp';
+
+    // Calculate dimensions
+    final font = img.arial14;
+    final w1 = line1.length * 7; // Approx width for arial14 (each character is ~7px wide)
+    final w2 = line2.length * 7;
+    final textWidth = w1 > w2 ? w1 : w2;
+    const textHeight = 32; // Font size 14px * 2 lines + small spacing
+
+    // Position of background overlay box
+    final boxPadding = 6;
+    final boxWidth = textWidth + (boxPadding * 2);
+    final boxHeight = textHeight + (boxPadding * 2);
+    final x1 = resized.width - boxWidth - 10;
+    final y1 = resized.height - boxHeight - 10;
+    final x2 = resized.width - 10;
+    final y2 = resized.height - 10;
+
+    // Draw dark semi-transparent rectangle behind the text for contrast/readability
+    img.fillRect(
+      resized,
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      color: img.ColorRgba8(0, 0, 0, 160), // Dark overlay (transparency = 160/255)
+    );
+
+    // Draw Line 1 (Medication Name)
+    img.drawString(
+      resized,
+      line1,
+      font: font,
+      x: x1 + boxPadding,
+      y: y1 + boxPadding,
+      color: img.ColorRgb8(255, 255, 255), // White color
+    );
+
+    // Draw Line 2 (Patient Name & Timestamp)
+    img.drawString(
+      resized,
+      line2,
+      font: font,
+      x: x1 + boxPadding,
+      y: y1 + boxPadding + 16,
+      color: img.ColorRgb8(255, 255, 255), // White color
     );
 
     // Encode to JPEG with low quality (30%)
@@ -101,7 +158,18 @@ class ConfirmMedicationViewModel extends ChangeNotifier {
 
     try {
       final originalBytes = await _imageFile!.readAsBytes();
-      final compressedBytes = _compressImage(originalBytes);
+
+      // Format timestamp locale-aware (07 Jun 2026, 14:30)
+      final now = DateTime.now();
+      final formattedTime = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(now);
+      final patientName = homeViewModel.user?.name ?? 'Pasien';
+
+      final compressedBytes = _compressImage(
+        originalBytes,
+        patientName: patientName,
+        medName: medName,
+        timestamp: formattedTime,
+      );
 
       // Unique filename
       final fileName = '${scheduleId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
