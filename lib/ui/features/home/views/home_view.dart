@@ -755,11 +755,13 @@ class _HomeViewState extends State<HomeView> with RouteAware {
     final status = sched['today_status'] as String? ?? 'Segera';
     final isNext = viewModel.nextSchedules.any((ns) => ns['id'] == sched['id']);
     final isVerified = sched['is_verified'] == true;
+    final takenTime = sched['taken_at'] as String?;
 
     return AppMedicationScheduleCard(
       medName: name,
       scheduleTime: timeStr,
       status: status,
+      takenTime: takenTime,
       isVerified: isVerified,
       isActive: isNext,
       onTap: () => _showMedicationDetailModal(context, sched, viewModel),

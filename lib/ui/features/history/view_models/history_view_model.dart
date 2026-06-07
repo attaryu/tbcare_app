@@ -334,11 +334,13 @@ class HistoryViewModel extends ChangeNotifier {
         final sId = s['id'] as int;
         String st = 'Segera';
         bool isVerified = false;
+        String? takenTime;
         if (dateLogs.containsKey(sId)) {
           final log = dateLogs[sId];
           final lSt = log?['status'] as String?;
           if (lSt == 'taken') {
             st = 'Di minum';
+            takenTime = log?['taken_at'] as String?;
           } else if (lSt == 'missed') {
             st = 'Terlewat';
           } else if (lSt == 'pending') {
@@ -356,6 +358,7 @@ class HistoryViewModel extends ChangeNotifier {
           'schedule_time': s['schedule_time'],
           'status': st,
           'is_verified': isVerified,
+          'taken_time': takenTime,
         });
       }
       
