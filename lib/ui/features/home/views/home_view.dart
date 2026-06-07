@@ -587,7 +587,9 @@ class _HomeViewState extends State<HomeView> with RouteAware {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           child: InkWell(
-            onTap: () => _showMedicationDetailModal(context, next, viewModel),
+            onTap: viewModel.isWithin30MinsSimulation
+                ? () => _showMedicationDetailModal(context, next, viewModel)
+                : null,
             borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.all(20),
