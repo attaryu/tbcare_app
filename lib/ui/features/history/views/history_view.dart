@@ -518,11 +518,13 @@ class _HistoryViewState extends State<HistoryView> with RouteAware {
         final status = item['status'] as String;
         final isVerified = item['is_verified'] as bool? ?? false;
         final isActive = activeIds.contains(id);
+        final takenTime = item['taken_time'] as String?;
 
         return AppMedicationScheduleCard(
           medName: name,
           scheduleTime: timeStr,
           status: status,
+          takenTime: takenTime,
           isVerified: isVerified,
           isActive: isActive,
           onTap: null,

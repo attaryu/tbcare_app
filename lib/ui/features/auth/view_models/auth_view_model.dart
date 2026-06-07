@@ -16,6 +16,15 @@ class AuthViewModel extends ChangeNotifier {
 
   bool get isAuthenticated => _currentUser != null;
 
+  final ValueNotifier<bool> authStateNotifier = ValueNotifier<bool>(false);
+
+  void _updateAuthState() {
+    final authenticated = _currentUser != null;
+    if (authStateNotifier.value != authenticated) {
+      authStateNotifier.value = authenticated;
+    }
+  }
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -30,6 +39,7 @@ class AuthViewModel extends ChangeNotifier {
       if (authUser == null) {
         _currentUser = null;
         _roleSlug = null;
+        _updateAuthState();
         notifyListeners();
         return;
       }
@@ -54,6 +64,7 @@ class AuthViewModel extends ChangeNotifier {
         _currentUser = null;
         _roleSlug = null;
       }
+      _updateAuthState();
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to restore session: $e');
@@ -103,6 +114,7 @@ class AuthViewModel extends ChangeNotifier {
       } catch (_) {}
     } finally {
       _isLoading = false;
+      _updateAuthState();
       notifyListeners();
     }
   }
@@ -250,6 +262,7 @@ class AuthViewModel extends ChangeNotifier {
       rethrow;
     } finally {
       _isLoading = false;
+      _updateAuthState();
       notifyListeners();
     }
   }
@@ -264,6 +277,7 @@ class AuthViewModel extends ChangeNotifier {
     }
     _currentUser = null;
     _roleSlug = null;
+    _updateAuthState();
     notifyListeners();
   }
 }

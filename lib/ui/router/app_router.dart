@@ -49,7 +49,7 @@ class AppRouter {
       initialLocation: '/',
       navigatorKey: rootNavigatorKey,
       observers: [routeObserver],
-      refreshListenable: authViewModel,
+      refreshListenable: authViewModel.authStateNotifier,
       redirect: (context, state) {
         final isAuthenticated = authViewModel.isAuthenticated;
         final isLoggingIn = state.matchedLocation == '/login';
@@ -138,7 +138,53 @@ class AppRouter {
                       path: 'confirm-medication',
                       parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
-                        final extras = state.extra as Map<String, dynamic>;
+                        final extras = state.extra as Map<String, dynamic>?;
+                        if (extras == null) {
+                          return Scaffold(
+                            appBar: AppBar(
+                              title: const Text('Sesi Berakhir'),
+                              leading: IconButton(
+                                icon: const Icon(Icons.arrow_back),
+                                onPressed: () => context.go('/'),
+                              ),
+                            ),
+                            body: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.timer_off_outlined,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Sesi pengambilan bukti obat telah berakhir atau aplikasi ter-restart.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Silakan kembali ke Beranda dan ulangi proses konfirmasi.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton(
+                                      onPressed: () => context.go('/'),
+                                      child: const Text('Kembali ke Beranda'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                         final scheduleId = extras['scheduleId'] as int;
                         final medName = extras['medName'] as String;
                         final scheduleTime = extras['scheduleTime'] as String;
@@ -235,7 +281,47 @@ class AppRouter {
                       path: 'add',
                       parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
-                        final viewModel = state.extra as SymptomViewModel;
+                        final viewModel = state.extra as SymptomViewModel?;
+                        if (viewModel == null) {
+                          return Scaffold(
+                            appBar: AppBar(
+                              title: const Text('Sesi Berakhir'),
+                              leading: IconButton(
+                                icon: const Icon(Icons.arrow_back),
+                                onPressed: () => context.go('/symptoms'),
+                              ),
+                            ),
+                            body: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Sesi formulir gejala telah berakhir.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton(
+                                      onPressed: () => context.go('/symptoms'),
+                                      child: const Text('Kembali ke Daftar Gejala'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                         return SymptomFormView(viewModel: viewModel);
                       },
                     ),
@@ -243,7 +329,47 @@ class AppRouter {
                       path: 'edit',
                       parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
-                        final extras = state.extra as Map<String, dynamic>;
+                        final extras = state.extra as Map<String, dynamic>?;
+                        if (extras == null) {
+                          return Scaffold(
+                            appBar: AppBar(
+                              title: const Text('Sesi Berakhir'),
+                              leading: IconButton(
+                                icon: const Icon(Icons.arrow_back),
+                                onPressed: () => context.go('/symptoms'),
+                              ),
+                            ),
+                            body: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Sesi formulir edit gejala telah berakhir.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton(
+                                      onPressed: () => context.go('/symptoms'),
+                                      child: const Text('Kembali ke Daftar Gejala'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                         final viewModel =
                             extras['viewModel'] as SymptomViewModel;
                         final log = extras['log'] as SymptomLog;
@@ -279,7 +405,47 @@ class AppRouter {
                       path: 'detail',
                       parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
-                        final extras = state.extra as Map<String, dynamic>;
+                        final extras = state.extra as Map<String, dynamic>?;
+                        if (extras == null) {
+                          return Scaffold(
+                            appBar: AppBar(
+                              title: const Text('Sesi Berakhir'),
+                              leading: IconButton(
+                                icon: const Icon(Icons.arrow_back),
+                                onPressed: () => context.go('/patients'),
+                              ),
+                            ),
+                            body: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Sesi melihat detail pasien telah berakhir.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton(
+                                      onPressed: () => context.go('/patients'),
+                                      child: const Text('Kembali ke Daftar Pasien'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                         final patientUserId = extras['patientUserId'] as int;
 
                         return ChangeNotifierProvider(
@@ -367,7 +533,47 @@ class AppRouter {
                           path: 'add',
                           parentNavigatorKey: rootNavigatorKey,
                           builder: (context, state) {
-                            final viewModel = state.extra as TreatmentViewModel;
+                            final viewModel = state.extra as TreatmentViewModel?;
+                            if (viewModel == null) {
+                              return Scaffold(
+                                appBar: AppBar(
+                                  title: const Text('Sesi Berakhir'),
+                                  leading: IconButton(
+                                    icon: const Icon(Icons.arrow_back),
+                                    onPressed: () => context.go('/profile/treatment-periods'),
+                                  ),
+                                ),
+                                body: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Sesi formulir periode pengobatan telah berakhir.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        ElevatedButton(
+                                          onPressed: () => context.go('/profile/treatment-periods'),
+                                          child: const Text('Kembali ke Periode Pengobatan'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
                             return TreatmentFormView(viewModel: viewModel);
                           },
                         ),
@@ -375,7 +581,47 @@ class AppRouter {
                           path: 'edit',
                           parentNavigatorKey: rootNavigatorKey,
                           builder: (context, state) {
-                            final extras = state.extra as Map<String, dynamic>;
+                            final extras = state.extra as Map<String, dynamic>?;
+                            if (extras == null) {
+                              return Scaffold(
+                                appBar: AppBar(
+                                  title: const Text('Sesi Berakhir'),
+                                  leading: IconButton(
+                                    icon: const Icon(Icons.arrow_back),
+                                    onPressed: () => context.go('/profile/treatment-periods'),
+                                  ),
+                                ),
+                                body: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Sesi formulir edit periode pengobatan telah berakhir.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        ElevatedButton(
+                                          onPressed: () => context.go('/profile/treatment-periods'),
+                                          child: const Text('Kembali ke Periode Pengobatan'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
                             final viewModel =
                                 extras['viewModel'] as TreatmentViewModel;
                             final period =

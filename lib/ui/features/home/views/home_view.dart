@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -483,7 +484,8 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                             label: 'Hubungi\nPengawas',
                             onTap: () {
                               if (viewModel.hasSupervisor) {
-                                _showSupervisorInfoModal(context, viewModel);
+                                final phone = viewModel.supervisorInfo?['telephone'] as String?;
+                                _launchPhone(phone);
                               } else {
                                 _showConnectSupervisorModal(context, viewModel);
                               }
@@ -585,7 +587,9 @@ class _HomeViewState extends State<HomeView> with RouteAware {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           child: InkWell(
-            onTap: () => _showMedicationDetailModal(context, next, viewModel),
+            onTap: viewModel.isWithin30MinsSimulation
+                ? () => _showMedicationDetailModal(context, next, viewModel)
+                : null,
             borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.all(20),
@@ -751,11 +755,13 @@ class _HomeViewState extends State<HomeView> with RouteAware {
     final status = sched['today_status'] as String? ?? 'Segera';
     final isNext = viewModel.nextSchedules.any((ns) => ns['id'] == sched['id']);
     final isVerified = sched['is_verified'] == true;
+    final takenTime = sched['taken_at'] as String?;
 
     return AppMedicationScheduleCard(
       medName: name,
       scheduleTime: timeStr,
       status: status,
+      takenTime: takenTime,
       isVerified: isVerified,
       isActive: isNext,
       onTap: () => _showMedicationDetailModal(context, sched, viewModel),
@@ -866,34 +872,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
     );
   }
 
-  void _showSupervisorInfoModal(BuildContext context, HomeViewModel viewModel) {
-    final info = viewModel.supervisorInfo;
-    if (info == null) return;
-
-    AppDialog.info(
-      context,
-      title: 'Informasi Pengawas',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppDialogInfoRow(
-            label: 'Nama',
-            value: info['name'] ?? '-',
-          ),
-          AppDialogInfoRow(
-            label: 'Telepon',
-            value: info['telephone'] ?? '-',
-          ),
-          AppDialogInfoRow(
-            label: 'Status Koneksi',
-            value: info['status'] ?? '-',
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showMedicationDetailModal(
     BuildContext context,
     Map<String, dynamic> sched,
@@ -916,11 +894,30 @@ class _HomeViewState extends State<HomeView> with RouteAware {
             orElse: () => sched,
           );
           final status = currentSched['today_status'] ?? 'Segera';
+          final takenTime = currentSched['taken_at'] as String?;
+          final scheduleTime = currentSched['schedule_time'] as String? ?? '00:00:00';
+
+          String displayStatus = status;
+          if (takenTime != null && status == 'Tepat waktu') {
+            final parsedTaken = DateTime.tryParse(takenTime)?.toLocal();
+            if (parsedTaken != null) {
+              final parts = scheduleTime.split(':');
+              if (parts.isNotEmpty) {
+                final schedHour = int.tryParse(parts[0]) ?? 0;
+                final schedMin = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                if (parsedTaken.hour > schedHour ||
+                    (parsedTaken.hour == schedHour && parsedTaken.minute > schedMin)) {
+                  displayStatus = 'Terlambat';
+                }
+              }
+            }
+          }
 
           Color statusColor = AppColor.darkGray;
-          if (status == 'Di minum') statusColor = AppColor.success;
-          if (status == 'Terlewat') statusColor = AppColor.error;
-          if (status == 'Segera') statusColor = AppColor.warning;
+          if (displayStatus == 'Tepat waktu') statusColor = AppColor.success;
+          if (displayStatus == 'Terlewat') statusColor = AppColor.error;
+          if (displayStatus == 'Segera') statusColor = AppColor.warning;
+          if (displayStatus == 'Terlambat') statusColor = AppColor.warning;
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -950,7 +947,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
               AppDialogInfoRow(label: 'Aturan Pakai', value: instructions),
               AppDialogInfoRow(
                 label: 'Status Hari Ini',
-                value: status,
+                value: displayStatus,
                 valueColor: statusColor,
                 isLast: true,
               ),
@@ -966,7 +963,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                       onPressed: () => Navigator.pop(dialogContext),
                     ),
                   ),
-                  if (status != 'Di minum') ...[
+                  if (status != 'Tepat waktu') ...[
                     const SizedBox(width: 12),
                     Expanded(
                       child: AppButton(
@@ -995,5 +992,13 @@ class _HomeViewState extends State<HomeView> with RouteAware {
         },
       ),
     );
+  }
+
+  Future<void> _launchPhone(String? phone) async {
+    if (phone == null || phone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 }

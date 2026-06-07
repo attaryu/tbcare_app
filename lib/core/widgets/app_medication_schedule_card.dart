@@ -7,7 +7,7 @@ import '../theme/app_color.dart';
 /// Widget ini memvisualisasikan data jadwal minum obat baik untuk halaman Beranda
 /// (HomeView) maupun Riwayat Pengobatan (HistoryView), mendukung kondisi kartu aktif
 /// (sorotan hijau), tanda verifikasi PMO (Pemberi Minum Obat), serta penyesuaian otomatis
-/// badge status obat ('Di minum', 'Terlewat', 'Segera').
+/// badge status obat ('Tepat waktu', 'Terlewat', 'Segera').
 class AppMedicationScheduleCard extends StatelessWidget {
   /// Nama obat (misal: "Obat TBC - Isoniazid").
   final String medName;
@@ -16,8 +16,11 @@ class AppMedicationScheduleCard extends StatelessWidget {
   /// Widget ini akan otomatis menormalkannya menjadi format "HH:mm".
   final String scheduleTime;
 
-  /// Status obat hari ini ('Di minum', 'Terlewat', atau 'Segera').
+  /// Status obat hari ini ('Tepat waktu', 'Terlewat', atau 'Segera').
   final String status;
+
+  /// Waktu ketika obat diminum / dikonfirmasi.
+  final String? takenTime;
 
   /// Status verifikasi PMO/petugas kesehatan.
   final bool isVerified;
@@ -36,6 +39,7 @@ class AppMedicationScheduleCard extends StatelessWidget {
     required this.medName,
     required this.scheduleTime,
     required this.status,
+    this.takenTime,
     this.isVerified = false,
     this.isActive = false,
     this.onTap,
@@ -46,10 +50,42 @@ class AppMedicationScheduleCard extends StatelessWidget {
     // Normalisasi format waktu (mengambil HH:mm dari HH:mm:ss jika ada)
     final timeStr = scheduleTime.length >= 5 ? scheduleTime.substring(0, 5) : scheduleTime;
 
+    String displayStatus = status;
+    bool isLate = false;
+    String? takenHourMin;
+    if (takenTime != null && status == 'Tepat waktu') {
+      final parsedTaken = DateTime.tryParse(takenTime!)?.toLocal();
+      if (parsedTaken != null) {
+        final takenHourStr = parsedTaken.hour.toString().padLeft(2, '0');
+        final takenMinStr = parsedTaken.minute.toString().padLeft(2, '0');
+        takenHourMin = '$takenHourStr:$takenMinStr';
+
+        final parts = scheduleTime.split(':');
+        if (parts.isNotEmpty) {
+          final schedHour = int.tryParse(parts[0]) ?? 0;
+          final schedMin = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+          if (parsedTaken.hour > schedHour ||
+              (parsedTaken.hour == schedHour && parsedTaken.minute > schedMin)) {
+            isLate = true;
+            displayStatus = 'Terlambat';
+          }
+        }
+      }
+    }
+
     // Menentukan warna latar belakang badge berdasarkan status
     Color badgeBg = AppColor.warning;
-    if (status == 'Di minum') badgeBg = AppColor.success;
-    if (status == 'Terlewat') badgeBg = AppColor.error;
+    if (displayStatus == 'Tepat waktu') badgeBg = AppColor.success;
+    if (displayStatus == 'Terlewat') badgeBg = AppColor.error;
+    if (displayStatus == 'Terlambat') badgeBg = AppColor.warning;
+
+    // Menentukan background dan icon indikator sebelah kiri
+    Color indicatorBg = AppColor.lightGray;
+    if (status == 'Tepat waktu') {
+      indicatorBg = isLate ? AppColor.warning : AppColor.success;
+    } else if (isActive) {
+      indicatorBg = AppColor.white.withOpacity(0.2);
+    }
 
     final cardChild = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -74,17 +110,13 @@ class AppMedicationScheduleCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: status == 'Di minum'
-                  ? AppColor.success
-                  : (isActive
-                      ? AppColor.white.withOpacity(0.2)
-                      : AppColor.lightGray),
+              color: indicatorBg,
               shape: BoxShape.circle,
             ),
             child: Icon(
-              status == 'Di minum' ? Icons.check : Icons.medical_services_outlined,
+              status == 'Tepat waktu' ? Icons.check : Icons.medical_services_outlined,
               size: 16,
-              color: status == 'Di minum'
+              color: status == 'Tepat waktu'
                   ? AppColor.white
                   : (isActive ? AppColor.white : AppColor.neutralGray),
             ),
@@ -133,7 +165,7 @@ class AppMedicationScheduleCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                        status,
+                        displayStatus,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -144,19 +176,40 @@ class AppMedicationScheduleCard extends StatelessWidget {
                     const Spacer(),
 
                     // Jam alarm & waktu
-                    Icon(
-                      Icons.alarm,
-                      size: 14,
-                      color: isActive ? AppColor.white : AppColor.darkGray,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$timeStr WIB',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isActive ? AppColor.white : AppColor.darkGray,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.alarm,
+                              size: 14,
+                              color: isActive ? AppColor.white : AppColor.darkGray,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$timeStr WIB',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isActive ? AppColor.white : AppColor.darkGray,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (takenHourMin != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Diminum: $takenHourMin WIB',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isActive ? AppColor.white.withOpacity(0.8) : AppColor.neutralGray,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

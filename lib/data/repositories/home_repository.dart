@@ -105,7 +105,7 @@ class HomeRepository {
           // Fetch compliance logs for today using log_date
           final compRes = await _supabase.client
               .from('compliance_logs')
-              .select('schedule_id, status, verified_by')
+              .select('schedule_id, status, verified_by, taken_at')
               .eq('log_date', todayStr)
               .inFilter('schedule_id', schedIds);
 
@@ -114,6 +114,7 @@ class HomeRepository {
               item['schedule_id'] as int: {
                 'status': item['status'],
                 'verified_by': item['verified_by'],
+                'taken_at': item['taken_at'],
               }
           };
 
@@ -133,13 +134,15 @@ class HomeRepository {
             final sId = s['id'] as int;
             String status = 'Segera';
             bool isVerified = false;
+            String? takenAt;
 
             if (compMap.containsKey(sId)) {
               final logData = compMap[sId];
               final st = logData?['status'];
               isVerified = logData?['verified_by'] != null;
+              takenAt = logData?['taken_at'];
 
-              if (st == 'taken') status = 'Di minum';
+              if (st == 'taken') status = 'Tepat waktu';
               if (st == 'missed') status = 'Terlewat';
               if (st == 'pending') status = 'Segera';
             } else {
@@ -159,6 +162,7 @@ class HomeRepository {
 
             s['today_status'] = status;
             s['is_verified'] = isVerified;
+            s['taken_at'] = takenAt;
             schedules.add(s);
           }
         }

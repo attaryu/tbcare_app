@@ -79,7 +79,7 @@ class MedicationScheduleRepository {
       String status = 'Segera';
       if (compMap.containsKey(sId)) {
         final st = compMap[sId];
-        if (st == 'taken') status = 'Di minum';
+        if (st == 'taken') status = 'Tepat waktu';
         if (st == 'missed') status = 'Terlewat';
         if (st == 'pending') status = 'Segera';
       } else {
