@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -483,7 +484,8 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                             label: 'Hubungi\nPengawas',
                             onTap: () {
                               if (viewModel.hasSupervisor) {
-                                _showSupervisorInfoModal(context, viewModel);
+                                final phone = viewModel.supervisorInfo?['telephone'] as String?;
+                                _launchPhone(phone);
                               } else {
                                 _showConnectSupervisorModal(context, viewModel);
                               }
@@ -866,34 +868,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
     );
   }
 
-  void _showSupervisorInfoModal(BuildContext context, HomeViewModel viewModel) {
-    final info = viewModel.supervisorInfo;
-    if (info == null) return;
-
-    AppDialog.info(
-      context,
-      title: 'Informasi Pengawas',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppDialogInfoRow(
-            label: 'Nama',
-            value: info['name'] ?? '-',
-          ),
-          AppDialogInfoRow(
-            label: 'Telepon',
-            value: info['telephone'] ?? '-',
-          ),
-          AppDialogInfoRow(
-            label: 'Status Koneksi',
-            value: info['status'] ?? '-',
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showMedicationDetailModal(
     BuildContext context,
     Map<String, dynamic> sched,
@@ -995,5 +969,13 @@ class _HomeViewState extends State<HomeView> with RouteAware {
         },
       ),
     );
+  }
+
+  Future<void> _launchPhone(String? phone) async {
+    if (phone == null || phone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 }
