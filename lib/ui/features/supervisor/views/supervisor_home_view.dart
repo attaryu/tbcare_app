@@ -487,7 +487,7 @@ void _showVerifikasiDetailDialog(
           child: photoUrl != null
               ? Image.network(
                   photoUrl,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   loadingBuilder: (_, child, progress) => progress == null
                       ? child
                       : const Center(child: CircularProgressIndicator(color: AppColor.primary)),
@@ -562,7 +562,7 @@ void _showAmanDetailDialog(
           child: photoUrl != null
               ? Image.network(
                   photoUrl,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   loadingBuilder: (_, child, progress) => progress == null
                       ? child
                       : const Center(child: CircularProgressIndicator(color: AppColor.primary)),
