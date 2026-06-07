@@ -7,52 +7,26 @@ class SymptomRepository {
   SymptomRepository(this._supabase);
 
   Future<List<SymptomLog>> getSymptomLogs(int treatmentPeriodId) async {
-    var response = await _supabase.client
+    final response = await _supabase.client
         .from('symptom_logs')
         .select()
         .eq('treatment_period_id', treatmentPeriodId)
         .order('created_at', ascending: false);
 
-    if (response.isEmpty) {
-      final note =
-          "Lorem ipsum elementum malesuada feugiat tempus rhoncus sit habitant elit justo lectus non in arcu fringilla porta malesuada amet mus ultrices leo urna elementum.";
-      final now = DateTime.now();
+    return (response as List).map((json) => SymptomLog.fromJson(json)).toList();
+  }
 
-      final logsToInsert = [
-        {
-          'treatment_period_id': treatmentPeriodId,
-          'level': 'mild',
-          'note': note,
-          'created_at': DateTime(now.year, now.month, 20, 13, 20).toIso8601String(),
-        },
-        {
-          'treatment_period_id': treatmentPeriodId,
-          'level': 'severe',
-          'note': note,
-          'created_at': DateTime(now.year, now.month, 16, 20, 20).toIso8601String(),
-        },
-        {
-          'treatment_period_id': treatmentPeriodId,
-          'level': 'normal',
-          'note': note,
-          'created_at': DateTime(now.year, now.month, 14, 4, 20).toIso8601String(),
-        },
-        {
-          'treatment_period_id': treatmentPeriodId,
-          'level': 'mild',
-          'note': note,
-          'created_at': DateTime(now.year, now.month, 12, 18, 20).toIso8601String(),
-        },
-      ];
+  Future<List<SymptomLog>> getSymptomLogsByDate(int treatmentPeriodId, DateTime date) async {
+    final dateStr = date.toIso8601String().split('T')[0];
+    final nextDay = date.add(const Duration(days: 1)).toIso8601String().split('T')[0];
 
-      await _supabase.client.from('symptom_logs').insert(logsToInsert);
-
-      response = await _supabase.client
-          .from('symptom_logs')
-          .select()
-          .eq('treatment_period_id', treatmentPeriodId)
-          .order('created_at', ascending: false);
-    }
+    final response = await _supabase.client
+        .from('symptom_logs')
+        .select()
+        .eq('treatment_period_id', treatmentPeriodId)
+        .gte('created_at', '${dateStr}T00:00:00')
+        .lt('created_at', '${nextDay}T00:00:00')
+        .order('created_at', ascending: false);
 
     return (response as List).map((json) => SymptomLog.fromJson(json)).toList();
   }

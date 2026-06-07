@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../view_models/auth_view_model.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
+import '../../../../core/widgets/app_text_field.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -19,7 +22,8 @@ class MedicationScheduleItem {
   MedicationScheduleItem(this.medName, this.scheduleTime);
 }
 
-class _RegisterViewState extends State<RegisterView> with SingleTickerProviderStateMixin {
+class _RegisterViewState extends State<RegisterView>
+    with SingleTickerProviderStateMixin {
   int _currentStep = 1;
   String _selectedRole = 'pasien'; // default
 
@@ -36,17 +40,12 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
   // Step 3 Controllers
   final _treatmentNameController = TextEditingController();
   DateTime _treatmentStartDate = DateTime.now();
-  final _treatmentDurationController = TextEditingController(text: '6');
+  final _treatmentDurationController = TextEditingController();
   String _treatmentDurationType = 'month';
 
   // Step 4 Controllers
-  final List<MedicationScheduleItem> _medicationSchedules = [
-    MedicationScheduleItem('Obat TBC - Isoniazid', const TimeOfDay(hour: 8, minute: 45)),
-    MedicationScheduleItem('Obat TBC - Rifampicin', const TimeOfDay(hour: 12, minute: 10)),
-  ];
+  final List<MedicationScheduleItem> _medicationSchedules = [];
 
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   String? _validationError;
 
   late AnimationController _fadeController;
@@ -82,16 +81,31 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
 
   String _formatDateIndo(DateTime date) {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   DateTime get _predictionEndDate {
-    final int duration = int.tryParse(_treatmentDurationController.text.trim()) ?? 6;
+    final int duration =
+        int.tryParse(_treatmentDurationController.text.trim()) ?? 6;
     if (_treatmentDurationType == 'month') {
-      return DateTime(_treatmentStartDate.year, _treatmentStartDate.month + duration, _treatmentStartDate.day);
+      return DateTime(
+        _treatmentStartDate.year,
+        _treatmentStartDate.month + duration,
+        _treatmentStartDate.day,
+      );
     } else {
       return _treatmentStartDate.add(Duration(days: duration));
     }
@@ -214,15 +228,13 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
     final supervisionCode = _supervisionCodeController.text.trim();
 
     final treatmentName = _treatmentNameController.text.trim();
-    final duration = int.tryParse(_treatmentDurationController.text.trim()) ?? 6;
+    final duration =
+        int.tryParse(_treatmentDurationController.text.trim()) ?? 6;
 
     final schedules = _medicationSchedules.map((item) {
       final hour = item.scheduleTime.hour.toString().padLeft(2, '0');
       final minute = item.scheduleTime.minute.toString().padLeft(2, '0');
-      return {
-        'med_name': item.medName,
-        'schedule_time': '$hour:$minute:00',
-      };
+      return {'med_name': item.medName, 'schedule_time': '$hour:$minute:00'};
     }).toList();
 
     FocusScope.of(context).unfocus();
@@ -236,11 +248,15 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
         password,
         _selectedRole,
         supervisionCode: supervisionCode.isNotEmpty ? supervisionCode : null,
-        treatmentName: _selectedRole == 'pasien' ? (treatmentName.isNotEmpty ? treatmentName : 'Periode Pengobatan') : null,
+        treatmentName: _selectedRole == 'pasien'
+            ? (treatmentName.isNotEmpty ? treatmentName : 'Periode Pengobatan')
+            : null,
         startDate: _selectedRole == 'pasien' ? _treatmentStartDate : null,
         duration: _selectedRole == 'pasien' ? duration : null,
         durationType: _selectedRole == 'pasien' ? _treatmentDurationType : null,
-        predictionEndDate: _selectedRole == 'pasien' ? _predictionEndDate : null,
+        predictionEndDate: _selectedRole == 'pasien'
+            ? _predictionEndDate
+            : null,
         medicationSchedules: _selectedRole == 'pasien' ? schedules : null,
       );
       if (mounted && authViewModel.isAuthenticated) {
@@ -257,190 +273,128 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
     }
   }
 
-  void _showAddScheduleDialog() {
-    final nameCtrl = TextEditingController();
-    TimeOfDay selectedTime = const TimeOfDay(hour: 8, minute: 0);
+  void _showScheduleDialog({int? editIndex}) {
+    final isEdit = editIndex != null;
+    final item = isEdit ? _medicationSchedules[editIndex] : null;
+    final nameCtrl = TextEditingController(text: item?.medName);
+    TimeOfDay selectedTime =
+        item?.scheduleTime ?? const TimeOfDay(hour: 8, minute: 0);
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Tambah Jadwal Obat', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: AppColor.darkGray)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildLabel('Nama Obat'),
-              TextFormField(
-                controller: nameCtrl,
-                textCapitalization: TextCapitalization.words,
-                style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-                decoration: _buildInputDecoration('Misal: Isoniazid'),
+    AppDialog.custom(
+      context,
+      barrierDismissible: true,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setModalState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              isEdit ? 'Edit Jadwal Obat' : 'Tambah Jadwal Obat',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 20,
+                color: AppColor.darkGray,
               ),
-              const SizedBox(height: 20),
-              _buildLabel('Waktu Minum'),
-              GestureDetector(
-                onTap: () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: selectedTime,
-                    builder: (context, child) => Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: AppColor.primary,
-                          onPrimary: AppColor.white,
-                          onSurface: AppColor.darkGray,
-                        ),
-                      ),
-                      child: child!,
-                    ),
-                  );
-                  if (time != null) {
-                    setModalState(() => selectedTime = time);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColor.lightGray.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColor.neutralGray.withOpacity(0.25)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} WIB',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColor.darkGray),
-                      ),
-                      const Icon(Icons.access_time, color: AppColor.primary, size: 20),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray, fontSize: 15, fontWeight: FontWeight.w600)),
             ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameCtrl.text.trim();
-                if (name.isNotEmpty) {
-                  setState(() {
-                    _medicationSchedules.add(MedicationScheduleItem(name, selectedTime));
-                  });
-                  HapticFeedback.selectionClick();
-                  Navigator.pop(context);
+            const SizedBox(height: 16),
+            const Divider(height: 1, thickness: 1.2),
+            const SizedBox(height: 20),
+            _buildLabel('Nama Obat'),
+            AppTextField(
+              controller: nameCtrl,
+              textCapitalization: TextCapitalization.words,
+              hint: 'Misal: Isoniazid',
+            ),
+            const SizedBox(height: 20),
+            _buildLabel('Waktu Minum'),
+            GestureDetector(
+              onTap: () async {
+                final time = await showTimePicker(
+                  context: context,
+                  initialTime: selectedTime,
+                  builder: (context, child) => Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: AppColor.primary,
+                        onPrimary: AppColor.white,
+                        onSurface: AppColor.darkGray,
+                      ),
+                    ),
+                    child: child!,
+                  ),
+                );
+                if (time != null) {
+                  setModalState(() => selectedTime = time);
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                elevation: 0,
-              ),
-              child: const Text('Simpan', style: TextStyle(color: AppColor.white, fontWeight: FontWeight.w700)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showEditScheduleDialog(int index) {
-    final item = _medicationSchedules[index];
-    final nameCtrl = TextEditingController(text: item.medName);
-    TimeOfDay selectedTime = item.scheduleTime;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Edit Jadwal Obat', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: AppColor.darkGray)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildLabel('Nama Obat'),
-              TextFormField(
-                controller: nameCtrl,
-                textCapitalization: TextCapitalization.words,
-                style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-                decoration: _buildInputDecoration('Misal: Isoniazid'),
-              ),
-              const SizedBox(height: 20),
-              _buildLabel('Waktu Minum'),
-              GestureDetector(
-                onTap: () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: selectedTime,
-                    builder: (context, child) => Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: AppColor.primary,
-                          onPrimary: AppColor.white,
-                          onSurface: AppColor.darkGray,
-                        ),
-                      ),
-                      child: child!,
-                    ),
-                  );
-                  if (time != null) {
-                    setModalState(() => selectedTime = time);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColor.lightGray.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColor.neutralGray.withOpacity(0.25)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} WIB',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColor.darkGray),
-                      ),
-                      const Icon(Icons.access_time, color: AppColor.primary, size: 20),
-                    ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColor.lightGray.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColor.neutralGray.withOpacity(0.25),
                   ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} WIB',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColor.darkGray,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.access_time,
+                      color: AppColor.primary,
+                      size: 20,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray, fontSize: 15, fontWeight: FontWeight.w600)),
             ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameCtrl.text.trim();
-                if (name.isNotEmpty) {
-                  setState(() {
-                    _medicationSchedules[index] = MedicationScheduleItem(name, selectedTime);
-                  });
-                  HapticFeedback.selectionClick();
-                  Navigator.pop(context);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                elevation: 0,
-              ),
-              child: const Text('Simpan', style: TextStyle(color: AppColor.white, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Batal',
+                    variant: AppButtonVariant.outline,
+                    height: 48,
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton(
+                    text: 'Simpan',
+                    height: 48,
+                    onPressed: () {
+                      final name = nameCtrl.text.trim();
+                      if (name.isNotEmpty) {
+                        setState(() {
+                          if (isEdit) {
+                            _medicationSchedules[editIndex] =
+                                MedicationScheduleItem(name, selectedTime);
+                          } else {
+                            _medicationSchedules.add(
+                              MedicationScheduleItem(name, selectedTime),
+                            );
+                          }
+                        });
+                        HapticFeedback.selectionClick();
+                        Navigator.pop(dialogContext);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -462,29 +416,6 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
     );
   }
 
-  InputDecoration _buildInputDecoration(String hint, {Widget? suffixIcon}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        color: AppColor.neutralGray.withOpacity(0.6),
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-      ),
-      filled: true,
-      fillColor: AppColor.lightGray.withOpacity(0.4),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColor.neutralGray.withOpacity(0.25)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColor.primary, width: 2),
-      ),
-      suffixIcon: suffixIcon,
-    );
-  }
-
   Widget _buildRoleCard({
     required String title,
     required String subtitle,
@@ -502,7 +433,9 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
         decoration: BoxDecoration(
-          color: isSelected ? AppColor.primary : AppColor.primaryLight.withOpacity(0.4),
+          color: isSelected
+              ? AppColor.primary
+              : AppColor.primaryLight.withOpacity(0.4),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? AppColor.primary : AppColor.primary,
@@ -524,7 +457,9 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isSelected ? AppColor.white.withOpacity(0.2) : AppColor.white,
+                color: isSelected
+                    ? AppColor.white.withOpacity(0.2)
+                    : AppColor.white,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -552,7 +487,9 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                     style: TextStyle(
                       fontSize: 13,
                       height: 1.35,
-                      color: isSelected ? AppColor.white.withOpacity(0.9) : AppColor.primary.withOpacity(0.85),
+                      color: isSelected
+                          ? AppColor.white.withOpacity(0.9)
+                          : AppColor.primary.withOpacity(0.85),
                     ),
                   ),
                 ],
@@ -589,98 +526,53 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
         const SizedBox(height: 36),
 
         // Input Nama Lengkap
-        _buildLabel('Nama Lengkap'),
-        TextFormField(
+        AppTextField(
+          label: 'Nama Lengkap',
+          hint: 'Masukkan nama lengkap Anda',
           controller: _nameController,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan nama lengkap Anda'),
         ),
         const SizedBox(height: 20),
 
         // Input Email
-        _buildLabel('Email'),
-        TextFormField(
+        AppTextField(
+          label: 'Email',
+          hint: 'Masukkan email aktif',
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan email aktif'),
         ),
         const SizedBox(height: 20),
 
         // Input Nomor Telepon
-        _buildLabel('Nomor Telepon'),
-        TextFormField(
+        AppTextField(
+          label: 'Nomor Telepon',
+          hint: 'Masukkan nomor telepon aktif',
           controller: _phoneController,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan nomor telepon aktif'),
         ),
         const SizedBox(height: 20),
 
         // Input Password
-        _buildLabel('Password'),
-        TextFormField(
+        AppTextField(
+          label: 'Password',
+          hint: 'Buat password (minimal 8 karakter)',
           controller: _passwordController,
-          obscureText: _obscurePassword,
+          isPassword: true,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration(
-            'Buat password (minimal 8 karakter)',
-            suffixIcon: IconButton(
-              splashRadius: 24,
-              icon: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                child: Icon(
-                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  key: ValueKey(_obscurePassword),
-                  color: AppColor.neutralGray,
-                ),
-              ),
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-            ),
-          ),
         ),
         const SizedBox(height: 20),
 
         // Input Konfirmasi Password
-        _buildLabel('Konfirmasi Password'),
-        TextFormField(
+        AppTextField(
+          label: 'Konfirmasi Password',
+          hint: 'Ketik ulang password Anda',
           controller: _confirmPasswordController,
-          obscureText: _obscureConfirmPassword,
+          isPassword: true,
           textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => _handleStep1Next(),
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration(
-            'Ketik ulang password Anda',
-            suffixIcon: IconButton(
-              splashRadius: 24,
-              icon: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                child: Icon(
-                  _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  key: ValueKey(_obscureConfirmPassword),
-                  color: AppColor.neutralGray,
-                ),
-              ),
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _obscureConfirmPassword = !_obscureConfirmPassword;
-                });
-              },
-            ),
-          ),
+          onSubmitted: (_) => _handleStep1Next(),
         ),
         const SizedBox(height: 32),
       ],
@@ -737,24 +629,40 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
           child: _selectedRole == 'pengawas'
               ? Container(
                   key: const ValueKey('pengawas_info'),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColor.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColor.neutralGray.withOpacity(0.3)),
+                    border: Border.all(
+                      color: AppColor.neutralGray.withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(color: AppColor.primary, shape: BoxShape.circle),
-                        child: const Icon(Icons.info_outline, color: AppColor.white, size: 20),
+                        decoration: const BoxDecoration(
+                          color: AppColor.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.info_outline,
+                          color: AppColor.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       const Expanded(
                         child: Text(
                           'Setelah pendaftaran berhasil, Anda akan mendapatkan Kode Pengawas unik untuk dibagikan kepada pasien yang Anda pantau.',
-                          style: TextStyle(fontSize: 13, color: AppColor.darkGray, height: 1.4),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColor.darkGray,
+                            height: 1.4,
+                          ),
                         ),
                       ),
                     ],
@@ -764,26 +672,20 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                   key: const ValueKey('pasien_input'),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Kode Pengawas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColor.darkGray)),
-                    const SizedBox(height: 8),
-                    TextFormField(
+                    AppTextField(
+                      label: 'Kode Pengawas',
+                      hint: 'Masukkan kode unik dari pengawas Anda',
                       controller: _supervisionCodeController,
                       textCapitalization: TextCapitalization.characters,
-                      style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-                      decoration: InputDecoration(
-                        hintText: 'Masukkan kode unik dari pengawas Anda',
-                        hintStyle: TextStyle(color: AppColor.neutralGray.withOpacity(0.6), fontSize: 14),
-                        filled: true,
-                        fillColor: AppColor.lightGray.withOpacity(0.4),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColor.neutralGray.withOpacity(0.25))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColor.primary, width: 2)),
-                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'Jika Anda belum memiliki kode, bagian ini bisa dilewati dan diisi nanti.',
-                      style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColor.neutralGray),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: AppColor.neutralGray,
+                      ),
                     ),
                   ],
                 ),
@@ -799,23 +701,31 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
       children: [
         const Text(
           'Buat Periode Penyembuhan',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColor.darkGray, letterSpacing: -0.5),
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: AppColor.darkGray,
+            letterSpacing: -0.5,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
           'Periode penyembuhan TBC penting untuk dilacak demi kesehatan Anda',
-          style: TextStyle(fontSize: 14, color: AppColor.neutralGray, height: 1.45),
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColor.neutralGray,
+            height: 1.45,
+          ),
         ),
         const SizedBox(height: 36),
 
         // Input Judul
-        _buildLabel('Judul'),
-        TextFormField(
+        AppTextField(
+          label: 'Judul',
+          hint: 'Masukkan judul periode',
           controller: _treatmentNameController,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
-          style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-          decoration: _buildInputDecoration('Masukkan judul periode'),
         ),
         const SizedBox(height: 20),
 
@@ -860,9 +770,17 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
               children: [
                 Text(
                   _formatDateIndo(_treatmentStartDate),
-                  style: const TextStyle(fontSize: 15, color: AppColor.darkGray, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppColor.darkGray,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                Icon(Icons.calendar_today_outlined, size: 20, color: AppColor.neutralGray.withOpacity(0.8)),
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 20,
+                  color: AppColor.neutralGray.withOpacity(0.8),
+                ),
               ],
             ),
           ),
@@ -875,33 +793,58 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
           children: [
             Expanded(
               flex: 3,
-              child: TextFormField(
+              child: AppTextField(
                 controller: _treatmentDurationController,
+                hint: 'Masukkan durasi pengobatan',
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
                 onChanged: (_) => setState(() {}),
-                decoration: _buildInputDecoration('Masukkan durasi pengobatan'),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               flex: 2,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColor.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColor.neutralGray.withOpacity(0.5)),
+                  border: Border.all(
+                    color: AppColor.neutralGray.withOpacity(0.5),
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _treatmentDurationType,
                     isExpanded: true,
-                    icon: Icon(Icons.keyboard_arrow_down, color: AppColor.neutralGray.withOpacity(0.8)),
+                    icon: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppColor.neutralGray.withOpacity(0.8),
+                    ),
                     items: const [
-                      DropdownMenuItem(value: 'month', child: Text('Bulan', style: TextStyle(fontSize: 15, color: AppColor.darkGray))),
-                      DropdownMenuItem(value: 'day', child: Text('Hari', style: TextStyle(fontSize: 15, color: AppColor.darkGray))),
+                      DropdownMenuItem(
+                        value: 'month',
+                        child: Text(
+                          'Bulan',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: AppColor.darkGray,
+                          ),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'day',
+                        child: Text(
+                          'Hari',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: AppColor.darkGray,
+                          ),
+                        ),
+                      ),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -928,7 +871,11 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
           ),
           child: Text(
             _formatDateIndo(_predictionEndDate),
-            style: TextStyle(fontSize: 15, color: AppColor.darkGray.withOpacity(0.9), fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 15,
+              color: AppColor.darkGray.withOpacity(0.9),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         const SizedBox(height: 32),
@@ -942,29 +889,28 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
       children: [
         const Text(
           'Buat Jadwal Minum Obat',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColor.darkGray, letterSpacing: -0.5),
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: AppColor.darkGray,
+            letterSpacing: -0.5,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
           'Jadwal minum obat sangat penting bagi keberlangsungan pengobatan anda',
-          style: TextStyle(fontSize: 14, color: AppColor.neutralGray, height: 1.45),
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColor.neutralGray,
+            height: 1.45,
+          ),
         ),
         const SizedBox(height: 36),
 
         // Tombol Tambah Jadwal
-        ElevatedButton(
-          onPressed: _showAddScheduleDialog,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColor.primary,
-            foregroundColor: AppColor.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: const Text(
-            'Tambah Jadwal',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
+        AppButton(
+          text: 'Tambah Jadwal',
+          onPressed: () => _showScheduleDialog(),
         ),
         const SizedBox(height: 28),
 
@@ -975,7 +921,11 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
             child: Center(
               child: Text(
                 'Belum ada jadwal obat yang ditambahkan.',
-                style: TextStyle(color: AppColor.neutralGray.withOpacity(0.8), fontSize: 15, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  color: AppColor.neutralGray.withOpacity(0.8),
+                  fontSize: 15,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           )
@@ -987,39 +937,81 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
             itemBuilder: (context, index) {
               final item = _medicationSchedules[index];
               final hour = item.scheduleTime.hour.toString().padLeft(2, '0');
-              final minute = item.scheduleTime.minute.toString().padLeft(2, '0');
+              final minute = item.scheduleTime.minute.toString().padLeft(
+                2,
+                '0',
+              );
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
                 decoration: BoxDecoration(
                   color: AppColor.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColor.neutralGray.withOpacity(0.15)),
+                  border: Border.all(
+                    color: AppColor.neutralGray.withOpacity(0.15),
+                  ),
                   boxShadow: [
-                    BoxShadow(color: AppColor.darkGray.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                    BoxShadow(
+                      color: AppColor.darkGray.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(item.medName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColor.darkGray)),
+                      child: Text(
+                        item.medName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColor.darkGray,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
-                    Icon(Icons.access_time_outlined, size: 18, color: AppColor.darkGray.withOpacity(0.7)),
+                    Icon(
+                      Icons.access_time_outlined,
+                      size: 18,
+                      color: AppColor.darkGray.withOpacity(0.7),
+                    ),
                     const SizedBox(width: 6),
-                    Text('$hour:$minute WIB', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColor.darkGray)),
+                    Text(
+                      '$hour:$minute WIB',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColor.darkGray,
+                      ),
+                    ),
                     const SizedBox(width: 16),
                     PopupMenuButton<String>(
                       icon: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: AppColor.primary, borderRadius: BorderRadius.circular(6)),
-                        child: const Icon(Icons.more_horiz, color: AppColor.white, size: 20),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColor.primary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(
+                          Icons.more_horiz,
+                          color: AppColor.white,
+                          size: 20,
+                        ),
                       ),
                       offset: const Offset(0, 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       onSelected: (action) {
                         if (action == 'edit') {
-                          _showEditScheduleDialog(index);
+                          _showScheduleDialog(editIndex: index);
                         } else if (action == 'delete') {
                           setState(() {
                             _medicationSchedules.removeAt(index);
@@ -1032,9 +1024,19 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                           value: 'edit',
                           child: Row(
                             children: [
-                              Icon(Icons.edit_outlined, size: 18, color: AppColor.darkGray),
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 18,
+                                color: AppColor.darkGray,
+                              ),
                               SizedBox(width: 12),
-                              Text('Edit Waktu', style: TextStyle(color: AppColor.darkGray, fontSize: 14)),
+                              Text(
+                                'Edit Waktu',
+                                style: TextStyle(
+                                  color: AppColor.darkGray,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1042,9 +1044,19 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(Icons.delete_outline, size: 18, color: AppColor.error),
+                              Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: AppColor.error,
+                              ),
                               SizedBox(width: 12),
-                              Text('Hapus Jadwal', style: TextStyle(color: AppColor.error, fontSize: 14)),
+                              Text(
+                                'Hapus Jadwal',
+                                style: TextStyle(
+                                  color: AppColor.error,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1065,7 +1077,11 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
     final authViewModel = context.watch<AuthViewModel>();
     final errorMessage = _validationError ?? authViewModel.error;
     final mediaQuery = MediaQuery.of(context);
-    final totalMinHeight = mediaQuery.size.height - mediaQuery.padding.top - mediaQuery.padding.bottom - 72;
+    final totalMinHeight =
+        mediaQuery.size.height -
+        mediaQuery.padding.top -
+        mediaQuery.padding.bottom -
+        72;
 
     Widget formContent;
     if (_currentStep == 1) {
@@ -1085,7 +1101,10 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
           opacity: _fadeAnimation,
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 36.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28.0,
+              vertical: 36.0,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 minHeight: totalMinHeight > 0 ? totalMinHeight : 600,
@@ -1114,15 +1133,24 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                             ? Padding(
                                 padding: const EdgeInsets.only(bottom: 20.0),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColor.error.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColor.error.withOpacity(0.3)),
+                                    border: Border.all(
+                                      color: AppColor.error.withOpacity(0.3),
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.error_outline, color: AppColor.error, size: 20),
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: AppColor.error,
+                                        size: 20,
+                                      ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -1143,31 +1171,9 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
 
                       // Tombol Dinamis
                       if (_currentStep == 1) ...[
-                        Container(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColor.primary.withOpacity(0.25),
-                                blurRadius: 16,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _handleStep1Next,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColor.primary,
-                              foregroundColor: AppColor.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text(
-                              'Selanjutnya',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.3),
-                            ),
-                          ),
+                        AppButton(
+                          text: 'Selanjutnya',
+                          onPressed: _handleStep1Next,
                         ),
                         const SizedBox(height: 28),
                         Row(
@@ -1175,7 +1181,10 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                           children: [
                             const Text(
                               'Sudah punya akun? ',
-                              style: TextStyle(color: AppColor.darkGray, fontSize: 14),
+                              style: TextStyle(
+                                color: AppColor.darkGray,
+                                fontSize: 14,
+                              ),
                             ),
                             GestureDetector(
                               onTap: () {
@@ -1184,7 +1193,11 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                               },
                               child: const Text(
                                 'Masuk di sini',
-                                style: TextStyle(color: AppColor.primary, fontWeight: FontWeight.bold, fontSize: 14),
+                                style: TextStyle(
+                                  color: AppColor.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ],
@@ -1193,52 +1206,19 @@ class _RegisterViewState extends State<RegisterView> with SingleTickerProviderSt
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton(
-                                onPressed: authViewModel.isLoading ? null : _handlePrevious,
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  side: BorderSide(color: AppColor.neutralGray.withOpacity(0.5), width: 1.5),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                child: const Text(
-                                  'Sebelumnya',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColor.darkGray),
-                                ),
+                              child: AppButton(
+                                text: 'Sebelumnya',
+                                variant: AppButtonVariant.outline,
+                                isDisabled: authViewModel.isLoading,
+                                onPressed: _handlePrevious,
                               ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColor.primary.withOpacity(0.25),
-                                      blurRadius: 16,
-                                      spreadRadius: 2,
-                                      offset: const Offset(0, 6),
-                                    ),
-                                  ],
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: authViewModel.isLoading ? null : _handleNextOrSubmit,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColor.primary,
-                                    foregroundColor: AppColor.white,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
-                                  child: authViewModel.isLoading
-                                      ? const SizedBox(
-                                          height: 22,
-                                          width: 22,
-                                          child: CircularProgressIndicator(color: AppColor.white, strokeWidth: 2.5),
-                                        )
-                                      : const Text(
-                                          'Selanjutnya',
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.3),
-                                        ),
-                                ),
+                              child: AppButton(
+                                text: 'Selanjutnya',
+                                isLoading: authViewModel.isLoading,
+                                onPressed: _handleNextOrSubmit,
                               ),
                             ),
                           ],

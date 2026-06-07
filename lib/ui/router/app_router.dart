@@ -10,6 +10,7 @@ import '../../data/repositories/home_repository.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/repositories/symptom_repository.dart';
 import '../../data/repositories/treatment_repository.dart';
+import '../../data/repositories/medication_schedule_repository.dart';
 import '../features/auth/view_models/auth_view_model.dart';
 import '../features/auth/views/login_view.dart';
 import '../features/auth/views/register_view.dart';
@@ -25,14 +26,29 @@ import '../features/symptoms/views/symptom_list_view.dart';
 import '../features/treatment/view_models/treatment_view_model.dart';
 import '../features/treatment/views/treatment_form_view.dart';
 import '../features/treatment/views/treatment_view.dart';
+import '../features/medication_schedule/view_models/medication_schedule_view_model.dart';
+import '../features/medication_schedule/views/medication_schedule_view.dart';
+import '../../data/services/supabase_service.dart';
+import '../features/home/view_models/confirm_medication_view_model.dart';
+import '../features/home/views/confirm_medication_view.dart';
+import '../features/supervisor/views/supervisor_home_view.dart';
+import '../features/supervisor/views/supervisor_patient_list_view.dart';
+import '../features/supervisor/views/supervisor_patient_detail_view.dart';
+import '../../data/repositories/supervisor_repository.dart';
+import '../../data/repositories/notification_repository.dart';
+import '../features/supervisor/view_models/supervisor_view_model.dart';
+import '../features/notification/view_models/notification_view_model.dart';
+import '../features/notification/views/notification_view.dart';
 
 class AppRouter {
-  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+  static final rootNavigatorKey = GlobalKey<NavigatorState>();
+  static final routeObserver = RouteObserver<ModalRoute<void>>();
 
   static GoRouter config(AuthViewModel authViewModel) {
     return GoRouter(
       initialLocation: '/',
-      navigatorKey: _rootNavigatorKey,
+      navigatorKey: rootNavigatorKey,
+      observers: [routeObserver],
       refreshListenable: authViewModel,
       redirect: (context, state) {
         final isAuthenticated = authViewModel.isAuthenticated;
@@ -49,9 +65,41 @@ class AppRouter {
       },
       routes: [
         GoRoute(path: '/login', builder: (context, state) => const LoginView()),
-        GoRoute(path: '/register', builder: (context, state) => const RegisterView()),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const RegisterView(),
+        ),
+        GoRoute(
+          path: '/notifications',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) {
+            final userId = authViewModel.currentUser?.id;
+            if (userId == null) {
+              return const Scaffold(
+                body: Center(child: Text('Sesi berakhir')),
+              );
+            }
+            return ChangeNotifierProvider(
+              create: (_) => NotificationViewModel(
+                repository: context.read<NotificationRepository>(),
+                userId: userId,
+              ),
+              child: const NotificationView(),
+            );
+          },
+        ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
+            final userId = authViewModel.currentUser?.id;
+            if (userId != null) {
+              return ChangeNotifierProvider(
+                create: (_) => NotificationViewModel(
+                  repository: context.read<NotificationRepository>(),
+                  userId: userId,
+                ),
+                child: MainShell(navigationShell: navigationShell),
+              );
+            }
             return MainShell(navigationShell: navigationShell);
           },
           branches: [
@@ -66,14 +114,50 @@ class AppRouter {
                         body: Center(child: Text('Sesi berakhir')),
                       );
                     }
+                    if (authViewModel.roleSlug == 'pengawas') {
+                      return ChangeNotifierProvider(
+                        create: (_) => SupervisorViewModel(
+                          repository: context.read<SupervisorRepository>(),
+                          notificationRepository: context.read<NotificationRepository>(),
+                          supervisorId: userId,
+                        ),
+                        child: const SupervisorHomeView(),
+                      );
+                    }
                     return ChangeNotifierProvider(
                       create: (_) => HomeViewModel(
                         repository: context.read<HomeRepository>(),
+                        notificationRepository: context.read<NotificationRepository>(),
                         userId: userId,
                       ),
                       child: const HomeView(),
                     );
                   },
+                  routes: [
+                    GoRoute(
+                      path: 'confirm-medication',
+                      parentNavigatorKey: rootNavigatorKey,
+                      builder: (context, state) {
+                        final extras = state.extra as Map<String, dynamic>;
+                        final scheduleId = extras['scheduleId'] as int;
+                        final medName = extras['medName'] as String;
+                        final scheduleTime = extras['scheduleTime'] as String;
+                        final homeViewModel =
+                            extras['homeViewModel'] as HomeViewModel;
+
+                        return ChangeNotifierProvider(
+                          create: (_) => ConfirmMedicationViewModel(
+                            homeViewModel: homeViewModel,
+                            scheduleId: scheduleId,
+                            medName: medName,
+                            scheduleTime: scheduleTime,
+                            supabaseService: context.read<SupabaseService>(),
+                          ),
+                          child: const ConfirmMedicationView(),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -105,10 +189,11 @@ class AppRouter {
                   path: '/symptoms',
                   builder: (context, state) {
                     final userId = authViewModel.currentUser?.id;
-                    if (userId == null)
+                    if (userId == null) {
                       return const Scaffold(
                         body: Center(child: Text('Error: Sesi berakhir')),
                       );
+                    }
 
                     return FutureBuilder<int?>(
                       future: context
@@ -148,7 +233,7 @@ class AppRouter {
                   routes: [
                     GoRoute(
                       path: 'add',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final viewModel = state.extra as SymptomViewModel;
                         return SymptomFormView(viewModel: viewModel);
@@ -156,13 +241,60 @@ class AppRouter {
                     ),
                     GoRoute(
                       path: 'edit',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final extras = state.extra as Map<String, dynamic>;
                         final viewModel =
                             extras['viewModel'] as SymptomViewModel;
                         final log = extras['log'] as SymptomLog;
                         return SymptomFormView(viewModel: viewModel, log: log);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/patients',
+                  builder: (context, state) {
+                    final userId = authViewModel.currentUser?.id;
+                    if (userId == null) {
+                      return const Scaffold(
+                        body: Center(child: Text('Sesi berakhir')),
+                      );
+                    }
+                    return ChangeNotifierProvider(
+                      create: (_) => SupervisorViewModel(
+                        repository: context.read<SupervisorRepository>(),
+                        notificationRepository: context.read<NotificationRepository>(),
+                        supervisorId: userId,
+                      ),
+                      child: const SupervisorPatientListView(),
+                    );
+                  },
+                  routes: [
+                    GoRoute(
+                      path: 'detail',
+                      parentNavigatorKey: rootNavigatorKey,
+                      builder: (context, state) {
+                        final extras = state.extra as Map<String, dynamic>;
+                        final patientUserId = extras['patientUserId'] as int;
+
+                        return ChangeNotifierProvider(
+                          create: (_) => HistoryViewModel(
+                            repository: context.read<HistoryRepository>(),
+                            userId: patientUserId,
+                            symptomRepository: context.read<SymptomRepository>(),
+                          ),
+                          child: SupervisorPatientDetailView(
+                            patientName: extras['name'] as String,
+                            patientPhotoUrl: extras['photoUrl'] as String?,
+                            patientEmail: extras['email'] as String?,
+                            patientTelephone: extras['telephone'] as String?,
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -190,8 +322,31 @@ class AppRouter {
                   },
                   routes: [
                     GoRoute(
+                      path: 'medication-schedules',
+                      parentNavigatorKey: rootNavigatorKey,
+                      builder: (context, state) {
+                        final userId = authViewModel.currentUser?.id;
+                        if (userId == null) {
+                          return const Scaffold(
+                            body: Center(child: Text('Sesi berakhir')),
+                          );
+                        }
+                        return ChangeNotifierProvider(
+                          create: (_) => MedicationScheduleViewModel(
+                            repository: context
+                                .read<MedicationScheduleRepository>(),
+                            userId: userId,
+                          ),
+                          child: Consumer<MedicationScheduleViewModel>(
+                            builder: (context, viewModel, _) =>
+                                MedicationScheduleView(viewModel: viewModel),
+                          ),
+                        );
+                      },
+                    ),
+                    GoRoute(
                       path: 'treatment-periods',
-                      parentNavigatorKey: _rootNavigatorKey,
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final userId = authViewModel.currentUser?.id;
                         if (userId == null) {
@@ -210,7 +365,7 @@ class AppRouter {
                       routes: [
                         GoRoute(
                           path: 'add',
-                          parentNavigatorKey: _rootNavigatorKey,
+                          parentNavigatorKey: rootNavigatorKey,
                           builder: (context, state) {
                             final viewModel = state.extra as TreatmentViewModel;
                             return TreatmentFormView(viewModel: viewModel);
@@ -218,11 +373,13 @@ class AppRouter {
                         ),
                         GoRoute(
                           path: 'edit',
-                          parentNavigatorKey: _rootNavigatorKey,
+                          parentNavigatorKey: rootNavigatorKey,
                           builder: (context, state) {
                             final extras = state.extra as Map<String, dynamic>;
-                            final viewModel = extras['viewModel'] as TreatmentViewModel;
-                            final period = extras['period'] as TreatmentPeriodModel;
+                            final viewModel =
+                                extras['viewModel'] as TreatmentViewModel;
+                            final period =
+                                extras['period'] as TreatmentPeriodModel;
                             return TreatmentFormView(
                               viewModel: viewModel,
                               existingPeriod: period,

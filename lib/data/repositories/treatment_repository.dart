@@ -23,7 +23,7 @@ class TreatmentRepository {
           .select('id')
           .eq('treatment_period_id', treatmentPeriodId);
 
-      if (schedRes.isEmpty) return 92.5;
+      if (schedRes.isEmpty) return 0.0;
 
       final scheduleIds = (schedRes as List).map((e) => e['id'] as int).toList();
 
@@ -32,7 +32,7 @@ class TreatmentRepository {
           .select('status')
           .inFilter('schedule_id', scheduleIds);
 
-      if (complianceRes.isEmpty) return 92.5;
+      if (complianceRes.isEmpty) return 0.0;
 
       int taken = 0;
       for (var log in complianceRes) {
@@ -41,7 +41,7 @@ class TreatmentRepository {
 
       return (taken / complianceRes.length) * 100.0;
     } catch (_) {
-      return 92.5;
+      return 0.0;
     }
   }
 

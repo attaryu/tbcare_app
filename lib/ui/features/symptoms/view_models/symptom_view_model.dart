@@ -35,13 +35,13 @@ class SymptomViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> addLog(SymptomLevel level, String? note) async {
+  Future<void> addLog(SymptomLevel level, String? note, {DateTime? createdAt}) async {
     final log = SymptomLog(
       id: 0, // Database will generate
       treatmentPeriodId: treatmentPeriodId,
       level: level,
       note: note,
-      createdAt: DateTime.now(),
+      createdAt: createdAt ?? DateTime.now(),
     );
 
     try {

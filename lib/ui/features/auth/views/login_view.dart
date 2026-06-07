@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../view_models/auth_view_model.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -12,10 +14,10 @@ class LoginView extends StatefulWidget {
   State<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMixin {
+class _LoginViewState extends State<LoginView>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -46,17 +48,18 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
     HapticFeedback.lightImpact();
     FocusScope.of(context).unfocus();
     final authViewModel = context.read<AuthViewModel>();
-    authViewModel.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    authViewModel.login(_emailController.text.trim(), _passwordController.text);
   }
 
   @override
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
     final mediaQuery = MediaQuery.of(context);
-    final totalMinHeight = mediaQuery.size.height - mediaQuery.padding.top - mediaQuery.padding.bottom - 72;
+    final totalMinHeight =
+        mediaQuery.size.height -
+        mediaQuery.padding.top -
+        mediaQuery.padding.bottom -
+        72;
 
     return Scaffold(
       backgroundColor: AppColor.white,
@@ -65,7 +68,10 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
           opacity: _fadeAnimation,
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 36.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28.0,
+              vertical: 36.0,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 minHeight: totalMinHeight > 0 ? totalMinHeight : 500,
@@ -127,114 +133,25 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
                       const SizedBox(height: 48),
 
                       // Input Email
-                      const Text(
-                        'Email',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
+                      AppTextField(
+                        label: 'Email',
+                        hint: 'Masukkan email terdaftar',
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-                        decoration: InputDecoration(
-                          hintText: 'Masukkan email terdaftar',
-                          hintStyle: TextStyle(
-                            color: AppColor.neutralGray.withOpacity(0.6),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          filled: true,
-                          fillColor: AppColor.lightGray.withOpacity(0.4),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 16,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: AppColor.neutralGray.withOpacity(0.25),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColor.primary,
-                              width: 2,
-                            ),
-                          ),
-                        ),
+                        enabled: !authViewModel.isLoading,
                       ),
                       const SizedBox(height: 24),
 
                       // Input Password
-                      const Text(
-                        'Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
+                      AppTextField(
+                        label: 'Password',
+                        hint: 'Masukkan password',
                         controller: _passwordController,
-                        obscureText: _obscurePassword,
+                        isPassword: true,
                         textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _performLogin(),
-                        style: const TextStyle(fontSize: 15, color: AppColor.darkGray),
-                        decoration: InputDecoration(
-                          hintText: 'Masukkan password',
-                          hintStyle: TextStyle(
-                            color: AppColor.neutralGray.withOpacity(0.6),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          filled: true,
-                          fillColor: AppColor.lightGray.withOpacity(0.4),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 16,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: AppColor.neutralGray.withOpacity(0.25),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColor.primary,
-                              width: 2,
-                            ),
-                          ),
-                          suffixIcon: IconButton(
-                            splashRadius: 24,
-                            icon: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              transitionBuilder: (child, animation) =>
-                                  FadeTransition(opacity: animation, child: child),
-                              child: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                key: ValueKey(_obscurePassword),
-                                color: AppColor.neutralGray,
-                              ),
-                            ),
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                        ),
+                        onSubmitted: (_) => _performLogin(),
+                        enabled: !authViewModel.isLoading,
                       ),
                     ],
                   ),
@@ -285,49 +202,10 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
                               )
                             : const SizedBox.shrink(),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColor.primary.withOpacity(0.25),
-                              blurRadius: 16,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: authViewModel.isLoading ? null : _performLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColor.primary,
-                            foregroundColor: AppColor.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: authViewModel.isLoading
-                                ? const SizedBox(
-                                    height: 22,
-                                    width: 22,
-                                    child: CircularProgressIndicator(
-                                      color: AppColor.white,
-                                      strokeWidth: 2.5,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Masuk',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                          ),
-                        ),
+                      AppButton(
+                        text: 'Masuk',
+                        isLoading: authViewModel.isLoading,
+                        onPressed: _performLogin,
                       ),
                       const SizedBox(height: 28),
                       Row(

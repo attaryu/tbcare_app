@@ -2,6 +2,39 @@ import 'package:flutter/material.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/profile_repository.dart';
 
+enum ProfileMenuAction {
+  editProfile,
+  viewSupervisor,
+  addSupervisor,
+  treatmentPeriod,
+  medicationSchedule,
+  logout,
+}
+
+class ProfileMenuItem {
+  final String title;
+  final IconData icon;
+  final ProfileMenuAction action;
+  final bool isDestructive;
+
+  const ProfileMenuItem({
+    required this.title,
+    required this.icon,
+    required this.action,
+    this.isDestructive = false,
+  });
+}
+
+class ProfileMenuSection {
+  final String title;
+  final List<ProfileMenuItem> items;
+
+  const ProfileMenuSection({
+    required this.title,
+    required this.items,
+  });
+}
+
 class ProfileViewModel extends ChangeNotifier {
   final ProfileRepository _repository;
   final int _userId;
@@ -21,10 +54,10 @@ class ProfileViewModel extends ChangeNotifier {
   UserModel? _user;
   UserModel? get user => _user;
 
-  String _roleSlug = 'pasien';
+  String _roleSlug = '';
   String get roleSlug => _roleSlug;
 
-  String _roleName = 'Pasien';
+  String _roleName = '';
   String get roleName => _roleName;
 
   Map<String, dynamic>? _supervisorInfo;
@@ -38,6 +71,83 @@ class ProfileViewModel extends ChangeNotifier {
 
   String? _supervisorCode;
   String? get supervisorCode => _supervisorCode;
+
+  List<ProfileMenuSection> get menuSections {
+    final sections = <ProfileMenuSection>[];
+
+    // Akun Section
+    final accountItems = <ProfileMenuItem>[
+      const ProfileMenuItem(
+        title: 'Edit Profil',
+        icon: Icons.person_outline,
+        action: ProfileMenuAction.editProfile,
+      ),
+    ];
+
+    if (_roleSlug == 'pasien') {
+      if (_supervisorInfo != null) {
+        final status = _supervisorInfo!['status'] as String? ?? '';
+        if (status == 'approved') {
+          accountItems.add(const ProfileMenuItem(
+            title: 'Lihat Pengawas',
+            icon: Icons.people_outline,
+            action: ProfileMenuAction.viewSupervisor,
+          ));
+        } else {
+          accountItems.add(const ProfileMenuItem(
+            title: 'Permintaan Menunggu Persetujuan',
+            icon: Icons.hourglass_empty_rounded,
+            action: ProfileMenuAction.viewSupervisor,
+          ));
+        }
+      } else {
+        accountItems.add(const ProfileMenuItem(
+          title: 'Tambah Pengawas',
+          icon: Icons.shield_outlined,
+          action: ProfileMenuAction.addSupervisor,
+        ));
+      }
+    }
+
+    sections.add(ProfileMenuSection(
+      title: 'Akun',
+      items: accountItems,
+    ));
+
+    // Informasi Pengobatan Section
+    if (_roleSlug == 'pasien') {
+      sections.add(const ProfileMenuSection(
+        title: 'Informasi Pengobatan',
+        items: [
+          ProfileMenuItem(
+            title: 'Periode Pengobatan',
+            icon: Icons.calendar_today_outlined,
+            action: ProfileMenuAction.treatmentPeriod,
+          ),
+          ProfileMenuItem(
+            title: 'Jadwal Minum Obat Harian',
+            icon: Icons.alarm,
+            action: ProfileMenuAction.medicationSchedule,
+          ),
+        ],
+      ));
+    }
+
+    // Lainnya Section (Logout)
+    sections.add(const ProfileMenuSection(
+      title: 'Lainnya',
+      items: [
+        ProfileMenuItem(
+          title: 'Keluar Akun',
+          icon: Icons.logout_outlined,
+          action: ProfileMenuAction.logout,
+          isDestructive: true,
+        ),
+      ],
+    ));
+
+    return sections;
+  }
 
   Future<void> fetchProfile() async {
     _isLoading = true;

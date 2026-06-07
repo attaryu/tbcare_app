@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/symptom_card.dart';
 import '../../../../data/models/symptom_model.dart';
 import '../view_models/symptom_view_model.dart';
@@ -30,8 +32,10 @@ class _SymptomListViewState extends State<SymptomListView> {
 
   List<SymptomLog> get _filteredLogs {
     return widget.viewModel.logs.where((log) {
-      final matchesSearch = log.note?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? true;
-      final matchesFilter = _selectedFilter == null || log.level == _selectedFilter;
+      final matchesSearch =
+          log.note?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? true;
+      final matchesFilter =
+          _selectedFilter == null || log.level == _selectedFilter;
       return matchesSearch && matchesFilter;
     }).toList();
   }
@@ -85,12 +89,18 @@ class _SymptomListViewState extends State<SymptomListView> {
                                 ),
                               ),
                               child: TextField(
-                                onChanged: (value) => setState(() => _searchQuery = value),
+                                onChanged: (value) =>
+                                    setState(() => _searchQuery = value),
                                 decoration: const InputDecoration(
                                   hintText: 'Cari catatan gejala...',
-                                  prefixIcon: Icon(Icons.search, color: AppColor.neutralGray),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: AppColor.neutralGray,
+                                  ),
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                 ),
                               ),
                             ),
@@ -117,9 +127,14 @@ class _SymptomListViewState extends State<SymptomListView> {
                   ),
 
                   // Content List
-                  if (widget.viewModel.isLoading && widget.viewModel.logs.isEmpty)
+                  if (widget.viewModel.isLoading &&
+                      widget.viewModel.logs.isEmpty)
                     const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator(color: AppColor.primary)),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColor.primary,
+                        ),
+                      ),
                     )
                   else if (logs.isEmpty)
                     SliverFillRemaining(
@@ -145,17 +160,18 @@ class _SymptomListViewState extends State<SymptomListView> {
                     SliverPadding(
                       padding: const EdgeInsets.only(top: 16, bottom: 100),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final log = logs[index];
-                            return SymptomCard(
-                              log: log,
-                              onDelete: () => _showDeleteConfirm(log),
-                              onTap: () => _showSymptomDetailModal(context, log, widget.viewModel),
-                            );
-                          },
-                          childCount: logs.length,
-                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final log = logs[index];
+                          return SymptomCard(
+                            log: log,
+                            onDelete: () => _showDeleteConfirm(log),
+                            onTap: () => _showSymptomDetailModal(
+                              context,
+                              log,
+                              widget.viewModel,
+                            ),
+                          );
+                        }, childCount: logs.length),
                       ),
                     ),
                 ],
@@ -195,7 +211,9 @@ class _SymptomListViewState extends State<SymptomListView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: isSelected ? AppColor.primary : const Color(0xFFA0E4CB)),
+          side: BorderSide(
+            color: isSelected ? AppColor.primary : const Color(0xFFA0E4CB),
+          ),
         ),
         showCheckmark: false,
       ),
@@ -203,120 +221,156 @@ class _SymptomListViewState extends State<SymptomListView> {
   }
 
   void _showDeleteConfirm(SymptomLog log) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Catatan', style: TextStyle(fontWeight: FontWeight.bold, color: AppColor.darkGray)),
-        content: const Text('Apakah Anda yakin ingin menghapus catatan gejala ini?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray, fontWeight: FontWeight.bold)),
-          ),
-          TextButton(
-            onPressed: () {
-              widget.viewModel.deleteLog(log.id);
-              Navigator.pop(context);
-            },
-            child: const Text('Hapus', style: TextStyle(color: AppColor.error, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    AppDialog.confirm(
+      context,
+      title: 'Hapus Catatan',
+      message: 'Apakah Anda yakin ingin menghapus catatan gejala ini?',
+      confirmLabel: 'Hapus',
+      confirmColor: AppButtonColor.danger,
+      icon: Icons.delete_outline,
+      onConfirm: () {
+        widget.viewModel.deleteLog(log.id);
+      },
     );
   }
 
-  void _showSymptomDetailModal(BuildContext context, SymptomLog log, SymptomViewModel viewModel) {
+  void _showSymptomDetailModal(
+    BuildContext context,
+    SymptomLog log,
+    SymptomViewModel viewModel,
+  ) {
     Color levelColor = AppColor.success;
     if (log.level == SymptomLevel.mild) levelColor = const Color(0xFFF09C15);
     if (log.level == SymptomLevel.severe) levelColor = AppColor.error;
 
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: AppColor.white,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+    AppDialog.custom(
+      context,
+      barrierDismissible: true,
+      builder: (dialogContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Detail Riwayat Gejala', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColor.darkGray)),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColor.neutralGray),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+              const Text(
+                'Detail Riwayat Gejala',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.darkGray,
+                ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Text('Tingkat Gejala: ', style: TextStyle(fontSize: 14, color: AppColor.neutralGray)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(color: levelColor, borderRadius: BorderRadius.circular(20)),
-                    child: Text(log.level.displayName, style: const TextStyle(color: AppColor.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today_outlined, size: 16, color: AppColor.neutralGray),
-                  const SizedBox(width: 8),
-                  Text(DateFormat('dd MMMM yyyy, HH:mm WIB', 'id_ID').format(log.createdAt), style: const TextStyle(fontSize: 13, color: AppColor.darkGray)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Text('Catatan / Keluhan:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColor.darkGray)),
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppColor.lightGray, borderRadius: BorderRadius.circular(16)),
-                child: Text(log.note ?? 'Tidak ada deskripsi keluhan.', style: const TextStyle(fontSize: 14, color: AppColor.darkGray, height: 1.5)),
-              ),
-              const SizedBox(height: 28),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColor.error),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showDeleteConfirm(log);
-                      },
-                      child: const Text('Hapus', style: TextStyle(color: AppColor.error, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        context.push('/symptoms/edit', extra: {'viewModel': viewModel, 'log': log});
-                      },
-                      child: const Text('Edit Catatan', style: TextStyle(color: AppColor.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
+              IconButton(
+                icon: const Icon(Icons.close, color: AppColor.neutralGray),
+                onPressed: () => Navigator.pop(dialogContext),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Text(
+                'Tingkat Gejala: ',
+                style: TextStyle(fontSize: 14, color: AppColor.neutralGray),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: levelColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  log.level.displayName,
+                  style: const TextStyle(
+                    color: AppColor.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 16,
+                color: AppColor.neutralGray,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                DateFormat(
+                  'dd MMMM yyyy, HH:mm',
+                  'id_ID',
+                ).format(log.createdAt),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColor.darkGray,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Catatan / Keluhan:',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColor.darkGray,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColor.lightGray,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              log.note ?? 'Tidak ada deskripsi keluhan.',
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColor.darkGray,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  text: 'Hapus',
+                  variant: AppButtonVariant.outline,
+                  color: AppButtonColor.danger,
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _showDeleteConfirm(log);
+                  },
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: AppButton(
+                  text: 'Edit Catatan',
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    context.push(
+                      '/symptoms/edit',
+                      extra: {'viewModel': viewModel, 'log': log},
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -335,11 +389,12 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: AppColor.white,
-      child: child,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: AppColor.white, child: child);
   }
 
   @override

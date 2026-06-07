@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../data/models/symptom_model.dart';
 import '../view_models/symptom_view_model.dart';
 
@@ -9,11 +11,7 @@ class SymptomFormView extends StatefulWidget {
   final SymptomViewModel viewModel;
   final SymptomLog? log;
 
-  const SymptomFormView({
-    super.key,
-    required this.viewModel,
-    this.log,
-  });
+  const SymptomFormView({super.key, required this.viewModel, this.log});
 
   @override
   State<SymptomFormView> createState() => _SymptomFormViewState();
@@ -105,14 +103,18 @@ class _SymptomFormViewState extends State<SymptomFormView> {
     setState(() => _isSaving = true);
     try {
       if (widget.log == null) {
-        // Since ViewModel addLog currently uses DateTime.now(), 
-        // we might need to modify it or handle it here if we want custom date.
-        // But for this task, I'll stick to the UI logic.
-        await widget.viewModel.addLog(_selectedLevel, _noteController.text);
+        await widget.viewModel.addLog(
+          _selectedLevel,
+          _noteController.text,
+          createdAt: _selectedDate,
+        );
       } else {
-        final updatedLog = widget.log!.copyWith(
+        final updatedLog = SymptomLog(
+          id: widget.log!.id,
+          treatmentPeriodId: widget.log!.treatmentPeriodId,
           level: _selectedLevel,
           note: _noteController.text,
+          createdAt: _selectedDate,
           editedAt: DateTime.now(),
         );
         await widget.viewModel.updateLog(updatedLog);
@@ -120,9 +122,9 @@ class _SymptomFormViewState extends State<SymptomFormView> {
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -178,20 +180,29 @@ class _SymptomFormViewState extends State<SymptomFormView> {
             GestureDetector(
               onTap: _pickDateTime,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColor.neutralGray.withOpacity(0.5)),
+                  border: Border.all(
+                    color: AppColor.neutralGray.withOpacity(0.5),
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     Text(
-                      DateFormat('dd MMM yyyy, HH:mm').format(_selectedDate) + ' WIB',
+                      DateFormat('dd MMM yyyy, HH:mm').format(_selectedDate) +
+                          ' WIB',
                       style: const TextStyle(color: AppColor.darkGray),
                     ),
                     const Spacer(),
-                    const Icon(Icons.calendar_today_outlined, 
-                      color: AppColor.neutralGray, size: 20),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      color: AppColor.neutralGray,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -208,38 +219,29 @@ class _SymptomFormViewState extends State<SymptomFormView> {
             const SizedBox(height: 12),
             Row(
               children: [
-                _buildConditionOption(SymptomLevel.normal, Icons.sentiment_satisfied_alt),
+                _buildConditionOption(
+                  SymptomLevel.normal,
+                  Icons.sentiment_satisfied_alt,
+                ),
                 const SizedBox(width: 12),
-                _buildConditionOption(SymptomLevel.mild, Icons.sentiment_neutral),
+                _buildConditionOption(
+                  SymptomLevel.mild,
+                  Icons.sentiment_neutral,
+                ),
                 const SizedBox(width: 12),
-                _buildConditionOption(SymptomLevel.severe, Icons.sentiment_very_dissatisfied),
+                _buildConditionOption(
+                  SymptomLevel.severe,
+                  Icons.sentiment_very_dissatisfied,
+                ),
               ],
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Catatan Tambahan',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColor.darkGray,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
+            AppTextField(
+              label: 'Catatan Tambahan',
+              hint: 'Ceritakan lebih detail mengenai apa yang Anda rasakan...',
               controller: _noteController,
               maxLines: 6,
-              decoration: InputDecoration(
-                hintText: 'Ceritakan lebih detail mengenai apa yang Anda rasakan...',
-                hintStyle: TextStyle(color: AppColor.neutralGray.withOpacity(0.7)),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColor.neutralGray.withOpacity(0.5)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColor.neutralGray.withOpacity(0.5)),
-                ),
-              ),
+              enabled: !_isSaving,
             ),
             const SizedBox(height: 24),
             Container(
@@ -247,7 +249,9 @@ class _SymptomFormViewState extends State<SymptomFormView> {
               decoration: BoxDecoration(
                 color: AppColor.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColor.neutralGray.withOpacity(0.2)),
+                border: Border.all(
+                  color: AppColor.neutralGray.withOpacity(0.2),
+                ),
               ),
               child: Row(
                 children: [
@@ -257,7 +261,11 @@ class _SymptomFormViewState extends State<SymptomFormView> {
                       color: AppColor.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.info_outline, color: AppColor.white, size: 16),
+                    child: const Icon(
+                      Icons.info_outline,
+                      color: AppColor.white,
+                      size: 16,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -282,55 +290,21 @@ class _SymptomFormViewState extends State<SymptomFormView> {
             children: [
               if (isEdit) ...[
                 Expanded(
-                  child: SizedBox(
+                  child: AppButton(
+                    text: 'Reset',
+                    variant: AppButtonVariant.outline,
                     height: 50,
-                    child: OutlinedButton(
-                      onPressed: _resetForm,
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: const BorderSide(color: AppColor.neutralGray),
-                      ),
-                      child: const Text(
-                        'Reset',
-                        style: TextStyle(
-                          color: AppColor.darkGray,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    onPressed: _resetForm,
                   ),
                 ),
                 const SizedBox(width: 16),
               ],
               Expanded(
-                child: SizedBox(
+                child: AppButton(
+                  text: 'Simpan',
+                  isLoading: _isSaving,
                   height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.primary,
-                      foregroundColor: AppColor.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: AppColor.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text(
-                            'Simpan',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                  ),
+                  onPressed: _save,
                 ),
               ),
             ],
@@ -344,7 +318,7 @@ class _SymptomFormViewState extends State<SymptomFormView> {
     final isSelected = _selectedLevel == level;
     Color color;
     String label;
-    
+
     switch (level) {
       case SymptomLevel.normal:
         color = AppColor.success;
@@ -375,11 +349,7 @@ class _SymptomFormViewState extends State<SymptomFormView> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 20,
-                color: isSelected ? AppColor.white : color,
-              ),
+              Icon(icon, size: 20, color: isSelected ? AppColor.white : color),
               const SizedBox(width: 8),
               Text(
                 label,

@@ -7,18 +7,29 @@ environment:
   sdk: ^3.11.4
 
 dependencies:
+  alarm: ^5.4.1
   bcrypt: ^1.2.0
   flutter:
     sdk: flutter
   go_router: ^17.2.3
+  image: ^4.8.0
+  image_picker: ^1.2.2
   intl: ^0.20.2
+  permission_handler: ^12.0.3
   provider: ^6.1.5+1
+  shared_preferences: ^2.5.3
   supabase_flutter: ^2.12.4
+  url_launcher: ^6.3.1
+  firebase_core: ^4.10.0
+  firebase_messaging: ^16.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  fdb_helper: ^1.7.2
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/audio/alarm.mp3

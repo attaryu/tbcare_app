@@ -4,11 +4,40 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../../data/models/treatment_period_model.dart';
+import '../../../router/app_router.dart';
 import '../view_models/treatment_view_model.dart';
 
-class TreatmentView extends StatelessWidget {
+class TreatmentView extends StatefulWidget {
   const TreatmentView({super.key});
+
+  @override
+  State<TreatmentView> createState() => _TreatmentViewState();
+}
+
+class _TreatmentViewState extends State<TreatmentView> with RouteAware {
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute != null) {
+      AppRouter.routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<TreatmentViewModel>().fetchTreatmentPeriods();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +48,8 @@ class TreatmentView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColor.primary,
         shape: const CircleBorder(),
-        onPressed: () => context.push('/profile/treatment-periods/add', extra: viewModel),
+        onPressed: () =>
+            context.push('/profile/treatment-periods/add', extra: viewModel),
         child: const Icon(Icons.add, color: AppColor.white, size: 28),
       ),
       body: SafeArea(
@@ -55,153 +85,154 @@ class TreatmentView extends StatelessWidget {
               ),
             ),
 
-            if (viewModel.isLoading && viewModel.activePeriod == null && viewModel.historyPeriods.isEmpty)
+            if (viewModel.isLoading &&
+                viewModel.activePeriod == null &&
+                viewModel.historyPeriods.isEmpty)
               const Expanded(
-                child: Center(child: CircularProgressIndicator(color: AppColor.primary)),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColor.primary),
+                ),
               )
             else
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Section 1: Periode Aktif
-                      const Text(
-                        'Periode Aktif',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      if (viewModel.activePeriod != null) ...[
-                        _buildActivePeriodCard(context, viewModel.activePeriod!, viewModel.compliancePercentage),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  side: const BorderSide(color: AppColor.primary, width: 1.5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () => context.push(
-                                  '/profile/treatment-periods/edit',
-                                  extra: {
-                                    'viewModel': viewModel,
-                                    'period': viewModel.activePeriod!,
-                                  },
-                                ),
-                                child: const Text(
-                                  'Edit Periode',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColor.primary,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () => _confirmMarkCompleted(context, viewModel),
-                                child: const Text(
-                                  'Tandai Selesai',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else ...[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppColor.lightGray,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade300),
+                child: RefreshIndicator(
+                  onRefresh: () => viewModel.fetchTreatmentPeriods(),
+                  color: AppColor.primary,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section 1: Periode Aktif
+                        const Text(
+                          'Periode Aktif',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.darkGray,
                           ),
-                          child: Column(
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (viewModel.activePeriod != null) ...[
+                          _buildActivePeriodCard(
+                            context,
+                            viewModel.activePeriod!,
+                            viewModel.compliancePercentage,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
                             children: [
-                              const Icon(Icons.calendar_today_outlined, size: 40, color: AppColor.neutralGray),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Belum ada periode pengobatan aktif.',
-                                style: TextStyle(color: AppColor.neutralGray, fontSize: 15),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColor.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                              Expanded(
+                                child: AppButton(
+                                  text: 'Edit Periode',
+                                  variant: AppButtonVariant.outline,
+                                  onPressed: () => context.push(
+                                    '/profile/treatment-periods/edit',
+                                    extra: {
+                                      'viewModel': viewModel,
+                                      'period': viewModel.activePeriod!,
+                                    },
                                   ),
                                 ),
-                                onPressed: () => context.push('/profile/treatment-periods/add', extra: viewModel),
-                                child: const Text('Buat Periode Baru', style: TextStyle(color: AppColor.white)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: AppButton(
+                                  text: 'Tandai Selesai',
+                                  onPressed: () =>
+                                      _confirmMarkCompleted(context, viewModel),
+                                ),
                               ),
                             ],
                           ),
+                        ] else ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColor.lightGray,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 40,
+                                  color: AppColor.neutralGray,
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Belum ada periode pengobatan aktif.',
+                                  style: TextStyle(
+                                    color: AppColor.neutralGray,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                AppButton(
+                                  text: 'Buat Periode Baru',
+                                  onPressed: () => context.push(
+                                    '/profile/treatment-periods/add',
+                                    extra: viewModel,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 32),
+
+                        // Section 2: Riwayat Periode
+                        const Text(
+                          'Riwayat Periode',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.darkGray,
+                          ),
                         ),
+                        const SizedBox(height: 12),
+
+                        if (viewModel.historyPeriods.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColor.lightGray,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Text(
+                              'Belum ada riwayat periode pengobatan.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColor.neutralGray,
+                                fontSize: 14,
+                              ),
+                            ),
+                          )
+                        else
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: viewModel.historyPeriods.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              return _buildHistoryPeriodCard(
+                                context,
+                                viewModel.historyPeriods[index],
+                              );
+                            },
+                          ),
+                        const SizedBox(height: 80),
                       ],
-                      const SizedBox(height: 32),
-
-                      // Section 2: Riwayat Periode
-                      const Text(
-                        'Riwayat Periode',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.darkGray,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      if (viewModel.historyPeriods.isEmpty)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppColor.lightGray,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Text(
-                            'Belum ada riwayat periode pengobatan.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColor.neutralGray, fontSize: 14),
-                          ),
-                        )
-                      else
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: viewModel.historyPeriods.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            return _buildHistoryPeriodCard(context, viewModel.historyPeriods[index]);
-                          },
-                        ),
-                      const SizedBox(height: 80),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -211,12 +242,22 @@ class TreatmentView extends StatelessWidget {
     );
   }
 
-  Widget _buildActivePeriodCard(BuildContext context, TreatmentPeriodModel period, double percentage) {
+  Widget _buildActivePeriodCard(
+    BuildContext context,
+    TreatmentPeriodModel period,
+    double percentage,
+  ) {
     String dateRange = '-';
     try {
-      final startStr = DateFormat('dd MMMM yyyy', 'id_ID').format(period.startDate);
+      final startStr = DateFormat(
+        'dd MMMM yyyy',
+        'id_ID',
+      ).format(period.startDate);
       final endStr = period.predictionEndDate != null
-          ? DateFormat('dd MMMM yyyy', 'id_ID').format(period.predictionEndDate!)
+          ? DateFormat(
+              'dd MMMM yyyy',
+              'id_ID',
+            ).format(period.predictionEndDate!)
           : '-';
       dateRange = '$startStr - $endStr';
     } catch (_) {}
@@ -256,7 +297,11 @@ class TreatmentView extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.white70),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 16,
+                color: Colors.white70,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -306,15 +351,24 @@ class TreatmentView extends StatelessWidget {
     );
   }
 
-  Widget _buildHistoryPeriodCard(BuildContext context, TreatmentPeriodModel period) {
+  Widget _buildHistoryPeriodCard(
+    BuildContext context,
+    TreatmentPeriodModel period,
+  ) {
     String dateRange = '-';
     try {
-      final startStr = DateFormat('dd MMMM yyyy', 'id_ID').format(period.startDate);
+      final startStr = DateFormat(
+        'dd MMMM yyyy',
+        'id_ID',
+      ).format(period.startDate);
       final endStr = period.actualEndDate != null
           ? DateFormat('dd MMMM yyyy', 'id_ID').format(period.actualEndDate!)
           : (period.predictionEndDate != null
-              ? DateFormat('dd MMMM yyyy', 'id_ID').format(period.predictionEndDate!)
-              : '-');
+                ? DateFormat(
+                    'dd MMMM yyyy',
+                    'id_ID',
+                  ).format(period.predictionEndDate!)
+                : '-');
       dateRange = '$startStr - $endStr';
     } catch (_) {}
 
@@ -347,7 +401,11 @@ class TreatmentView extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColor.primary),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: AppColor.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -362,46 +420,37 @@ class TreatmentView extends StatelessWidget {
     );
   }
 
-  void _confirmMarkCompleted(BuildContext context, TreatmentViewModel viewModel) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tandai Selesai', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Apakah Anda yakin periode pengobatan ini telah selesai?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColor.neutralGray)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await viewModel.markActivePeriodCompleted();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Periode pengobatan ditandai selesai!'),
-                      backgroundColor: AppColor.success,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString()), backgroundColor: AppColor.error),
-                  );
-                }
-              }
-            },
-            child: const Text('Ya, Selesai', style: TextStyle(color: AppColor.white)),
-          ),
-        ],
-      ),
+  void _confirmMarkCompleted(
+    BuildContext context,
+    TreatmentViewModel viewModel,
+  ) {
+    AppDialog.confirm(
+      context,
+      title: 'Tandai Selesai',
+      message: 'Apakah Anda yakin periode pengobatan ini telah selesai?',
+      confirmLabel: 'Ya, Selesai',
+      onConfirm: () async {
+        try {
+          await viewModel.markActivePeriodCompleted();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Periode pengobatan ditandai selesai!'),
+                backgroundColor: AppColor.success,
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: AppColor.error,
+              ),
+            );
+          }
+        }
+      },
     );
   }
 }

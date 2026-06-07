@@ -1,16 +1,24 @@
+import 'package:alarm/alarm.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/app_env.dart';
+import 'core/services/alarm_service.dart';
+import 'core/services/fcm_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/history_repository.dart';
 import 'data/repositories/home_repository.dart';
+import 'data/repositories/medication_schedule_repository.dart';
+import 'data/repositories/notification_repository.dart';
 import 'data/repositories/profile_repository.dart';
+import 'data/repositories/supervisor_repository.dart';
 import 'data/repositories/symptom_repository.dart';
 import 'data/repositories/treatment_repository.dart';
 import 'data/services/supabase_service.dart';
+import 'firebase_options.dart';
 import 'ui/features/auth/view_models/auth_view_model.dart';
 import 'ui/router/app_router.dart';
 
@@ -18,24 +26,40 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
 
+  // Inisialisasi Service Alarm untuk PoC Hard Reminder
+  await Alarm.init();
+  AppAlarmService.init();
+  await AppAlarmService.requestPermissions();
+
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,
     anonKey: AppEnv.supabaseAnonKey,
   );
 
-  runApp(const MainApp());
+  final supabaseService = SupabaseService.instance;
+  final authViewModel = AuthViewModel(supabaseService);
+  await authViewModel.tryRestoreSession();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FcmService.instance.init();
+
+  if (authViewModel.isAuthenticated && authViewModel.currentUser != null) {
+    await FcmService.instance.saveTokenToDatabase(authViewModel.currentUser!.id);
+  }
+
+  runApp(MainApp(authViewModel: authViewModel));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  final AuthViewModel authViewModel;
+
+  const MainApp({super.key, required this.authViewModel});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<SupabaseService>(
-          create: (_) => SupabaseService.instance,
-        ),
+        Provider<SupabaseService>(create: (_) => SupabaseService.instance),
         ProxyProvider<SupabaseService, SymptomRepository>(
           update: (_, supabase, __) => SymptomRepository(supabase),
         ),
@@ -51,9 +75,16 @@ class MainApp extends StatelessWidget {
         ProxyProvider<SupabaseService, HistoryRepository>(
           update: (_, supabase, __) => HistoryRepository(supabase),
         ),
-        ChangeNotifierProvider<AuthViewModel>(
-          create: (context) => AuthViewModel(context.read<SupabaseService>()),
+        ProxyProvider<SupabaseService, MedicationScheduleRepository>(
+          update: (_, supabase, __) => MedicationScheduleRepository(supabase),
         ),
+        ProxyProvider<SupabaseService, SupervisorRepository>(
+          update: (_, supabase, __) => SupervisorRepository(supabase),
+        ),
+        ProxyProvider<SupabaseService, NotificationRepository>(
+          update: (_, supabase, __) => NotificationRepository(supabase),
+        ),
+        ChangeNotifierProvider<AuthViewModel>.value(value: authViewModel),
       ],
       child: Consumer<AuthViewModel>(
         builder: (context, authViewModel, _) => MaterialApp.router(

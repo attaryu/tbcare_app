@@ -4,6 +4,59 @@ Dokumen ini mencatat riwayat pembaruan, perbaikan bug, dan penyesuaian arsitektu
 
 ---
 
+## [v1.5.0-dev] - 25 Mei 2026
+
+### ✨ Fitur Baru & Optimalisasi Penyimpanan (Peran Pasien)
+- **Halaman Konfirmasi Minum Obat dengan Foto (`ConfirmMedicationView`)**:
+  - Implementasi alur konfirmasi minum obat interaktif menggunakan bukti foto langsung dari Kamera atau Galeri.
+  - Membuka halaman secara otomatis ketika menekan tombol "Konfirmasi minum obat" di area Jadwal Terdekat maupun tombol "Konfirmasi" pada modal detail obat.
+  - Tampilan UI premium berlatar belakang putih bersih dengan tombol kembali berbingkai hijau teal melengkung (sudut bulat) khas TBCare.
+- **Kompresi Gambar Ultra Ringan**:
+  - Mengintegrasikan pustaka `image` berbasis Dart untuk memproses dan mengompresi byte foto sebelum diunggah ke storage.
+  - Mengurangi resolusi foto secara otomatis (maksimal 400px pada sisi terlebar) dan menyimpannya sebagai JPEG dengan kualitas 30%, meminimalkan ukuran file menjadi sangat kecil (~15-30 KB) untuk optimalisasi penyimpanan database & cloud storage Supabase.
+- **Integrasi Supabase Storage & Database**:
+  - Unggah foto biner terkompresi secara dinamis ke bucket `medication_evidence` di Supabase Storage.
+  - Memperbarui riwayat kepatuhan (`compliance_logs`) dengan menyimpan URL publik foto tersebut beserta status `taken` dan waktu penyelesaian `taken_at`.
+- **Mekanisme Fallback Foto Simulasi**:
+  - Menambahkan deteksi `PlatformException` (akibat belum rebuild aplikasi saat paket native baru ditambahkan).
+  - Menyediakan opsi interaktif "Gunakan Foto Simulasi" yang menggambar gambar biner hijau teal solid di memori menggunakan pure Dart agar proses upload dan database tetap dapat diuji tanpa harus menghentikan sesi testing saat itu juga.
+
+---
+
+## [v1.4.0-dev] - 25 Mei 2026
+
+### ✨ Fitur Baru & Sinkronisasi Real-Time (Peran Pasien)
+- **Beranda Terintegrasi (`HomeView` & `HomeRepository`)**:
+  - Sinkronisasi area **Jadwal Harian** dan **Jadwal Terdekat** dengan data riil Supabase menggunakan rentang waktu `taken_at` hari ini, menyelesaikan isu kegagalan kueri `log_date` yang usang.
+  - Implementasi seeder otomatis di `HomeRepository` untuk memastikan data beranda terisi saat pengguna baru masuk pertama kali.
+  - Logika penentuan jadwal terdekat (`nextSchedule`) yang reaktif berdasarkan selisih waktu terkecil ke waktu saat ini.
+- **Konfirmasi Kepatuhan dari Jadwal Harian**:
+  - Mengubah daftar kartu Jadwal Harian agar dapat diklik secara interaktif.
+  - Mendesain ulang `_showMedicationDetailModal` menggunakan `AppDialog.custom` + `ListenableBuilder` mematuhi **Pattern 3** (Anti-tutup luar, loading spinner reaktif pada tombol konfirmasi, penonaktifan tombol tutup saat loading, dan urutan `Navigator.pop` aman pasca operasi async sukses).
+  - Pengguna kini dapat mengonfirmasi minum obat langsung dari modal detail obat yang dibuka via daftar Jadwal Harian maupun Jadwal Terdekat.
+
+### 🛠️ Pembersihan & Perbaikan CRUD Gejala (`SymptomRepository` & `SymptomFormView`)
+- Menghapus pemanggilan seeder otomatis data gejala statis di `SymptomRepository.getSymptomLogs`.
+- Menyelaraskan input DateTime kustom dari form picker di `SymptomFormView` agar disimpan langsung ke tabel `symptom_logs` Supabase (baik saat `addLog` maupun `updateLog`).
+
+---
+
+## [v1.3.0-dev] - 25 Mei 2026
+
+### ✨ Fitur Baru & UI Premium (Peran Pasien)
+- **Halaman Jadwal Minum Obat Harian (`MedicationScheduleView`)**:
+  - Implementasi halaman baru yang menampilkan daftar jadwal minum obat harian pasien.
+  - Sesuai dengan desain lampiran: menyajikan header dengan tombol kembali kustom berbentuk kotak hijau/teal, judul besar, dan informasi "Periode Jadwal" dalam bentuk kartu hijau/teal solid yang berisi nama periode dan rentang tanggal.
+  - Daftar kartu jadwal obat harian lengkap dengan nama obat, ikon jam, waktu dalam WIB, dan tombol opsi menu (`...`) hijau/teal.
+  - Implementasi fungsionalitas CRUD lengkap:
+    - **Create (Tambah Jadwal)**: tombol "Tambah Jadwal" di bawah daftar dan tombol FAB (+) di pojok kanan bawah memunculkan dialog/bottom sheet premium untuk memasukkan nama obat dan memilih waktu.
+    - **Read**: Memuat data real-time langsung dari tabel `medication_schedules` di database Supabase Cloud.
+    - **Update (Edit Jadwal)**: Mengedit nama obat dan jam minum obat melalui bottom sheet yang sama.
+    - **Delete (Hapus Jadwal)**: Menghapus jadwal obat secara aman dengan dialog konfirmasi.
+  - Penerapan arsitektur MVVM secara disiplin melalui `MedicationScheduleViewModel` dan `MedicationScheduleRepository`.
+
+---
+
 ## [v1.2.0-dev] - 17 Mei 2026
 
 ### ✨ Fitur Baru & UI Premium (Peran Pasien)

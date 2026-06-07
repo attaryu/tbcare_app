@@ -3,16 +3,40 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_medication_schedule_card.dart';
+import '../../../../ui/router/app_router.dart';
 import '../view_models/history_view_model.dart';
 
-class HistoryView extends StatelessWidget {
+class HistoryView extends StatefulWidget {
   const HistoryView({super.key});
+
+  @override
+  State<HistoryView> createState() => _HistoryViewState();
+}
+
+class _HistoryViewState extends State<HistoryView> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<HistoryViewModel>().fetchHistoryData();
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HistoryViewModel>();
 
-    if (viewModel.isLoading && viewModel.activeTreatment == null) {
+    if (viewModel.isLoading) {
       return const Scaffold(
         backgroundColor: AppColor.lightGray,
         body: Center(child: CircularProgressIndicator(color: AppColor.primary)),
@@ -20,13 +44,13 @@ class HistoryView extends StatelessWidget {
     }
 
     final activeTp = viewModel.activeTreatment;
-    String startDateStr = '01 Mei 2026';
-    String endDateStr = '29 Desember 2026';
+    String startDateStr = '-';
+    String endDateStr = '-';
 
     if (activeTp != null) {
       try {
         final st = DateTime.parse(activeTp['start_date']);
-        final ed = DateTime.parse(activeTp['end_date_estimated']);
+        final ed = DateTime.parse(activeTp['prediction_end_date']);
         startDateStr = DateFormat('dd MMMM yyyy', 'id_ID').format(st);
         endDateStr = DateFormat('dd MMMM yyyy', 'id_ID').format(ed);
       } catch (_) {}
@@ -34,19 +58,19 @@ class HistoryView extends StatelessWidget {
 
     final stats = viewModel.stats;
     final percentage = stats['percentage'] as double;
-    final daysInCurrentMonth = DateTime(viewModel.currentMonth.year, viewModel.currentMonth.month + 1, 0).day;
-    final currentDayOrMax = DateTime.now().month == viewModel.currentMonth.month
-        ? DateTime.now().day
-        : daysInCurrentMonth;
 
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: () => viewModel.fetchHistoryData(),
+          color: AppColor.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Title
               const Text(
                 'Riwayat Pengobatan',
@@ -100,10 +124,10 @@ class HistoryView extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // Laporan Pengobatan Bulan Ini
-              const Text(
-                'Laporan Pengobatan Bulan Ini',
-                style: TextStyle(
+              // Laporan Pengobatan Bulan Ini (Dinamis berdasarkan currentMonth yang aktif)
+              Text(
+                'Laporan Pengobatan ${DateFormat('MMMM yyyy', 'id_ID').format(viewModel.currentMonth)}',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColor.darkGray,
@@ -137,7 +161,7 @@ class HistoryView extends StatelessWidget {
                           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColor.primary),
                         ),
                         Text(
-                          '$currentDayOrMax/$daysInCurrentMonth Hari',
+                          '${viewModel.passedTreatmentDaysInCurrentMonth}/${viewModel.totalTreatmentDaysInCurrentMonth} Hari',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColor.primary),
                         ),
                       ],
@@ -224,8 +248,9 @@ class HistoryView extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatCard({required IconData icon, required String title, required int count, required Color iconColor}) {
     return Container(
@@ -301,20 +326,48 @@ class HistoryView extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: viewModel.canNavigateToPreviousMonth
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade100,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
                       iconSize: 18,
-                      icon: const Icon(Icons.chevron_left, color: AppColor.darkGray),
-                      onPressed: viewModel.previousMonth,
+                      icon: Icon(
+                        Icons.chevron_left,
+                        color: viewModel.canNavigateToPreviousMonth
+                            ? AppColor.darkGray
+                            : Colors.grey.shade300,
+                      ),
+                      onPressed: viewModel.canNavigateToPreviousMonth
+                          ? viewModel.previousMonth
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: viewModel.canNavigateToNextMonth
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade100,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
                       iconSize: 18,
-                      icon: const Icon(Icons.chevron_right, color: AppColor.darkGray),
-                      onPressed: viewModel.nextMonth,
+                      icon: Icon(
+                        Icons.chevron_right,
+                        color: viewModel.canNavigateToNextMonth
+                            ? AppColor.darkGray
+                            : Colors.grey.shade300,
+                      ),
+                      onPressed: viewModel.canNavigateToNextMonth
+                          ? viewModel.nextMonth
+                          : null,
                     ),
                   ),
                 ],
@@ -360,6 +413,8 @@ class HistoryView extends StatelessWidget {
                   dayDate.month == viewModel.selectedDate.month &&
                   dayDate.day == viewModel.selectedDate.day;
 
+              final isDiluarPeriode = status == 'Diluar Periode';
+
               Color bg = const Color(0xFFE9ECEF);
               Color textColor = AppColor.darkGray;
               if (status == 'Penuh') {
@@ -374,21 +429,21 @@ class HistoryView extends StatelessWidget {
               }
 
               return InkWell(
-                onTap: () => viewModel.selectDate(dayDate),
+                onTap: isDiluarPeriode ? null : () => viewModel.selectDate(dayDate),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: bg,
+                    color: isDiluarPeriode ? Colors.grey.shade100 : bg,
                     borderRadius: BorderRadius.circular(8),
-                    border: isSelected ? Border.all(color: AppColor.darkGray, width: 2.5) : null,
+                    border: isSelected && !isDiluarPeriode ? Border.all(color: AppColor.darkGray, width: 2.5) : null,
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     dayNum.toString(),
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
-                      color: textColor,
+                      fontWeight: isSelected && !isDiluarPeriode ? FontWeight.w900 : FontWeight.bold,
+                      color: isDiluarPeriode ? Colors.grey.shade400 : textColor,
                     ),
                   ),
                 ),
@@ -448,6 +503,8 @@ class HistoryView extends StatelessWidget {
       );
     }
 
+    final activeIds = viewModel.activeScheduleIds;
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -455,75 +512,20 @@ class HistoryView extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final item = items[index];
-        final name = item['med_name'];
-        final timeStr = (item['schedule_time'] as String).substring(0, 5);
-        final status = item['status'];
+        final id = item['id'] as int;
+        final name = item['med_name'] as String;
+        final timeStr = item['schedule_time'] as String;
+        final status = item['status'] as String;
+        final isVerified = item['is_verified'] as bool? ?? false;
+        final isActive = activeIds.contains(id);
 
-        final isGreenCard = name.toString().contains('Nyeri'); // Matching screenshot highlighting
-        Color badgeBg = AppColor.warning;
-        if (status == 'Di minum') badgeBg = AppColor.success;
-        if (status == 'Terlewat') badgeBg = AppColor.error;
-
-        return InkWell(
-          onTap: () => viewModel.toggleLogStatus(item['id'], status),
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: isGreenCard ? AppColor.primary : AppColor.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isGreenCard ? AppColor.primary : Colors.grey.shade300),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: status == 'Di minum' ? AppColor.success : (isGreenCard ? Colors.white.withOpacity(0.2) : AppColor.lightGray),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    status == 'Di minum' ? Icons.check : Icons.medical_services_outlined,
-                    size: 16,
-                    color: status == 'Di minum' ? AppColor.white : (isGreenCard ? AppColor.white : AppColor.neutralGray),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: isGreenCard ? AppColor.white : AppColor.darkGray,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(16)),
-                  child: Text(
-                    status,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColor.white),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Icon(Icons.alarm, size: 14, color: isGreenCard ? AppColor.white : AppColor.darkGray),
-                const SizedBox(width: 4),
-                Text(
-                  '$timeStr WIB',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: isGreenCard ? AppColor.white : AppColor.darkGray,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        return AppMedicationScheduleCard(
+          medName: name,
+          scheduleTime: timeStr,
+          status: status,
+          isVerified: isVerified,
+          isActive: isActive,
+          onTap: null,
         );
       },
     );

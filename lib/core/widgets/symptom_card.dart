@@ -7,12 +7,14 @@ class SymptomCard extends StatelessWidget {
   final SymptomLog log;
   final VoidCallback? onDelete;
   final VoidCallback? onTap;
+  final EdgeInsetsGeometry? margin;
 
   const SymptomCard({
     super.key,
     required this.log,
     this.onDelete,
     this.onTap,
+    this.margin,
   });
 
   @override
@@ -33,7 +35,7 @@ class SymptomCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        margin: margin ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColor.white,
@@ -92,7 +94,7 @@ class SymptomCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  DateFormat('dd MMM yyyy, HH:mm WIB', 'id_ID').format(log.createdAt),
+                  DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(log.createdAt),
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColor.darkGray,
