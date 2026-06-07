@@ -97,7 +97,7 @@ class _MedicationScheduleViewState extends State<MedicationScheduleView> with Ro
                         ),
                         const SizedBox(width: 16),
                         const Text(
-                          'Jadwal Minum Obat Harian',
+                          'Jadwal Obat Harian',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
